@@ -1,0 +1,21 @@
+platform,date,account_id,campaign,adset,ad,objective,impressions,clicks,spend_chf,conversions,revenue_chf,pin_format,saves
+pinterest_ads,2025-10-01,PIN-8251,Awareness - Seasonal,Actalikes,PI_AD_07,traffic,1699,27,28.23,2,212.26,video,2
+pinterest_ads,2025-10-02,PIN-9976,Awareness - Seasonal,Retarget 30d,PI_AD_04,leads,4422,135,220.97,1,97.21,standard,7
+pinterest_ads,2025-10-03,PIN-8777,Catalog Sales,Retarget 30d,PI_AD_07,leads,4670,76,49.76,4,162.3,standard,15
+pinterest_ads,2025-10-04,PIN-5543,Traffic - Pins,All Audiences,PI_AD_07,traffic,3613,52,36.89,4,309.03,standard,10
+pinterest_ads,2025-10-05,PIN-5499,Traffic - Pins,Retarget 30d,PI_AD_02,leads,3869,91,104.37,5,463.43,standard,4
+pinterest_ads,2025-10-06,PIN-4841,Catalog Sales,Retarget 30d,PI_AD_03,leads,4439,88,156.12,6,458.74,video,17
+pinterest_ads,2025-10-07,PIN-2320,Traffic - Pins,Actalikes,PI_AD_05,sales,2648,58,71.08,5,478.87,standard,9
+pinterest_ads,2025-10-08,PIN-3503,Catalog Sales,All Audiences,PI_AD_04,traffic,4757,86,72.54,4,346.33,video,4
+pinterest_ads,2025-10-09,PIN-7678,Catalog Sales,All Audiences,PI_AD_04,leads,1987,51,95.55,0,0.0,video,6
+pinterest_ads,2025-10-10,PIN-2020,Awareness - Seasonal,Actalikes,PI_AD_04,sales,3945,57,70.76,2,119.14,video,13
+pinterest_ads,2025-10-11,PIN-1320,Traffic - Pins,Actalikes,PI_AD_07,traffic,5715,119,113.54,9,619.64,video,11
+pinterest_ads,2025-10-12,PIN-6763,Traffic - Pins,Actalikes,PI_AD_01,leads,2357,45,57.31,3,271.6,video,2
+pinterest_ads,2025-10-13,PIN-9947,Traffic - Pins,Actalikes,PI_AD_05,traffic,4361,91,86.38,3,274.09,carousel,5
+pinterest_ads,2025-10-14,PIN-5471,Catalog Sales,Actalikes,PI_AD_02,leads,3964,91,50.27,3,336.98,standard,4
+pinterest_ads,2025-10-15,PIN-6507,Traffic - Pins,All Audiences,PI_AD_04,traffic,4417,87,121.61,8,911.72,standard,15
+pinterest_ads,2025-10-16,PIN-3704,Awareness - Seasonal,Actalikes,PI_AD_06,leads,2094,22,12.88,1,78.99,standard,8
+pinterest_ads,2025-10-17,PIN-1441,Catalog Sales,Retarget 30d,PI_AD_05,leads,3962,35,17.37,1,94.49,standard,5
+pinterest_ads,2025-10-18,PIN-1444,Awareness - Seasonal,Retarget 30d,PI_AD_06,sales,5332,151,171.94,9,865.6,video,8
+pinterest_ads,2025-10-19,PIN-8564,Awareness - Seasonal,Actalikes,PI_AD_02,sales,3059,62,85.59,2,215.12,carousel,4
+pinterest_ads,2025-10-20,PIN-6363,Catalog Sales,Actalikes,PI_AD_04,sales,3591,67,54.83,2,76.93,standard,5

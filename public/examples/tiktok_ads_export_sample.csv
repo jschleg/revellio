@@ -1,0 +1,21 @@
+platform,date,account_id,campaign,adset,ad,objective,impressions,clicks,spend_chf,conversions,revenue_chf,video_id,creative_type
+tiktok_ads,2025-10-01,TIK-8787,Retargeting - Engaged,Broad - 18-34,TI_AD_02,traffic,3004,74,139.83,3,216.48,vid_ao72kz02,in-feed
+tiktok_ads,2025-10-02,TIK-7932,Spark - Awareness,Interest - Tech,TI_AD_05,sales,4374,162,191.07,10,1058.01,vid_xrghc0cl,spark
+tiktok_ads,2025-10-03,TIK-4295,Retargeting - Engaged,Retarget 14d,TI_AD_06,traffic,4106,97,132.19,6,356.28,vid_br7tcs4c,spark
+tiktok_ads,2025-10-04,TIK-7118,Conversion - Broad,Interest - Tech,TI_AD_06,leads,3910,82,107.7,6,516.26,vid_c5o7uubc,spark
+tiktok_ads,2025-10-05,TIK-5061,Retargeting - Engaged,Interest - Tech,TI_AD_01,sales,2438,53,44.57,2,140.93,vid_xuljylje,spark
+tiktok_ads,2025-10-06,TIK-4770,Spark - Awareness,Interest - Tech,TI_AD_01,traffic,3501,31,47.77,1,106.26,vid_xq77awud,spark
+tiktok_ads,2025-10-07,TIK-1964,Spark - Awareness,Broad - 18-34,TI_AD_01,sales,2455,63,71.82,1,59.23,vid_tsemcikp,spark
+tiktok_ads,2025-10-08,TIK-6413,Spark - Awareness,Broad - 18-34,TI_AD_07,sales,5792,120,134.69,1,103.01,vid_tk93tyt7,in-feed
+tiktok_ads,2025-10-09,TIK-8953,Retargeting - Engaged,Broad - 18-34,TI_AD_03,sales,7006,197,184.13,10,868.59,vid_d5j60fkh,topview
+tiktok_ads,2025-10-10,TIK-8744,Retargeting - Engaged,Broad - 18-34,TI_AD_06,sales,2133,41,62.52,2,116.0,vid_my4sj6bw,in-feed
+tiktok_ads,2025-10-11,TIK-2545,Conversion - Broad,Interest - Tech,TI_AD_02,sales,2692,61,83.66,0,0.0,vid_3bme9fpz,spark
+tiktok_ads,2025-10-12,TIK-7939,Retargeting - Engaged,Interest - Tech,TI_AD_03,leads,3544,51,53.33,2,191.42,vid_ue8yfbnt,spark
+tiktok_ads,2025-10-13,TIK-2612,Conversion - Broad,Retarget 14d,TI_AD_01,sales,3775,74,50.33,0,0.0,vid_pbn78bmy,topview
+tiktok_ads,2025-10-14,TIK-2790,Conversion - Broad,Retarget 14d,TI_AD_03,sales,7708,123,152.18,6,648.93,vid_ymu5907i,topview
+tiktok_ads,2025-10-15,TIK-8350,Spark - Awareness,Broad - 18-34,TI_AD_05,sales,4969,104,121.62,5,260.45,vid_f2gog72o,spark
+tiktok_ads,2025-10-16,TIK-8579,Conversion - Broad,Broad - 18-34,TI_AD_03,sales,3183,74,79.05,3,170.49,vid_y0ifznbq,in-feed
+tiktok_ads,2025-10-17,TIK-2604,Spark - Awareness,Interest - Tech,TI_AD_07,sales,4255,39,48.81,2,93.24,vid_h7m35ixo,spark
+tiktok_ads,2025-10-18,TIK-1241,Retargeting - Engaged,Retarget 14d,TI_AD_07,sales,5293,90,162.11,7,435.19,vid_kc1msy4l,spark
+tiktok_ads,2025-10-19,TIK-8956,Spark - Awareness,Broad - 18-34,TI_AD_04,leads,2759,30,17.84,1,103.99,vid_a5ju9bvm,spark
+tiktok_ads,2025-10-20,TIK-3697,Spark - Awareness,Interest - Tech,TI_AD_01,leads,1862,43,61.01,2,182.39,vid_2p9e6gbp,spark

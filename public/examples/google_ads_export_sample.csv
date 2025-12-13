@@ -1,0 +1,21 @@
+platform,date,account_id,campaign,adset,ad,objective,impressions,clicks,spend_chf,conversions,revenue_chf,network,keyword
+google_ads,2025-10-01,GOO-5506,PMax - Prospects,KW Cluster A,GO_AD_01,sales,4332,74,101.88,6,442.71,Search,brand +name
+google_ads,2025-10-02,GOO-2679,Search - Brand,KW Cluster A,GO_AD_06,traffic,3354,92,130.51,3,263.3,Search,brand +name
+google_ads,2025-10-03,GOO-7912,PMax - Prospects,PMax Asset Group 1,GO_AD_01,sales,3095,47,58.03,0,0.0,Search,webdesign günstig
+google_ads,2025-10-04,GOO-4811,Search - Brand,KW Cluster A,GO_AD_02,traffic,2990,36,45.36,1,52.58,Search,gravel bike
+google_ads,2025-10-05,GOO-4257,PMax - Prospects,KW Cluster A,GO_AD_05,traffic,6081,101,118.54,2,136.4,Performance Max,data visualization
+google_ads,2025-10-06,GOO-7873,PMax - Prospects,PMax Asset Group 1,GO_AD_05,sales,3785,42,53.82,1,72.75,Search,ciso service
+google_ads,2025-10-07,GOO-1106,Search - Generic,PMax Asset Group 1,GO_AD_03,sales,2949,86,98.49,2,185.61,Search,gravel bike
+google_ads,2025-10-08,GOO-5552,PMax - Prospects,KW Cluster B,GO_AD_03,sales,2374,46,21.35,1,81.54,Performance Max,ciso service
+google_ads,2025-10-09,GOO-2519,Search - Brand,KW Cluster B,GO_AD_01,leads,4714,90,99.86,4,205.55,Search,webdesign günstig
+google_ads,2025-10-10,GOO-6635,Search - Brand,KW Cluster B,GO_AD_07,traffic,2830,43,65.36,2,92.53,Performance Max,webdesign günstig
+google_ads,2025-10-11,GOO-8527,Search - Generic,KW Cluster A,GO_AD_06,traffic,4078,64,58.44,4,386.23,Performance Max,brand +name
+google_ads,2025-10-12,GOO-5803,Search - Brand,KW Cluster B,GO_AD_01,traffic,5043,65,67.72,3,286.68,Search,data visualization
+google_ads,2025-10-13,GOO-4150,PMax - Prospects,KW Cluster B,GO_AD_05,traffic,3078,52,39.66,1,92.63,Search,ciso service
+google_ads,2025-10-14,GOO-4733,Search - Brand,KW Cluster A,GO_AD_06,leads,5852,103,154.63,5,331.94,Search,gravel bike
+google_ads,2025-10-15,GOO-2654,Search - Brand,KW Cluster A,GO_AD_07,leads,4131,112,127.4,9,277.6,Search,webdesign günstig
+google_ads,2025-10-16,GOO-6977,Search - Generic,KW Cluster B,GO_AD_06,sales,4854,90,94.08,4,168.9,Search,brand +name
+google_ads,2025-10-17,GOO-5374,Search - Generic,KW Cluster B,GO_AD_02,traffic,3371,68,113.37,2,126.89,Display,brand +name
+google_ads,2025-10-18,GOO-3803,PMax - Prospects,PMax Asset Group 1,GO_AD_01,traffic,3054,72,91.08,2,174.48,Search,ciso service
+google_ads,2025-10-19,GOO-8573,PMax - Prospects,KW Cluster A,GO_AD_02,leads,3766,90,81.39,3,212.83,Search,webdesign günstig
+google_ads,2025-10-20,GOO-4598,Search - Generic,PMax Asset Group 1,GO_AD_06,traffic,2181,43,53.38,2,147.55,Search,data visualization

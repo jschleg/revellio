@@ -1,0 +1,21 @@
+platform,date,account_id,campaign,adset,ad,objective,impressions,clicks,spend_chf,conversions,revenue_chf,industry,lead_form_opens
+linkedin_ads,2025-10-01,LIN-4228,Website Visits - TOFU,Retarget 30d,LI_AD_06,leads,6020,83,91.29,3,217.36,Healthcare,39
+linkedin_ads,2025-10-02,LIN-6409,ABM - Target Accounts,Job Titles,LI_AD_06,traffic,2812,58,45.57,1,67.95,IT Services,16
+linkedin_ads,2025-10-03,LIN-3041,ABM - Target Accounts,Retarget 30d,LI_AD_07,traffic,2753,27,27.99,0,0.0,IT Services,8
+linkedin_ads,2025-10-04,LIN-7691,ABM - Target Accounts,Retarget 30d,LI_AD_03,leads,2159,30,30.26,2,93.71,IT Services,9
+linkedin_ads,2025-10-05,LIN-3085,ABM - Target Accounts,Retarget 30d,LI_AD_03,sales,3826,93,96.87,2,152.11,IT Services,42
+linkedin_ads,2025-10-06,LIN-3851,ABM - Target Accounts,Retarget 30d,LI_AD_04,traffic,6213,89,147.09,4,400.74,Manufacturing,45
+linkedin_ads,2025-10-07,LIN-9977,Website Visits - TOFU,Company List,LI_AD_04,sales,3930,59,101.69,3,242.99,Manufacturing,28
+linkedin_ads,2025-10-08,LIN-8043,ABM - Target Accounts,Company List,LI_AD_02,traffic,4830,114,163.53,2,133.06,Manufacturing,30
+linkedin_ads,2025-10-09,LIN-8618,Website Visits - TOFU,Retarget 30d,LI_AD_03,leads,2893,39,32.95,1,84.05,IT Services,20
+linkedin_ads,2025-10-10,LIN-9375,ABM - Target Accounts,Retarget 30d,LI_AD_02,leads,4328,78,78.07,5,381.76,IT Services,28
+linkedin_ads,2025-10-11,LIN-2389,Website Visits - TOFU,Job Titles,LI_AD_06,leads,5054,74,95.82,5,155.21,IT Services,27
+linkedin_ads,2025-10-12,LIN-6491,Website Visits - TOFU,Retarget 30d,LI_AD_06,sales,2894,62,97.62,3,236.68,Healthcare,17
+linkedin_ads,2025-10-13,LIN-4680,B2B Leads - IT,Retarget 30d,LI_AD_03,sales,6397,164,138.74,8,675.86,IT Services,77
+linkedin_ads,2025-10-14,LIN-5011,B2B Leads - IT,Job Titles,LI_AD_01,leads,6644,154,171.52,8,352.72,Manufacturing,47
+linkedin_ads,2025-10-15,LIN-7790,Website Visits - TOFU,Job Titles,LI_AD_04,traffic,5110,112,176.32,5,401.52,Healthcare,47
+linkedin_ads,2025-10-16,LIN-7291,Website Visits - TOFU,Job Titles,LI_AD_06,leads,3076,34,31.93,0,0.0,Manufacturing,17
+linkedin_ads,2025-10-17,LIN-1090,ABM - Target Accounts,Job Titles,LI_AD_02,sales,1700,51,27.16,4,246.62,Healthcare,14
+linkedin_ads,2025-10-18,LIN-9486,ABM - Target Accounts,Job Titles,LI_AD_02,leads,4430,60,104.15,3,291.98,IT Services,25
+linkedin_ads,2025-10-19,LIN-2988,B2B Leads - IT,Retarget 30d,LI_AD_02,leads,3739,75,102.42,3,164.86,Finance,24
+linkedin_ads,2025-10-20,LIN-9702,B2B Leads - IT,Company List,LI_AD_06,traffic,2308,42,41.12,0,0.0,Manufacturing,15

@@ -61,11 +61,146 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ```
 revellio/
-├── app/              # Next.js app directory
-├── components/       # React components (shadcn/ui)
-├── lib/             # Utility functions
-└── public/          # Static assets
+├── app/                    # Next.js app directory
+├── components/             # React UI components (shadcn/ui)
+│   └── file-drop.tsx      # File upload component
+├── lib/                   # Core functionality
+│   ├── utils.ts           # General utilities
+│   ├── data/              # Data processing
+│   │   ├── csv-parser.ts
+│   │   ├── data-processor.ts
+│   │   └── data-validator.ts
+│   ├── analysis/          # Analysis logic (deterministic)
+│   │   ├── metadata-extractor.ts
+│   │   └── structure-analyzer.ts
+│   ├── ai/                # AI integration
+│   │   └── ai-service.ts
+│   └── types/             # TypeScript types
+│       └── data.ts
+├── public/                # Static assets
+│   └── examples/          # Sample CSV files
+└── Project-Spec.md        # Project specification
 ```
+
+## Architecture
+
+### Class Diagram
+
+```plantuml
+@startuml Revellio Architecture
+
+package "UI Layer" {
+  class FileDrop {
+    +onFilesSelected(files: File[])
+    +accept: string
+    +maxFiles?: number
+  }
+  
+  class VisualizationBlock {
+    +render(data: ProcessedData)
+    +explain(): string
+  }
+}
+
+package "Data Processing Layer" {
+  class CSVParser {
+    +parse(file: File): CSVData
+    +validate(data: string): boolean
+  }
+  
+  class DataProcessor {
+    +process(csvData: CSVData[]): ProcessedData
+    +aggregate(data: ProcessedData): AggregatedData
+  }
+  
+  class DataValidator {
+    +validate(data: CSVData): ValidationResult
+    +checkQuality(data: CSVData): QualityReport
+  }
+}
+
+package "Analysis Layer" {
+  class MetadataExtractor {
+    +extract(csvData: CSVData): Metadata
+    +getColumnTypes(data: CSVData): ColumnType[]
+    +getSample(data: CSVData, count: number): SampleData
+  }
+  
+  class StructureAnalyzer {
+    +analyze(metadata: Metadata[]): Structure
+    +findRelations(metadata: Metadata[]): Relation[]
+    +detectSemanticOverlap(metadata: Metadata[]): Overlap[]
+  }
+}
+
+package "AI Layer" {
+  class AIService {
+    +analyzeMetadata(metadata: Metadata[]): AIAnalysis
+    +suggestVisualizations(structure: Structure): VisualizationSuggestion[]
+    +explainDecision(decision: Decision): Explanation
+    +identifyRelations(metadata: Metadata[]): Relation[]
+  }
+}
+
+package "Types" {
+  class CSVData {
+    +columns: string[]
+    +rows: Row[]
+    +metadata: Metadata
+  }
+  
+  class Metadata {
+    +columnNames: string[]
+    +columnTypes: ColumnType[]
+    +sample: SampleData
+  }
+  
+  class ProcessedData {
+    +raw: CSVData[]
+    +merged?: MergedData
+    +structure: Structure
+  }
+  
+  class VisualizationSuggestion {
+    +type: VisualizationType
+    +data: ProcessedData
+    +explanation: string
+  }
+}
+
+' Relationships
+FileDrop --> CSVParser : uses
+FileDrop --> DataProcessor : uses
+
+CSVParser --> CSVData : creates
+DataProcessor --> ProcessedData : creates
+DataValidator --> CSVData : validates
+
+MetadataExtractor --> CSVData : extracts from
+MetadataExtractor --> Metadata : creates
+StructureAnalyzer --> Metadata : analyzes
+
+AIService --> Metadata : analyzes
+AIService --> StructureAnalyzer : uses
+AIService --> VisualizationSuggestion : creates
+
+VisualizationBlock --> ProcessedData : displays
+VisualizationBlock --> VisualizationSuggestion : uses
+
+@enduml
+```
+
+### Architecture Overview
+
+Die Architektur folgt dem Prinzip der klaren Trennung zwischen KI und deterministischer Logik:
+
+- **UI Layer** (`/components/`): Präsentationslogik, keine Datenverarbeitung
+- **Data Processing Layer** (`/lib/data/`): CSV-Parsing, Validierung, Aggregation
+- **Analysis Layer** (`/lib/analysis/`): Deterministische Analyse (Metadaten, Strukturen)
+- **AI Layer** (`/lib/ai/`): KI-gestützte Analyse und Entscheidungsfindung
+- **Types** (`/lib/types/`): TypeScript-Typdefinitionen
+
+Die KI übernimmt strategische Entscheidungen (Visualisierungen, Relationen), während die deterministische Logik die eigentliche Datenverarbeitung und das Rendering übernimmt.
 
 ## Projekt-Spezifikation
 

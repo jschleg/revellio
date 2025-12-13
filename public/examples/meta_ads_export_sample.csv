@@ -1,0 +1,21 @@
+platform,date,account_id,campaign,adset,ad,objective,impressions,clicks,spend_chf,conversions,revenue_chf,placement,age_range
+meta_ads,2025-10-01,MET-1525,Retargeting - Warm,Broad,ME_AD_02,leads,3147,73,102.3,2,136.7,Feed,18-24
+meta_ads,2025-10-02,MET-4456,Retargeting - Warm,Lookalike 2%,ME_AD_01,traffic,5344,110,31.42,6,568.06,Audience Network,45-54
+meta_ads,2025-10-03,MET-9179,Lead Gen - Local,Lookalike 2%,ME_AD_02,leads,2715,60,108.32,3,200.22,Stories,25-34
+meta_ads,2025-10-04,MET-5339,Lead Gen - Local,Lookalike 2%,ME_AD_02,sales,3032,55,70.52,3,261.09,Reels,25-34
+meta_ads,2025-10-05,MET-9830,Conversion - Prospecting,Interest Stack,ME_AD_05,leads,3458,66,98.19,2,159.91,Feed,18-24
+meta_ads,2025-10-06,MET-7543,Lead Gen - Local,Interest Stack,ME_AD_04,leads,3778,89,95.29,5,489.24,Feed,25-34
+meta_ads,2025-10-07,MET-9085,Conversion - Prospecting,Broad,ME_AD_05,sales,1905,48,38.65,1,26.17,Reels,55-64
+meta_ads,2025-10-08,MET-3621,Conversion - Prospecting,Broad,ME_AD_02,traffic,2748,49,49.78,2,115.95,Feed,35-44
+meta_ads,2025-10-09,MET-7304,Retargeting - Warm,Interest Stack,ME_AD_01,leads,4932,117,151.67,1,118.92,Feed,25-34
+meta_ads,2025-10-10,MET-5119,Lead Gen - Local,Lookalike 2%,ME_AD_05,traffic,3833,81,50.67,4,341.76,Audience Network,35-44
+meta_ads,2025-10-11,MET-2876,Conversion - Prospecting,Interest Stack,ME_AD_06,traffic,3465,81,130.01,1,93.3,Reels,25-34
+meta_ads,2025-10-12,MET-6573,Lead Gen - Local,Lookalike 2%,ME_AD_07,sales,4179,75,45.02,6,510.85,Feed,35-44
+meta_ads,2025-10-13,MET-8433,Retargeting - Warm,Lookalike 2%,ME_AD_02,sales,1950,32,40.46,2,151.41,Feed,18-24
+meta_ads,2025-10-14,MET-9201,Lead Gen - Local,Interest Stack,ME_AD_03,sales,4103,126,213.1,3,201.77,Feed,35-44
+meta_ads,2025-10-15,MET-5889,Lead Gen - Local,Broad,ME_AD_07,traffic,3501,26,17.69,0,0.0,Reels,18-24
+meta_ads,2025-10-16,MET-3504,Lead Gen - Local,Interest Stack,ME_AD_02,leads,5921,76,60.08,5,349.56,Feed,18-24
+meta_ads,2025-10-17,MET-9689,Conversion - Prospecting,Interest Stack,ME_AD_07,sales,4215,57,29.6,3,150.22,Feed,25-34
+meta_ads,2025-10-18,MET-1319,Lead Gen - Local,Lookalike 2%,ME_AD_04,sales,3045,41,49.95,1,75.7,Feed,18-24
+meta_ads,2025-10-19,MET-1949,Retargeting - Warm,Lookalike 2%,ME_AD_02,sales,2108,63,45.99,4,322.79,Feed,18-24
+meta_ads,2025-10-20,MET-8962,Lead Gen - Local,Broad,ME_AD_01,sales,3825,77,37.88,5,344.01,Reels,25-34

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileDrop } from "@/components/file-drop";
+import { FileDisplay } from "@/components/file-display";
 import { CSVParser } from "@/lib/data/csv-parser";
 import { DataValidator } from "@/lib/data/data-validator";
 import { DataProcessor } from "@/lib/data/data-processor";
@@ -132,6 +133,13 @@ export default function PlaygroundPage() {
             <span className="text-zinc-600 dark:text-zinc-400">
               Dateien werden verarbeitet...
             </span>
+          </div>
+        )}
+
+        {/* File Display with Tables */}
+        {csvData.length > 0 && (
+          <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <FileDisplay csvData={csvData} />
           </div>
         )}
 

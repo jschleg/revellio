@@ -92,7 +92,7 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-purple-50/30 to-zinc-50 dark:from-zinc-950 dark:via-purple-950/20 dark:to-zinc-950">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -104,7 +104,7 @@ export default function PlaygroundPage() {
         </div>
 
         {/* File Upload Section */}
-        <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
           <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             Dateien hochladen
           </h2>
@@ -128,7 +128,7 @@ export default function PlaygroundPage() {
 
         {/* Processing Indicator */}
         {isProcessing && (
-          <div className="mb-6 flex items-center gap-2 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-zinc-200/50 bg-card p-4 dark:border-zinc-800/50">
             <Loader2 className="h-5 w-5 animate-spin text-zinc-600 dark:text-zinc-400" />
             <span className="text-zinc-600 dark:text-zinc-400">
               Dateien werden verarbeitet...
@@ -138,14 +138,14 @@ export default function PlaygroundPage() {
 
         {/* File Display with Tables */}
         {csvData.length > 0 && (
-          <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
             <FileDisplay csvData={csvData} />
           </div>
         )}
 
         {/* Validation Results */}
         {validationResults.length > 0 && (
-          <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
             <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
               Validierung
             </h2>
@@ -204,7 +204,7 @@ export default function PlaygroundPage() {
 
         {/* Metadata Display */}
         {csvData.length > 0 && (
-          <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
             <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
               Metadaten
             </h2>
@@ -212,7 +212,7 @@ export default function PlaygroundPage() {
               {csvData.map((data, index) => (
                 <div
                   key={index}
-                  className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                  className="rounded-lg border border-zinc-200/50 bg-muted/50 p-4 dark:border-zinc-800/50"
                 >
                   <div className="mb-3 flex items-center gap-2">
                     <FileText className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
@@ -267,7 +267,7 @@ export default function PlaygroundPage() {
 
         {/* Structure Analysis */}
         {processedData && (
-          <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
             <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
               Strukturanalyse
             </h2>
@@ -317,7 +317,7 @@ export default function PlaygroundPage() {
           <div className="flex justify-end">
             <button
               onClick={handleClear}
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              className="rounded-lg border border-zinc-300/50 bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted dark:border-zinc-700/50"
             >
               Alles zurücksetzen
             </button>

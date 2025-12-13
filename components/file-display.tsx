@@ -22,7 +22,7 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
   return (
     <div className={cn("w-full", className)}>
       {/* Overview Section */}
-      <div className="mb-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-4 rounded-lg border border-zinc-200/50 bg-card p-4 dark:border-zinc-800/50">
         <div className="flex items-center gap-2 mb-3">
           <Table2 className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
@@ -82,11 +82,11 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
       </div>
 
       {/* Table Display */}
-      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-lg border border-zinc-200/50 bg-card dark:border-zinc-800/50">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+              <tr className="border-b border-zinc-200/50 bg-muted/30 dark:border-zinc-800/50">
                 {activeData.columns.map((column, index) => (
                   <th
                     key={index}
@@ -116,7 +116,7 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
                 activeData.rows.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
+                    className="hover:bg-muted/50 transition-colors"
                   >
                     {activeData.columns.map((column, colIndex) => {
                       const value = row[column];
@@ -160,7 +160,7 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
         </div>
 
         {/* Table Footer Info */}
-        <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="border-t border-zinc-200/50 bg-muted/30 px-4 py-3 dark:border-zinc-800/50">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Zeige {activeData.rows.length} von {activeData.metadata.rowCount} Zeilen
             {activeData.rows.length < activeData.metadata.rowCount &&

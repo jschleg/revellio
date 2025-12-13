@@ -128,8 +128,8 @@ export function FileDrop({
           "min-h-[200px] p-8",
           isDragging
             ? "border-primary bg-primary/5"
-            : "border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100/50",
-          "dark:border-zinc-700 dark:bg-zinc-900/50 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/50"
+            : "border-zinc-300/50 bg-muted/30 hover:border-purple-300 hover:bg-muted/50",
+          "dark:border-zinc-700/50 dark:hover:border-purple-700/50 dark:hover:bg-muted/30"
         )}
       >
         <input
@@ -144,7 +144,7 @@ export function FileDrop({
           <div
             className={cn(
               "rounded-full p-4",
-              isDragging ? "bg-primary/10" : "bg-zinc-200 dark:bg-zinc-800"
+              isDragging ? "bg-primary/10" : "bg-muted dark:bg-muted"
             )}
           >
             <Upload
@@ -191,7 +191,7 @@ export function FileDrop({
             {selectedFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900"
+                className="flex items-center gap-3 rounded-lg border border-zinc-200/50 bg-card p-3 dark:border-zinc-700/50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded bg-zinc-100 dark:bg-zinc-800">
                   <File className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />

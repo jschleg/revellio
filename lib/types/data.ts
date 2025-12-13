@@ -11,8 +11,8 @@ export interface Column {
 }
 
 export interface Row {
-  [columnName: string]: string | number | boolean | null;
   _raw: string[];
+  [columnName: string]: string | number | boolean | null | string[] | undefined;
 }
 
 export interface SampleData {

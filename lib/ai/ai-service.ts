@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import type {
   Metadata,
   AIAnalysis,
@@ -5,52 +6,87 @@ import type {
   Structure,
   Decision,
   Explanation,
+  Relation,
 } from "@/lib/types/data";
 
 /**
- * AI Service - Handles AI-powered analysis and decision making
+ * AI Service - Handles AI-powered analysis and decision making using OpenAI
  * 
- * This is a skeleton implementation. Replace with actual AI integration
- * (e.g., OpenAI API, Anthropic, etc.)
+ * Uses GPT-4o for structured data analysis tasks
  */
 export class AIService {
-  private apiKey?: string;
-  private baseUrl?: string;
+  private client: OpenAI | null = null;
+  private model: string = "gpt-4o";
 
-  constructor(apiKey?: string, baseUrl?: string) {
-    this.apiKey = apiKey;
-    this.baseUrl = baseUrl;
+  constructor(apiKey?: string) {
+    if (apiKey) {
+      this.client = new OpenAI({
+        apiKey: apiKey,
+      });
+    } else if (typeof window === "undefined") {
+      // Server-side: try to get from environment
+      const envKey = process.env.OPENAI_API_KEY;
+      if (envKey) {
+        this.client = new OpenAI({
+          apiKey: envKey,
+        });
+      }
+    }
+  }
+
+  /**
+   * Check if AI service is available
+   */
+  private isAvailable(): boolean {
+    return this.client !== null;
   }
 
   /**
    * Analyze metadata and generate AI insights
    */
   async analyzeMetadata(metadataArray: Metadata[]): Promise<AIAnalysis> {
-    // TODO: Implement actual AI integration
-    // This is a placeholder that returns structured data
-    
-    // For now, return a basic structure
-    // In production, this would call an AI API with:
-    // - Column names and types
-    // - Sample data
-    // - Request for structure analysis and visualization suggestions
+    if (!this.isAvailable()) {
+      // Fallback to basic structure if AI is not available
+      return this.getFallbackAnalysis(metadataArray);
+    }
 
-    const structure: Structure = {
-      tables: metadataArray,
-      relations: [],
-      overlaps: [],
-    };
+    try {
+      const prompt = this.buildMetadataAnalysisPrompt(metadataArray);
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: `Du bist ein Experte für Datenanalyse und Visualisierung. 
+            Analysiere die bereitgestellten Metadaten von CSV-Dateien und erstelle strukturierte Analysen.
+            Antworte IMMER im JSON-Format mit der exakten Struktur, die gefordert wird.`,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
 
-    const visualizations: VisualizationSuggestion[] = [];
-    const insights: string[] = [];
-    const assumptions: string[] = [];
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("No response from AI");
+      }
 
-    return {
-      structure,
-      visualizations,
-      insights,
-      assumptions,
-    };
+      const analysis = JSON.parse(content) as Partial<AIAnalysis>;
+      
+      return {
+        structure: analysis.structure || this.getFallbackStructure(metadataArray),
+        visualizations: analysis.visualizations || [],
+        insights: analysis.insights || [],
+        assumptions: analysis.assumptions || [],
+      };
+    } catch (error) {
+      console.error("Error in AI analysis:", error);
+      return this.getFallbackAnalysis(metadataArray);
+    }
   }
 
   /**
@@ -59,45 +95,145 @@ export class AIService {
   async suggestVisualizations(
     structure: Structure
   ): Promise<VisualizationSuggestion[]> {
-    // TODO: Implement AI-powered visualization suggestions
-    // The AI should analyze:
-    // - Column types
-    // - Data distribution
-    // - Relationships
-    // - User intent (if available)
+    if (!this.isAvailable()) {
+      return [];
+    }
 
-    return [];
+    try {
+      const prompt = this.buildVisualizationPrompt(structure);
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: `Du bist ein Experte für Datenvisualisierung. 
+            Analysiere die Datenstruktur und schlage passende Visualisierungen vor.
+            Antworte IMMER im JSON-Format mit einem Array von Visualisierungsvorschlägen.`,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.4,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        return [];
+      }
+
+      const result = JSON.parse(content) as { visualizations?: VisualizationSuggestion[] };
+      return result.visualizations || [];
+    } catch (error) {
+      console.error("Error in visualization suggestions:", error);
+      return [];
+    }
   }
 
   /**
    * Explain a decision made by the system
    */
   async explainDecision(decision: Decision): Promise<Explanation> {
-    // TODO: Implement AI-powered explanation generation
-    // The AI should provide:
-    // - Clear rationale
-    // - Alternative options considered
-    // - Confidence level
+    if (!this.isAvailable()) {
+      return {
+        decision,
+        rationale: "AI service not available",
+        confidence: 0.5,
+      };
+    }
 
-    return {
-      decision,
-      rationale: "Explanation not yet implemented",
-      confidence: 0.5,
-    };
+    try {
+      const prompt = `Erkläre die folgende Entscheidung des Systems:
+      
+Typ: ${decision.type}
+Daten: ${JSON.stringify(decision.data, null, 2)}
+
+Erkläre:
+1. Warum diese Entscheidung getroffen wurde
+2. Welche Alternativen in Betracht gezogen wurden
+3. Wie sicher die Entscheidung ist (0-1)
+
+Antworte im JSON-Format mit: rationale, alternatives (Array), confidence (0-1)`;
+
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: "Du bist ein Experte für erklärbare KI. Erkläre Entscheidungen klar und nachvollziehbar.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("No response from AI");
+      }
+
+      const explanation = JSON.parse(content) as Partial<Explanation>;
+      return {
+        decision,
+        rationale: explanation.rationale || "Keine Erklärung verfügbar",
+        alternatives: explanation.alternatives || [],
+        confidence: explanation.confidence || 0.5,
+      };
+    } catch (error) {
+      console.error("Error in decision explanation:", error);
+      return {
+        decision,
+        rationale: "Fehler bei der Erklärung",
+        confidence: 0.5,
+      };
+    }
   }
 
   /**
    * Identify relations between datasets using AI
    */
-  async identifyRelations(metadataArray: Metadata[]): Promise<Structure["relations"]> {
-    // TODO: Implement AI-powered relation detection
-    // The AI should identify:
-    // - Semantic overlaps
-    // - Potential join keys
-    // - Time-based relationships
-    // - Category relationships
+  async identifyRelations(metadataArray: Metadata[]): Promise<Relation[]> {
+    if (!this.isAvailable()) {
+      return [];
+    }
 
-    return [];
+    try {
+      const prompt = this.buildRelationPrompt(metadataArray);
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: `Du bist ein Experte für Datenmodellierung und Relationen.
+            Identifiziere Beziehungen zwischen verschiedenen Datensätzen.
+            Antworte IMMER im JSON-Format mit einem Array von Relationen.`,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        return [];
+      }
+
+      const result = JSON.parse(content) as { relations?: Relation[] };
+      return result.relations || [];
+    } catch (error) {
+      console.error("Error in relation identification:", error);
+      return [];
+    }
   }
 
   /**
@@ -107,32 +243,141 @@ export class AIService {
     visualizationType: string,
     data: unknown
   ): Promise<string> {
-    // TODO: Implement AI-powered explanation generation
-    // The AI should explain:
-    // - What the visualization shows
-    // - Why this visualization was chosen
-    // - Key insights from the data
+    if (!this.isAvailable()) {
+      return "Erklärung nicht verfügbar";
+    }
 
-    return "Explanation not yet implemented";
+    try {
+      const prompt = `Erkläre diese Visualisierung:
+      
+Typ: ${visualizationType}
+Daten: ${JSON.stringify(data, null, 2)}
+
+Erkläre:
+- Was zeigt die Visualisierung?
+- Warum wurde dieser Typ gewählt?
+- Welche Erkenntnisse lassen sich ableiten?`;
+
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: "Du bist ein Experte für Datenvisualisierung. Erkläre Visualisierungen klar und verständlich.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.4,
+      });
+
+      return response.choices[0]?.message?.content || "Erklärung nicht verfügbar";
+    } catch (error) {
+      console.error("Error in explanation generation:", error);
+      return "Fehler bei der Erklärung";
+    }
   }
 
   /**
-   * Private helper to call AI API (placeholder)
+   * Build prompt for metadata analysis
    */
-  private async callAI(prompt: string, context: unknown): Promise<unknown> {
-    // TODO: Implement actual API call
-    // Example structure:
-    // const response = await fetch(this.baseUrl, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${this.apiKey}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({ prompt, context }),
-    // });
-    // return response.json();
+  private buildMetadataAnalysisPrompt(metadataArray: Metadata[]): string {
+    const metadataSummary = metadataArray.map((meta, idx) => {
+      return `
+Datei ${idx + 1}: ${meta.fileName}
+- Spalten: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+- Zeilen: ${meta.rowCount}
+- Header vorhanden: ${meta.hasHeader}
+- Beispiel-Daten (erste 3 Zeilen):
+${JSON.stringify(meta.sample.rows.slice(0, 3), null, 2)}
+`;
+    }).join("\n");
 
-    throw new Error("AI service not yet implemented");
+    return `Analysiere die folgenden CSV-Metadaten und erstelle eine strukturierte Analyse:
+
+${metadataSummary}
+
+Erstelle eine JSON-Antwort mit:
+- structure: { tables: Metadata[], relations: Relation[], overlaps: SemanticOverlap[], suggestedMerge?: {...} }
+- visualizations: Array von Visualisierungsvorschlägen
+- insights: Array von Erkenntnissen (Strings)
+- assumptions: Array von Annahmen (Strings)
+
+Identifiziere:
+1. Potenzielle Relationen zwischen den Dateien
+2. Semantische Überschneidungen
+3. Passende Visualisierungen
+4. Wichtige Erkenntnisse`;
+  }
+
+  /**
+   * Build prompt for visualization suggestions
+   */
+  private buildVisualizationPrompt(structure: Structure): string {
+    return `Basierend auf dieser Datenstruktur schlage passende Visualisierungen vor:
+
+Tabellen: ${structure.tables.length}
+Relationen: ${structure.relations.length}
+Überschneidungen: ${structure.overlaps.length}
+
+Spalten-Informationen:
+${structure.tables.map((t, i) => 
+  `Tabelle ${i + 1}: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
+).join("\n")}
+
+Erstelle ein JSON-Objekt mit einem Array "visualizations" von Visualisierungsvorschlägen.
+Jeder Vorschlag sollte enthalten:
+- type: einer der Typen (bar-chart, line-chart, pie-chart, table, scatter-plot, relational-view, aggregated-overview)
+- explanation: Warum diese Visualisierung passend ist
+- reasoning: Begründung`;
+  }
+
+  /**
+   * Build prompt for relation identification
+   */
+  private buildRelationPrompt(metadataArray: Metadata[]): string {
+    const metadataSummary = metadataArray.map((meta, idx) => {
+      return `
+Datei ${idx + 1}: ${meta.fileName}
+Spalten: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+`;
+    }).join("\n");
+
+    return `Identifiziere Beziehungen zwischen diesen Datensätzen:
+
+${metadataSummary}
+
+Erstelle ein JSON-Objekt mit einem Array "relations" von Relationen.
+Jede Relation sollte enthalten:
+- type: "key" | "time" | "category" | "semantic"
+- sourceColumn: Spaltenname aus Datei 1
+- targetColumn: Spaltenname aus Datei 2
+- confidence: 0-1
+- description: Beschreibung der Relation`;
+  }
+
+  /**
+   * Fallback analysis when AI is not available
+   */
+  private getFallbackAnalysis(metadataArray: Metadata[]): AIAnalysis {
+    return {
+      structure: this.getFallbackStructure(metadataArray),
+      visualizations: [],
+      insights: [],
+      assumptions: [],
+    };
+  }
+
+  /**
+   * Get fallback structure
+   */
+  private getFallbackStructure(metadataArray: Metadata[]): Structure {
+    return {
+      tables: metadataArray,
+      relations: [],
+      overlaps: [],
+    };
   }
 }
-

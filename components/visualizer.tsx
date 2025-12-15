@@ -1,7 +1,8 @@
 "use client";
 
-import type { UnifiedAIOutput, CSVData, VisualizationInstruction } from "@/lib/types/data";
+import type { UnifiedAIOutput, CSVData } from "@/lib/types/data";
 import { BarChart3, GitBranch, Lightbulb, MessageSquare } from "lucide-react";
+import { DynamicVisualization } from "./visualizations";
 
 interface VisualizerProps {
   aiOutput: UnifiedAIOutput;
@@ -9,31 +10,7 @@ interface VisualizerProps {
 }
 
 export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
-  const getDataForVisualization = (instruction: VisualizationInstruction): CSVData | null => {
-    if (instruction.config.dataSource === "combined") {
-      // For combined visualizations, we'd need to merge data
-      // For now, return first file
-      return csvData[0] || null;
-    }
-    return csvData.find((data) => data.fileName === instruction.config.dataSource) || null;
-  };
-
-  const renderVisualization = (instruction: VisualizationInstruction, index: number) => {
-    const data = getDataForVisualization(instruction);
-    
-    if (!data) {
-      return (
-        <div
-          key={index}
-          className="rounded-lg border border-yellow-200/50 bg-yellow-50/50 p-4 dark:border-yellow-800/50 dark:bg-yellow-900/20"
-        >
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            Datenquelle "{instruction.config.dataSource}" nicht gefunden
-          </p>
-        </div>
-      );
-    }
-
+  const renderVisualization = (instruction: typeof aiOutput.visualizations[0], index: number) => {
     return (
       <div
         key={index}
@@ -76,14 +53,13 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
           </div>
         </div>
 
-        {/* Placeholder for actual visualization rendering */}
-        <div className="rounded-lg border border-zinc-200/50 bg-muted/30 p-8 text-center dark:border-zinc-800/50">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Visualisierung wird hier gerendert (Modul: {instruction.module})
-          </p>
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
-            {data.rows.length} Zeilen, {data.columns.length} Spalten
-          </p>
+        {/* Dynamic visualization rendering */}
+        <div className="rounded-lg border border-zinc-200/50 bg-white/80 p-4 dark:border-zinc-800/50 dark:bg-zinc-900/50">
+          <DynamicVisualization
+            instruction={instruction}
+            csvData={csvData}
+            relations={aiOutput.relations}
+          />
         </div>
       </div>
     );

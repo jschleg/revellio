@@ -80,19 +80,24 @@ export default function Home() {
 
       // Step 3: AI Analysis (via API)
       setProcessingStep("KI analysiert die Datenstruktur...");
+      console.log("🔍 [DEBUG] Starting AI analysis with metadata:", metadataArray);
       const analyzeResponse = await fetch("/api/ai/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ metadataArray }),
       });
       if (!analyzeResponse.ok) {
-        throw new Error("AI analysis failed");
+        const errorText = await analyzeResponse.text();
+        console.error("❌ [DEBUG] AI analysis failed:", analyzeResponse.status, errorText);
+        throw new Error(`AI analysis failed: ${errorText}`);
       }
       const aiAnalysis: AIAnalysis = await analyzeResponse.json();
+      console.log("✅ [DEBUG] AI analysis result:", aiAnalysis);
       setAnalysis(aiAnalysis);
 
       // Step 4: Identify Relations (via API)
       setProcessingStep("KI identifiziert Beziehungen zwischen Datensätzen...");
+      console.log("🔍 [DEBUG] Identifying relations...");
       const relationsResponse = await fetch("/api/ai/relations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,11 +105,16 @@ export default function Home() {
       });
       if (relationsResponse.ok) {
         const relationsData = await relationsResponse.json();
+        console.log("✅ [DEBUG] Relations found:", relationsData.relations);
         setRelations(relationsData.relations || []);
+      } else {
+        const errorText = await relationsResponse.text();
+        console.warn("⚠️ [DEBUG] Relations API failed:", relationsResponse.status, errorText);
       }
 
       // Step 5: Get visualization suggestions (via API)
       setProcessingStep("KI schlägt Visualisierungen vor...");
+      console.log("🔍 [DEBUG] Getting visualization suggestions...");
       const vizResponse = await fetch("/api/ai/visualizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,6 +123,7 @@ export default function Home() {
       if (vizResponse.ok) {
         const vizData = await vizResponse.json();
         const visualizationSuggestions = vizData.visualizations || [];
+        console.log("✅ [DEBUG] Visualizations:", visualizationSuggestions);
         setVisualizations(visualizationSuggestions);
 
         // Step 6: Generate explanations for visualizations (via API)

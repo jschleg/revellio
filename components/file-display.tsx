@@ -26,30 +26,30 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
         <div className="flex items-center gap-2 mb-3">
           <Table2 className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            Datenübersicht
+            Data Overview
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
           <div>
-            <span className="text-zinc-500 dark:text-zinc-400">Dateien:</span>
+            <span className="text-zinc-500 dark:text-zinc-400">Files:</span>
             <p className="font-medium text-zinc-900 dark:text-zinc-50">
               {csvData.length}
             </p>
           </div>
           <div>
-            <span className="text-zinc-500 dark:text-zinc-400">Gesamt Zeilen:</span>
+            <span className="text-zinc-500 dark:text-zinc-400">Total Rows:</span>
             <p className="font-medium text-zinc-900 dark:text-zinc-50">
               {csvData.reduce((sum, data) => sum + data.metadata.rowCount, 0)}
             </p>
           </div>
           <div>
-            <span className="text-zinc-500 dark:text-zinc-400">Gesamt Spalten:</span>
+            <span className="text-zinc-500 dark:text-zinc-400">Total Columns:</span>
             <p className="font-medium text-zinc-900 dark:text-zinc-50">
               {csvData.reduce((sum, data) => sum + data.metadata.columns.length, 0)}
             </p>
           </div>
           <div>
-            <span className="text-zinc-500 dark:text-zinc-400">Aktive Datei:</span>
+            <span className="text-zinc-500 dark:text-zinc-400">Active File:</span>
             <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">
               {activeData.fileName}
             </p>
@@ -109,7 +109,7 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
                     colSpan={activeData.columns.length}
                     className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
                   >
-                    Keine Daten vorhanden
+                    No data available
                   </td>
                 </tr>
               ) : (
@@ -132,7 +132,7 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
                               </span>
                             ) : typeof value === "number" ? (
                               <span className="font-mono">
-                                {value.toLocaleString("de-DE")}
+                                {value.toLocaleString("en-US")}
                               </span>
                             ) : typeof value === "boolean" ? (
                               <span
@@ -143,7 +143,7 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
                                     : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200"
                                 )}
                               >
-                                {value ? "Ja" : "Nein"}
+                                {value ? "Yes" : "No"}
                               </span>
                             ) : (
                               String(value)
@@ -162,9 +162,9 @@ export function FileDisplay({ csvData, className }: FileDisplayProps) {
         {/* Table Footer Info */}
         <div className="border-t border-zinc-200/50 bg-muted/30 px-4 py-3 dark:border-zinc-800/50">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Zeige {activeData.rows.length} von {activeData.metadata.rowCount} Zeilen
+            Showing {activeData.rows.length} of {activeData.metadata.rowCount} rows
             {activeData.rows.length < activeData.metadata.rowCount &&
-              ` (nur erste ${activeData.rows.length} Zeilen angezeigt)`}
+              ` (only first ${activeData.rows.length} rows displayed)`}
           </p>
         </div>
       </div>

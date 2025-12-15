@@ -23,25 +23,25 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
               {instruction.type}
             </span>
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              Modul: {instruction.module}
+              Module: {instruction.module}
             </span>
           </div>
         </div>
 
         <div className="mb-4 rounded-lg border border-purple-300/50 bg-white/80 p-4 dark:border-purple-700 dark:bg-zinc-900/50">
           <h3 className="mb-2 font-semibold text-purple-900 dark:text-purple-200">
-            Visualisierung: {instruction.type}
+            Visualization: {instruction.type}
           </h3>
           <p className="mb-3 text-sm text-purple-800 dark:text-purple-300">
-            <span className="font-medium">Begründung:</span> {instruction.reasoning}
+            <span className="font-medium">Reasoning:</span> {instruction.reasoning}
           </p>
           <div className="text-xs text-purple-700 dark:text-purple-400">
             <p>
-              <span className="font-medium">Datenquelle:</span> {instruction.config.dataSource}
+              <span className="font-medium">Data Source:</span> {instruction.config.dataSource}
             </p>
             {instruction.config.columns && instruction.config.columns.length > 0 && (
               <p>
-                <span className="font-medium">Spalten:</span>{" "}
+                <span className="font-medium">Columns:</span>{" "}
                 {instruction.config.columns.join(", ")}
               </p>
             )}
@@ -72,7 +72,7 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
         <div className="rounded-lg border border-blue-200/50 bg-gradient-to-r from-blue-50 to-blue-100/50 p-6 dark:border-blue-800/50 dark:from-blue-900/20 dark:to-blue-950/20">
           <div className="mb-3 flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-xl font-semibold text-foreground">Gesamtbegründung</h2>
+            <h2 className="text-xl font-semibold text-foreground">Overall Reasoning</h2>
           </div>
           <p className="text-sm text-blue-900 dark:text-blue-200">{aiOutput.reasoning}</p>
         </div>
@@ -81,7 +81,7 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
       {/* Visualizations */}
       {aiOutput.visualizations.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">Visualisierungen</h2>
+          <h2 className="text-xl font-semibold text-foreground">Visualizations</h2>
           {aiOutput.visualizations.map((viz, index) => renderVisualization(viz, index))}
         </div>
       )}
@@ -91,7 +91,7 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
         <div className="rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
           <div className="mb-4 flex items-center gap-2">
             <GitBranch className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            <h2 className="text-xl font-semibold text-foreground">Identifizierte Relationen</h2>
+            <h2 className="text-xl font-semibold text-foreground">Identified Relations</h2>
           </div>
           <div className="space-y-3">
             {aiOutput.relations.map((rel, index) => (
@@ -135,7 +135,7 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
             <div className="rounded-lg border border-yellow-200/50 bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-6 dark:border-yellow-800/50 dark:from-yellow-900/20 dark:to-yellow-950/20">
               <div className="mb-4 flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                <h2 className="text-xl font-semibold text-foreground">Erkenntnisse</h2>
+                <h2 className="text-xl font-semibold text-foreground">Insights</h2>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {aiOutput.metadata.insights.map((insight, index) => (
@@ -154,7 +154,7 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
             <div className="rounded-lg border border-blue-200/50 bg-gradient-to-r from-blue-50 to-blue-100/50 p-6 dark:border-blue-800/50 dark:from-blue-900/20 dark:to-blue-950/20">
               <div className="mb-4 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <h2 className="text-xl font-semibold text-foreground">Annahmen</h2>
+                <h2 className="text-xl font-semibold text-foreground">Assumptions</h2>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {aiOutput.metadata.assumptions.map((assumption, index) => (

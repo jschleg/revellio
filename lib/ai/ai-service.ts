@@ -60,9 +60,9 @@ export class AIService {
         messages: [
           {
             role: "system",
-            content: `Du bist ein Experte für Datenanalyse und Visualisierung. 
-            Analysiere die bereitgestellten Metadaten von CSV-Dateien und erstelle strukturierte Analysen.
-            Antworte IMMER im JSON-Format mit der exakten Struktur, die gefordert wird.`,
+            content: `You are an expert in data analysis and visualization. 
+            Analyze the provided CSV file metadata and create structured analyses.
+            Always respond in JSON format with the exact structure requested.`,
           },
           {
             role: "user",
@@ -109,9 +109,9 @@ export class AIService {
         messages: [
           {
             role: "system",
-            content: `Du bist ein Experte für Datenvisualisierung. 
-            Analysiere die Datenstruktur und schlage passende Visualisierungen vor.
-            Antworte IMMER im JSON-Format mit einem Array von Visualisierungsvorschlägen.`,
+            content: `You are an expert in data visualization. 
+            Analyze the data structure and suggest appropriate visualizations.
+            Always respond in JSON format with an array of visualization suggestions.`,
           },
           {
             role: "user",
@@ -148,24 +148,24 @@ export class AIService {
     }
 
     try {
-      const prompt = `Erkläre die folgende Entscheidung des Systems:
+      const prompt = `Explain the following system decision:
       
-Typ: ${decision.type}
-Daten: ${JSON.stringify(decision.data, null, 2)}
+Type: ${decision.type}
+Data: ${JSON.stringify(decision.data, null, 2)}
 
-Erkläre:
-1. Warum diese Entscheidung getroffen wurde
-2. Welche Alternativen in Betracht gezogen wurden
-3. Wie sicher die Entscheidung ist (0-1)
+Explain:
+1. Why this decision was made
+2. What alternatives were considered
+3. How confident the decision is (0-1)
 
-Antworte im JSON-Format mit: rationale, alternatives (Array), confidence (0-1)`;
+Respond in JSON format with: rationale, alternatives (array), confidence (0-1)`;
 
       const response = await this.client!.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: "system",
-            content: "Du bist ein Experte für erklärbare KI. Erkläre Entscheidungen klar und nachvollziehbar.",
+            content: "You are an expert in explainable AI. Explain decisions clearly and comprehensibly.",
           },
           {
             role: "user",
@@ -184,7 +184,7 @@ Antworte im JSON-Format mit: rationale, alternatives (Array), confidence (0-1)`;
       const explanation = JSON.parse(content) as Partial<Explanation>;
       return {
         decision,
-        rationale: explanation.rationale || "Keine Erklärung verfügbar",
+        rationale: explanation.rationale || "No explanation available",
         alternatives: explanation.alternatives || [],
         confidence: explanation.confidence || 0.5,
       };
@@ -192,7 +192,7 @@ Antworte im JSON-Format mit: rationale, alternatives (Array), confidence (0-1)`;
       console.error("Error in decision explanation:", error);
       return {
         decision,
-        rationale: "Fehler bei der Erklärung",
+        rationale: "Error generating explanation",
         confidence: 0.5,
       };
     }
@@ -213,9 +213,9 @@ Antworte im JSON-Format mit: rationale, alternatives (Array), confidence (0-1)`;
         messages: [
           {
             role: "system",
-            content: `Du bist ein Experte für Datenmodellierung und Relationen.
-            Identifiziere Beziehungen zwischen verschiedenen Datensätzen.
-            Antworte IMMER im JSON-Format mit einem Array von Relationen.`,
+            content: `You are an expert in data modeling and relations.
+            Identify relationships between different datasets.
+            Always respond in JSON format with an array of relations.`,
           },
           {
             role: "user",
@@ -247,26 +247,26 @@ Antworte im JSON-Format mit: rationale, alternatives (Array), confidence (0-1)`;
     data: unknown
   ): Promise<string> {
     if (!this.isAvailable()) {
-      return "Erklärung nicht verfügbar";
+      return "Explanation not available";
     }
 
     try {
-      const prompt = `Erkläre diese Visualisierung:
+      const prompt = `Explain this visualization:
       
-Typ: ${visualizationType}
-Daten: ${JSON.stringify(data, null, 2)}
+Type: ${visualizationType}
+Data: ${JSON.stringify(data, null, 2)}
 
-Erkläre:
-- Was zeigt die Visualisierung?
-- Warum wurde dieser Typ gewählt?
-- Welche Erkenntnisse lassen sich ableiten?`;
+Explain:
+- What does the visualization show?
+- Why was this type chosen?
+- What insights can be derived?`;
 
       const response = await this.client!.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: "system",
-            content: "Du bist ein Experte für Datenvisualisierung. Erkläre Visualisierungen klar und verständlich.",
+            content: "You are an expert in data visualization. Explain visualizations clearly and understandably.",
           },
           {
             role: "user",
@@ -276,10 +276,10 @@ Erkläre:
         temperature: 0.4,
       });
 
-      return response.choices[0]?.message?.content || "Erklärung nicht verfügbar";
+      return response.choices[0]?.message?.content || "Explanation not available";
     } catch (error) {
       console.error("Error in explanation generation:", error);
-      return "Fehler bei der Erklärung";
+      return "Error generating explanation";
     }
   }
 
@@ -289,52 +289,52 @@ Erkläre:
   private buildMetadataAnalysisPrompt(metadataArray: Metadata[]): string {
     const metadataSummary = metadataArray.map((meta, idx) => {
       return `
-Datei ${idx + 1}: ${meta.fileName}
-- Spalten: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
-- Zeilen: ${meta.rowCount}
-- Header vorhanden: ${meta.hasHeader}
-- Beispiel-Daten (erste 3 Zeilen):
+File ${idx + 1}: ${meta.fileName}
+- Columns: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+- Rows: ${meta.rowCount}
+- Header present: ${meta.hasHeader}
+- Sample data (first 3 rows):
 ${JSON.stringify(meta.sample.rows.slice(0, 3), null, 2)}
 `;
     }).join("\n");
 
-    return `Analysiere die folgenden CSV-Metadaten und erstelle eine strukturierte Analyse:
+    return `Analyze the following CSV metadata and create a structured analysis:
 
 ${metadataSummary}
 
-Erstelle eine JSON-Antwort mit:
+Create a JSON response with:
 - structure: { tables: Metadata[], relations: Relation[], overlaps: SemanticOverlap[], suggestedMerge?: {...} }
-- visualizations: Array von Visualisierungsvorschlägen
-- insights: Array von Erkenntnissen (Strings)
-- assumptions: Array von Annahmen (Strings)
+- visualizations: Array of visualization suggestions
+- insights: Array of insights (strings)
+- assumptions: Array of assumptions (strings)
 
-Identifiziere:
-1. Potenzielle Relationen zwischen den Dateien
-2. Semantische Überschneidungen
-3. Passende Visualisierungen
-4. Wichtige Erkenntnisse`;
+Identify:
+1. Potential relations between files
+2. Semantic overlaps
+3. Appropriate visualizations
+4. Important insights`;
   }
 
   /**
    * Build prompt for visualization suggestions
    */
   private buildVisualizationPrompt(structure: Structure): string {
-    return `Basierend auf dieser Datenstruktur schlage passende Visualisierungen vor:
+    return `Based on this data structure, suggest appropriate visualizations:
 
-Tabellen: ${structure.tables.length}
-Relationen: ${structure.relations.length}
-Überschneidungen: ${structure.overlaps.length}
+Tables: ${structure.tables.length}
+Relations: ${structure.relations.length}
+Overlaps: ${structure.overlaps.length}
 
-Spalten-Informationen:
+Column Information:
 ${structure.tables.map((t, i) => 
-  `Tabelle ${i + 1}: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
+  `Table ${i + 1}: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
 ).join("\n")}
 
-Erstelle ein JSON-Objekt mit einem Array "visualizations" von Visualisierungsvorschlägen.
-Jeder Vorschlag sollte enthalten:
-- type: einer der Typen (bar-chart, line-chart, pie-chart, table, scatter-plot, relational-view, aggregated-overview)
-- explanation: Warum diese Visualisierung passend ist
-- reasoning: Begründung`;
+Create a JSON object with an array "visualizations" of visualization suggestions.
+Each suggestion should contain:
+- type: one of the types (bar-chart, line-chart, pie-chart, table, scatter-plot, relational-view, aggregated-overview)
+- explanation: Why this visualization is appropriate
+- reasoning: Rationale`;
   }
 
   /**
@@ -343,22 +343,22 @@ Jeder Vorschlag sollte enthalten:
   private buildRelationPrompt(metadataArray: Metadata[]): string {
     const metadataSummary = metadataArray.map((meta, idx) => {
       return `
-Datei ${idx + 1}: ${meta.fileName}
-Spalten: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+File ${idx + 1}: ${meta.fileName}
+Columns: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
 `;
     }).join("\n");
 
-    return `Identifiziere Beziehungen zwischen diesen Datensätzen:
+    return `Identify relationships between these datasets:
 
 ${metadataSummary}
 
-Erstelle ein JSON-Objekt mit einem Array "relations" von Relationen.
-Jede Relation sollte enthalten:
+Create a JSON object with an array "relations" of relations.
+Each relation should contain:
 - type: "key" | "time" | "category" | "semantic"
-- sourceColumn: Spaltenname aus Datei 1
-- targetColumn: Spaltenname aus Datei 2
+- sourceColumn: Column name from file 1
+- targetColumn: Column name from file 2
 - confidence: 0-1
-- description: Beschreibung der Relation`;
+- description: Description of the relation`;
   }
 
   /**
@@ -403,10 +403,10 @@ Jede Relation sollte enthalten:
         messages: [
           {
             role: "system",
-            content: `Du bist ein Experte für Datenanalyse und Visualisierung. 
-            Analysiere die bereitgestellten Metadaten und Datenstichproben von CSV-Dateien.
-            Erstelle eine vollständige Analyse mit Visualisierungsanweisungen, Relationen und Begründungen.
-            Antworte IMMER im JSON-Format mit der exakten Struktur, die gefordert wird.`,
+            content: `You are an expert in data analysis and visualization. 
+            Analyze the provided metadata and data samples from CSV files.
+            Create a complete analysis with visualization instructions, relations, and reasoning.
+            Always respond in JSON format with the exact structure requested.`,
           },
           {
             role: "user",
@@ -427,7 +427,7 @@ Jede Relation sollte enthalten:
       return {
         visualizations: result.visualizations || [],
         relations: result.relations || [],
-        reasoning: result.reasoning || "Keine Begründung verfügbar",
+        reasoning: result.reasoning || "No reasoning available",
         metadata: {
           insights: result.metadata?.insights || [],
           assumptions: result.metadata?.assumptions || [],
@@ -449,69 +449,69 @@ Jede Relation sollte enthalten:
   ): string {
     const metadataSummary = metadataArray.map((meta, idx) => {
       return `
-Datei ${idx + 1}: ${meta.fileName}
-- Spalten: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
-- Zeilen: ${meta.rowCount}
-- Header vorhanden: ${meta.hasHeader}
+File ${idx + 1}: ${meta.fileName}
+- Columns: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+- Rows: ${meta.rowCount}
+- Header present: ${meta.hasHeader}
 `;
     }).join("\n");
 
     const dataSlicesSummary = dataSlices.map((data, idx) => {
       const sampleRows = data.rows.slice(0, 5);
       return `
-Datei ${idx + 1}: ${data.fileName}
-Datenstichprobe (5 Elemente):
+File ${idx + 1}: ${data.fileName}
+Data sample (5 elements):
 ${JSON.stringify(sampleRows, null, 2)}
 `;
     }).join("\n");
 
-    return `Analysiere die folgenden CSV-Daten und erstelle eine vollständige Visualisierungsstrategie:
+    return `Analyze the following CSV data and create a complete visualization strategy:
 
-METADATEN:
+METADATA:
 ${metadataSummary}
 
-DATENSTICHPROBEN (5 Elemente pro Datei):
+DATA SAMPLES (5 elements per file):
 ${dataSlicesSummary}
 
-USER-PROMPT (zusätzlicher Kontext):
-${userPrompt || "Kein zusätzlicher Kontext bereitgestellt"}
+USER PROMPT (additional context):
+${userPrompt || "No additional context provided"}
 
-Erstelle eine JSON-Antwort mit folgender Struktur:
+Create a JSON response with the following structure:
 {
   "visualizations": [
     {
       "type": "bar-chart" | "line-chart" | "pie-chart" | "table" | "scatter-plot" | "relational-view" | "aggregated-overview",
-      "module": "Name des Visualisierungsmoduls",
+      "module": "Name of visualization module",
       "config": {
-        "dataSource": "Dateiname oder 'combined'",
-        "columns": ["Spalte1", "Spalte2"],
+        "dataSource": "Filename or 'combined'",
+        "columns": ["Column1", "Column2"],
         "aggregation": "sum" | "avg" | "count" | null,
         "filters": {}
       },
-      "reasoning": "Warum diese Visualisierung gewählt wurde"
+      "reasoning": "Why this visualization was chosen"
     }
   ],
   "relations": [
     {
       "type": "key" | "time" | "category" | "semantic",
-      "sourceColumn": "Spaltenname aus Datei 1",
-      "targetColumn": "Spaltenname aus Datei 2",
+      "sourceColumn": "Column name from file 1",
+      "targetColumn": "Column name from file 2",
       "confidence": 0.0-1.0,
-      "description": "Beschreibung der Relation"
+      "description": "Description of the relation"
     }
   ],
-  "reasoning": "Gesamtbegründung für alle Entscheidungen und Visualisierungen",
+  "reasoning": "Overall reasoning for all decisions and visualizations",
   "metadata": {
-    "insights": ["Erkenntnis 1", "Erkenntnis 2"],
-    "assumptions": ["Annahme 1", "Annahme 2"]
+    "insights": ["Insight 1", "Insight 2"],
+    "assumptions": ["Assumption 1", "Assumption 2"]
   }
 }
 
-WICHTIG:
-- Identifiziere alle relevanten Relationen zwischen den Dateien
-- Wähle passende Visualisierungen basierend auf den Daten und dem User-Prompt
-- Erkläre jede Entscheidung klar
-- Berücksichtige den User-Prompt bei der Auswahl der Visualisierungen`;
+IMPORTANT:
+- Identify all relevant relations between files
+- Choose appropriate visualizations based on the data and user prompt
+- Explain each decision clearly
+- Consider the user prompt when selecting visualizations`;
   }
 
   /**
@@ -521,7 +521,7 @@ WICHTIG:
     return {
       visualizations: [],
       relations: [],
-      reasoning: "AI-Service nicht verfügbar",
+      reasoning: "AI service not available",
       metadata: {
         insights: [],
         assumptions: [],

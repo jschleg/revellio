@@ -29,13 +29,13 @@ export function FileDrop({
       for (const file of files) {
         // Check file type
         if (accept && !file.name.toLowerCase().endsWith(accept.replace(".", ""))) {
-          errors.push(`${file.name} ist kein gültiges ${accept.toUpperCase()}-Format`);
+          errors.push(`${file.name} is not a valid ${accept.toUpperCase()} format`);
           continue;
         }
 
         // Check max files
         if (maxFiles && validFiles.length + selectedFiles.length >= maxFiles) {
-          errors.push(`Maximal ${maxFiles} Datei(en) erlaubt`);
+          errors.push(`Maximum ${maxFiles} file(s) allowed`);
           break;
         }
 
@@ -156,7 +156,7 @@ export function FileDrop({
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-              {isDragging ? "Dateien hier ablegen" : "Dateien hier ablegen oder klicken zum Auswählen"}
+              {isDragging ? "Drop files here" : "Drop files here or click to select"}
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {accept.toUpperCase()} Dateien
@@ -178,13 +178,13 @@ export function FileDrop({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-              Ausgewählte Dateien ({selectedFiles.length})
+              Selected Files ({selectedFiles.length})
             </p>
             <button
               onClick={clearAll}
               className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             >
-              Alle entfernen
+              Remove All
             </button>
           </div>
           <div className="space-y-2">
@@ -209,7 +209,7 @@ export function FileDrop({
                   <button
                     onClick={() => removeFile(index)}
                     className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    aria-label="Datei entfernen"
+                    aria-label="Remove file"
                   >
                     <X className="h-4 w-4 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200" />
                   </button>

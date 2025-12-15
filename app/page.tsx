@@ -45,14 +45,14 @@ export default function Home() {
       console.log("📊 [DEBUG] CSV data count:", csvData.length);
       const metadataExtractor = new MetadataExtractor();
       // Extract metadata
-      setProcessingStep("Metadaten werden extrahiert...");
+      setProcessingStep("Extracting metadata...");
       console.log("🔍 [DEBUG] Extracting metadata...");
       const metadataArray = metadataExtractor.extractAll(csvData);
       console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
       setMetadataInput(metadataArray);
 
       // Prepare data slices (5 elements from each CSV)
-      setProcessingStep("Datenstichproben werden vorbereitet...");
+      setProcessingStep("Preparing data samples...");
       console.log("🔍 [DEBUG] Preparing data slices...");
       const dataSlices: CSVData[] = csvData.map((data) => ({
         ...data,
@@ -69,7 +69,7 @@ export default function Home() {
       setInputPayload(payload);
 
       // Unified AI Analysis
-      setProcessingStep("KI analysiert Daten und erstellt Visualisierungsstrategie...");
+      setProcessingStep("AI is analyzing data and creating visualization strategy...");
       console.log("🔍 [DEBUG] Starting unified AI analysis");
       console.log("📝 [DEBUG] User prompt:", userPrompt);
       console.log("📦 [DEBUG] Request payload:", {
@@ -129,7 +129,7 @@ export default function Home() {
       const metadataExtractor = new MetadataExtractor();
 
       // Step 1: Parse files
-      setProcessingStep("Dateien werden geparst...");
+      setProcessingStep("Parsing files...");
       console.log("🔍 [DEBUG] Parsing", selectedFiles.length, "files...");
       for (const file of selectedFiles) {
         try {
@@ -168,16 +168,16 @@ export default function Home() {
             Revellio
           </h1>
           <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-            KI-gestütztes Analyse- und Visualisierungstool
+            AI-powered analysis and visualization tool
           </p>
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
-            Lade CSV-Dateien hoch und analysiere sie mit KI
+            Upload CSV files and analyze them with AI
           </p>
         </div>
 
         {/* File Upload Section */}
         <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Dateien hochladen</h2>
+          <h2 className="mb-4 text-xl font-semibold text-foreground">Upload Files</h2>
           <FileDrop
             onFilesSelected={handleFilesSelected}
             accept=".csv"
@@ -188,17 +188,17 @@ export default function Home() {
         {/* User Prompt Section */}
         <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
           <h2 className="mb-4 text-xl font-semibold text-foreground">
-            Zusätzlicher Kontext (optional)
+            Additional Context (optional)
           </h2>
           <textarea
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
-            placeholder="Beschreibe, was du aus den Daten lernen möchtest oder welche Fragen du hast..."
+            placeholder="Describe what you want to learn from the data or what questions you have..."
             className="w-full rounded-lg border border-zinc-300/50 bg-background px-4 py-3 text-sm text-foreground placeholder:text-zinc-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700/50 dark:placeholder:text-zinc-400"
             rows={3}
           />
           <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Dieser Kontext hilft der KI, passendere Visualisierungen zu erstellen.
+            This context helps the AI create more appropriate visualizations.
           </p>
         </div>
 
@@ -213,12 +213,12 @@ export default function Home() {
               {isProcessing ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Analysiere...
+                  Analyzing...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
-                  Analyse starten
+                  Start Analysis
                 </span>
               )}
             </button>
@@ -230,7 +230,7 @@ export default function Home() {
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
-              <span className="font-medium">Fehler</span>
+              <span className="font-medium">Error</span>
             </div>
             <p className="mt-1">{error}</p>
           </div>
@@ -242,7 +242,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Loader2 className="h-5 w-5 animate-spin text-purple-600 dark:text-purple-400" />
               <div>
-                <p className="font-medium text-foreground">Verarbeitung läuft...</p>
+                <p className="font-medium text-foreground">Processing...</p>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">{processingStep}</p>
               </div>
             </div>
@@ -254,32 +254,32 @@ export default function Home() {
           <div className="mb-8 rounded-lg border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-purple-100/30 p-6 dark:border-purple-800/50 dark:from-purple-950/30 dark:to-purple-900/20">
             <div className="mb-4 flex items-center gap-2">
               <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-xl font-semibold text-foreground">KI-Analyse Übersicht</h2>
+              <h2 className="text-xl font-semibold text-foreground">AI Analysis Overview</h2>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {aiOutput.metadata.insights.length}
                 </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Erkenntnisse</div>
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">Insights</div>
               </div>
               <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {aiOutput.visualizations.length}
                 </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Visualisierungen</div>
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">Visualizations</div>
               </div>
               <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {aiOutput.relations.length}
                 </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Relationen</div>
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">Relations</div>
               </div>
               <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {aiOutput.metadata.assumptions.length}
                 </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Annahmen</div>
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">Assumptions</div>
               </div>
             </div>
           </div>
@@ -321,7 +321,7 @@ export default function Home() {
           <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
             <div className="mb-4 flex items-center gap-2">
               <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-xl font-semibold text-foreground">Eingabe: Metadaten</h2>
+              <h2 className="text-xl font-semibold text-foreground">Input: Metadata</h2>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {metadataInput.map((meta, index) => (
@@ -332,10 +332,10 @@ export default function Home() {
                   <h3 className="mb-2 font-medium text-foreground">{meta.fileName}</h3>
                   <div className="flex flex-wrap gap-2 text-xs">
                     <span className="rounded bg-blue-100 px-2 py-1 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                      {meta.rowCount} Zeilen
+                      {meta.rowCount} Rows
                     </span>
                     <span className="rounded bg-green-100 px-2 py-1 text-green-700 dark:bg-green-900/50 dark:text-green-300">
-                      {meta.columns.length} Spalten
+                      {meta.columns.length} Columns
                     </span>
                     <span className="rounded bg-purple-100 px-2 py-1 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
                       {Array.from(new Set(meta.columnTypes)).join(", ")}

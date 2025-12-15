@@ -24,12 +24,13 @@ export function BarChartVisualization({ instruction, data }: BarChartVisualizati
   let processedData = chartData;
   if (aggregation && columns.length >= 2) {
     const [categoryCol, valueCol] = columns;
-    const grouped = chartData.reduce((acc, row) => {
+    const grouped = chartData.reduce<Record<string, number>>((acc, row) => {
       const key = String(row[categoryCol] ?? "Unknown");
       const value = Number(row[valueCol]) || 0;
-      acc[key] = (acc[key] || 0) + value;
+      const currentValue: number = acc[key] ?? 0;
+      acc[key] = currentValue + value;
       return acc;
-    }, {} as Record<string, number>);
+    }, {});
 
     processedData = Object.entries(grouped).map(([key, value]) => ({
       [categoryCol]: key,

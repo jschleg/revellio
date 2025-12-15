@@ -18,12 +18,13 @@ export function PieChartVisualization({ instruction, data }: PieChartVisualizati
   const [labelCol, valueCol] = columns;
 
   // Aggregate data
-  const aggregated = data.rows.reduce((acc, row) => {
+  const aggregated = data.rows.reduce<Record<string, number>>((acc, row) => {
     const label = String(row[labelCol] ?? "Unknown");
     const value = Number(row[valueCol]) || 0;
-    acc[label] = (acc[label] || 0) + value;
+    const currentValue: number = acc[label] ?? 0;
+    acc[label] = currentValue + value;
     return acc;
-  }, {} as Record<string, number>);
+  }, {});
 
   const chartData = Object.entries(aggregated).map(([name, value]) => ({
     name,

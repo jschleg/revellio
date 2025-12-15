@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileDrop } from "@/components/file-drop";
 import { FileDisplay } from "@/components/file-display";
 import { Visualizer } from "@/components/visualizer";
+import { DataMeshVisualization } from "@/components/data-mesh-visualization";
 import { CSVParser } from "@/lib/data/csv-parser";
 import {
   Loader2,
@@ -391,52 +392,10 @@ export default function Home() {
               <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               <h2 className="text-xl font-semibold text-foreground">Data Mesh Network</h2>
             </div>
-            <div className="mb-4 rounded-lg bg-white/50 p-4 dark:bg-zinc-900/50">
-              <h3 className="mb-2 text-sm font-semibold text-purple-700 dark:text-purple-300">
-                Summary
-              </h3>
-              <p className="text-sm text-zinc-700 dark:text-zinc-300">{dataMeshOutput.summary}</p>
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-                Relations ({dataMeshOutput.relations.length})
-              </h3>
-              <div className="max-h-[600px] overflow-auto space-y-2">
-                {dataMeshOutput.relations.map((relation, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-purple-200/50 bg-white/50 p-4 dark:border-purple-800/50 dark:bg-zinc-900/50"
-                  >
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                          {relation.element1}
-                        </span>
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                          ({relation.element1Source.file}
-                          {relation.element1Source.column && ` / ${relation.element1Source.column}`}
-                          {relation.element1Source.rowIndex !== undefined && ` / Row ${relation.element1Source.rowIndex + 1}`})
-                        </span>
-                      </div>
-                      <span className="text-purple-600 dark:text-purple-400">↔</span>
-                      <div className="flex items-center gap-1">
-                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                          {relation.element2}
-                        </span>
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                          ({relation.element2Source.file}
-                          {relation.element2Source.column && ` / ${relation.element2Source.column}`}
-                          {relation.element2Source.rowIndex !== undefined && ` / Row ${relation.element2Source.rowIndex + 1}`})
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                      {relation.relationExplanation}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <DataMeshVisualization
+              dataMeshOutput={dataMeshOutput}
+              csvData={csvData}
+            />
           </div>
         )}
 

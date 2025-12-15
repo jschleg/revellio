@@ -7,6 +7,9 @@ import type {
   Decision,
   Explanation,
   Relation,
+  UnifiedAIOutput,
+  VisualizationInstruction,
+  CSVData,
 } from "@/lib/types/data";
 
 /**
@@ -378,6 +381,151 @@ Jede Relation sollte enthalten:
       tables: metadataArray,
       relations: [],
       overlaps: [],
+    };
+  }
+
+  /**
+   * Unified analysis: Takes metadata, data slices, user prompt and returns complete visualization instructions
+   */
+  async unifiedAnalysis(
+    metadataArray: Metadata[],
+    dataSlices: CSVData[],
+    userPrompt: string
+  ): Promise<UnifiedAIOutput> {
+    if (!this.isAvailable()) {
+      return this.getFallbackUnifiedOutput(metadataArray);
+    }
+
+    try {
+      const prompt = this.buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt);
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: `Du bist ein Experte für Datenanalyse und Visualisierung. 
+            Analysiere die bereitgestellten Metadaten und Datenstichproben von CSV-Dateien.
+            Erstelle eine vollständige Analyse mit Visualisierungsanweisungen, Relationen und Begründungen.
+            Antworte IMMER im JSON-Format mit der exakten Struktur, die gefordert wird.`,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("No response from AI");
+      }
+
+      const result = JSON.parse(content) as Partial<UnifiedAIOutput>;
+      
+      return {
+        visualizations: result.visualizations || [],
+        relations: result.relations || [],
+        reasoning: result.reasoning || "Keine Begründung verfügbar",
+        metadata: {
+          insights: result.metadata?.insights || [],
+          assumptions: result.metadata?.assumptions || [],
+        },
+      };
+    } catch (error) {
+      console.error("Error in unified AI analysis:", error);
+      return this.getFallbackUnifiedOutput(metadataArray);
+    }
+  }
+
+  /**
+   * Build prompt for unified analysis
+   */
+  private buildUnifiedAnalysisPrompt(
+    metadataArray: Metadata[],
+    dataSlices: CSVData[],
+    userPrompt: string
+  ): string {
+    const metadataSummary = metadataArray.map((meta, idx) => {
+      return `
+Datei ${idx + 1}: ${meta.fileName}
+- Spalten: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+- Zeilen: ${meta.rowCount}
+- Header vorhanden: ${meta.hasHeader}
+`;
+    }).join("\n");
+
+    const dataSlicesSummary = dataSlices.map((data, idx) => {
+      const sampleRows = data.rows.slice(0, 5);
+      return `
+Datei ${idx + 1}: ${data.fileName}
+Datenstichprobe (5 Elemente):
+${JSON.stringify(sampleRows, null, 2)}
+`;
+    }).join("\n");
+
+    return `Analysiere die folgenden CSV-Daten und erstelle eine vollständige Visualisierungsstrategie:
+
+METADATEN:
+${metadataSummary}
+
+DATENSTICHPROBEN (5 Elemente pro Datei):
+${dataSlicesSummary}
+
+USER-PROMPT (zusätzlicher Kontext):
+${userPrompt || "Kein zusätzlicher Kontext bereitgestellt"}
+
+Erstelle eine JSON-Antwort mit folgender Struktur:
+{
+  "visualizations": [
+    {
+      "type": "bar-chart" | "line-chart" | "pie-chart" | "table" | "scatter-plot" | "relational-view" | "aggregated-overview",
+      "module": "Name des Visualisierungsmoduls",
+      "config": {
+        "dataSource": "Dateiname oder 'combined'",
+        "columns": ["Spalte1", "Spalte2"],
+        "aggregation": "sum" | "avg" | "count" | null,
+        "filters": {}
+      },
+      "reasoning": "Warum diese Visualisierung gewählt wurde"
+    }
+  ],
+  "relations": [
+    {
+      "type": "key" | "time" | "category" | "semantic",
+      "sourceColumn": "Spaltenname aus Datei 1",
+      "targetColumn": "Spaltenname aus Datei 2",
+      "confidence": 0.0-1.0,
+      "description": "Beschreibung der Relation"
+    }
+  ],
+  "reasoning": "Gesamtbegründung für alle Entscheidungen und Visualisierungen",
+  "metadata": {
+    "insights": ["Erkenntnis 1", "Erkenntnis 2"],
+    "assumptions": ["Annahme 1", "Annahme 2"]
+  }
+}
+
+WICHTIG:
+- Identifiziere alle relevanten Relationen zwischen den Dateien
+- Wähle passende Visualisierungen basierend auf den Daten und dem User-Prompt
+- Erkläre jede Entscheidung klar
+- Berücksichtige den User-Prompt bei der Auswahl der Visualisierungen`;
+  }
+
+  /**
+   * Fallback unified output when AI is not available
+   */
+  private getFallbackUnifiedOutput(metadataArray: Metadata[]): UnifiedAIOutput {
+    return {
+      visualizations: [],
+      relations: [],
+      reasoning: "AI-Service nicht verfügbar",
+      metadata: {
+        insights: [],
+        assumptions: [],
+      },
     };
   }
 }

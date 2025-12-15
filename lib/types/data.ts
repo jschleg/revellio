@@ -123,3 +123,28 @@ export interface Explanation {
   confidence: number;
 }
 
+/**
+ * Unified AI output structure
+ */
+export interface VisualizationInstruction {
+  type: VisualizationType;
+  module: string; // Which visualization module to use
+  config: {
+    dataSource: string; // Which CSV file(s) to use
+    columns?: string[]; // Which columns to visualize
+    aggregation?: string; // Optional aggregation method
+    filters?: Record<string, unknown>; // Optional filters
+  };
+  reasoning: string; // Why this visualization was chosen
+}
+
+export interface UnifiedAIOutput {
+  visualizations: VisualizationInstruction[];
+  relations: Relation[];
+  reasoning: string; // Overall reasoning for all decisions
+  metadata: {
+    insights: string[];
+    assumptions: string[];
+  };
+}
+

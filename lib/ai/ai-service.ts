@@ -8,7 +8,8 @@ import type {
   Explanation,
   Relation,
   UnifiedAIOutput,
-  VisualizationInstruction,
+  DataMeshOutput,
+  DataMeshRelation,
   CSVData,
 } from "@/lib/types/data";
 
@@ -79,7 +80,7 @@ export class AIService {
       }
 
       const analysis = JSON.parse(content) as Partial<AIAnalysis>;
-      
+
       return {
         structure: analysis.structure || this.getFallbackStructure(metadataArray),
         visualizations: analysis.visualizations || [],
@@ -326,9 +327,9 @@ Relations: ${structure.relations.length}
 Overlaps: ${structure.overlaps.length}
 
 Column Information:
-${structure.tables.map((t, i) => 
-  `Table ${i + 1}: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
-).join("\n")}
+${structure.tables.map((t, i) =>
+      `Table ${i + 1}: ${t.columns.map(c => `${c.name} (${c.type})`).join(", ")}`
+    ).join("\n")}
 
 Create a JSON object with an array "visualizations" of visualization suggestions.
 Each suggestion should contain:
@@ -385,6 +386,55 @@ Each relation should contain:
   }
 
   /**
+   * Data mesh: Takes metadata and all data and returns a complete data mesh network analysis
+   */
+  async dataMesh(
+    metadataArray: Metadata[],
+    allData: CSVData[]
+  ): Promise<DataMeshOutput> {
+    if (!this.isAvailable()) {
+      return this.getFallbackDataMeshOutput();
+    }
+
+    try {
+      const prompt = this.buildDataMeshPrompt(metadataArray, allData);
+      const response = await this.client!.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert in data analysis and data mesh architecture. 
+            Analyze the provided metadata and data samples from CSV files.
+            Create a comprehensive network analysis showing all relationships and connections between data elements.
+            Always respond in JSON format with the exact structure requested.`,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("No response from AI");
+      }
+
+      const result = JSON.parse(content) as Partial<DataMeshOutput>;
+
+      return {
+        relations: result.relations || [],
+        summary: result.summary || "No summary available",
+      };
+    } catch (error) {
+      console.error("Error in data mesh analysis:", error);
+      return this.getFallbackDataMeshOutput();
+    }
+  }
+
+  /**
    * Unified analysis: Takes metadata, data slices, user prompt and returns complete visualization instructions
    */
   async unifiedAnalysis(
@@ -423,7 +473,7 @@ Each relation should contain:
       }
 
       const result = JSON.parse(content) as Partial<UnifiedAIOutput>;
-      
+
       return {
         visualizations: result.visualizations || [],
         relations: result.relations || [],
@@ -515,6 +565,86 @@ IMPORTANT:
   }
 
   /**
+   * Build prompt for data mesh analysis
+   */
+  private buildDataMeshPrompt(
+    metadataArray: Metadata[],
+    allData: CSVData[]
+  ): string {
+    const metadataSummary = metadataArray.map((meta, idx) => {
+      return `
+File ${idx + 1}: ${meta.fileName}
+- Columns: ${meta.columns.map(c => `${c.name} (${c.type})`).join(", ")}
+- Rows: ${meta.rowCount}
+- Header present: ${meta.hasHeader}
+`;
+    }).join("\n");
+
+    // Include ALL data, not just samples
+    const allDataSummary = allData.map((data, idx) => {
+      // For very large datasets, we might need to limit, but try to include all
+      const rowsToInclude = data.rows.length > 1000
+        ? data.rows.slice(0, 1000) // Limit to 1000 rows if too large
+        : data.rows;
+
+      return `
+File ${idx + 1}: ${data.fileName}
+Total rows: ${data.rows.length}
+All data (${rowsToInclude.length} rows shown):
+${JSON.stringify(rowsToInclude, null, 2)}
+`;
+    }).join("\n");
+
+    return `Perform a comprehensive data mesh network analysis on the following CSV data:
+
+METADATA:
+${metadataSummary}
+
+ALL DATA:
+${allDataSummary}
+
+Create a JSON response with the following structure:
+{
+  "relations": [
+    {
+      "element1": "First element (can be a column name, file name, data value, or conceptual element)",
+      "element1Source": {
+        "file": "Source file name (e.g., 'orders.csv')",
+        "column": "Column name if element1 is a column or data value from a column (optional)",
+        "rowIndex": number // Row index (0-based) if element1 is a specific data value (optional)
+      },
+      "element2": "Second element (can be a column name, file name, data value, or conceptual element)",
+      "element2Source": {
+        "file": "Source file name (e.g., 'customers.csv')",
+        "column": "Column name if element2 is a column or data value from a column (optional)",
+        "rowIndex": number // Row index (0-based) if element2 is a specific data value (optional)
+      },
+      "relationExplanation": "Detailed explanation of how these two elements are connected, related, or interact. Explain the type of relationship, why they are connected, and what insights this connection provides."
+    }
+  ],
+  "summary": "Overall summary of the data mesh network, describing the overall structure, key connections, and patterns found across all data elements."
+}
+
+IMPORTANT:
+- Identify ALL possible relationships and connections between data elements
+- ALWAYS include source information (file, column, rowIndex) for traceability
+- For column-to-column relationships: include both column names and file names
+- For data value relationships: include file, column, and rowIndex
+- For file-to-file relationships: include both file names
+- For conceptual relationships: include file names at minimum
+- Consider relationships between:
+  * Columns within the same file
+  * Columns across different files
+  * Files themselves
+  * Specific data values and patterns
+  * Conceptual relationships (semantic, structural, temporal, etc.)
+- Be comprehensive - find as many connections as possible
+- Explain each relationship clearly and in detail
+- Focus on creating a complete network/mesh view of all data connections
+- Make sure source information is accurate and traceable`;
+  }
+
+  /**
    * Fallback unified output when AI is not available
    */
   private getFallbackUnifiedOutput(metadataArray: Metadata[]): UnifiedAIOutput {
@@ -526,6 +656,16 @@ IMPORTANT:
         insights: [],
         assumptions: [],
       },
+    };
+  }
+
+  /**
+   * Fallback data mesh output when AI is not available
+   */
+  private getFallbackDataMeshOutput(): DataMeshOutput {
+    return {
+      relations: [],
+      summary: "AI service not available",
     };
   }
 }

@@ -16,6 +16,7 @@ import type {
   CSVData,
   Metadata,
   UnifiedAIOutput,
+  DataMeshOutput,
 } from "@/lib/types/data";
 import { JsonTreeView } from "@/components/json-tree-view";
 
@@ -26,12 +27,93 @@ export default function Home() {
   const [processingStep, setProcessingStep] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<UnifiedAIOutput | null>(null);
+  const [dataMeshOutput, setDataMeshOutput] = useState<DataMeshOutput | null>(null);
   const [userPrompt, setUserPrompt] = useState<string>("");
   const [inputPayload, setInputPayload] = useState<{
     metadataArray: Metadata[];
-    dataSlices: CSVData[];
-    userPrompt: string;
+    dataSlices?: CSVData[];
+    allData?: CSVData[];
+    userPrompt?: string;
   } | null>(null);
+
+
+  const startDataMesh = async () => {
+    console.log("🚀 [DEBUG] startDataMesh called");
+    setError(null);
+    setIsProcessing(true);
+    setAiOutput(null);
+    setDataMeshOutput(null);
+    setMetadataInput([]);
+    setInputPayload(null);
+
+    try {
+      console.log("📊 [DEBUG] CSV data count:", csvData.length);
+      const metadataExtractor = new MetadataExtractor();
+      // Extract metadata
+      setProcessingStep("Extracting metadata...");
+      console.log("🔍 [DEBUG] Extracting metadata...");
+      const metadataArray = metadataExtractor.extractAll(csvData);
+      console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
+      setMetadataInput(metadataArray);
+
+      // Use ALL data for mesh analysis (not just samples)
+      setProcessingStep("Preparing all data for mesh analysis...");
+      console.log("🔍 [DEBUG] Preparing all data...");
+      console.log("✅ [DEBUG] Total data prepared:", csvData.length, "files");
+      console.log("✅ [DEBUG] Total rows across all files:", csvData.reduce((sum, data) => sum + data.rows.length, 0));
+
+      // Store input payload (for data mesh, we send all data)
+      const payload = {
+        metadataArray,
+        allData: csvData, // Send all data, not just slices
+      };
+      setInputPayload(payload);
+
+      // Data Mesh Analysis
+      setProcessingStep("Analyzing data mesh network...");
+      console.log("🔍 [DEBUG] Starting data mesh analysis");
+      console.log("📦 [DEBUG] Request payload:", {
+        metadataCount: metadataArray.length,
+        allDataCount: csvData.length,
+        totalRows: csvData.reduce((sum, data) => sum + data.rows.length, 0),
+      });
+
+      const dataMeshResponse = await fetch("/api/ai/data-mesh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      console.log("📡 [DEBUG] Fetch response received, status:", dataMeshResponse.status);
+
+      if (!dataMeshResponse.ok) {
+        const errorText = await dataMeshResponse.text();
+        console.error("❌ [DEBUG] Data mesh analysis failed:", dataMeshResponse.status, errorText);
+        throw new Error(`Data mesh analysis failed: ${errorText}`);
+      }
+
+      console.log("📥 [DEBUG] Parsing response JSON...");
+      const dataMesh: DataMeshOutput = await dataMeshResponse.json();
+      console.log("✅ [DEBUG] Data mesh output received:", {
+        relations: dataMesh.relations?.length || 0,
+      });
+      console.log("✅ [DEBUG] Full data mesh output:", dataMesh);
+      setDataMeshOutput(dataMesh);
+
+    } catch (err) {
+      console.error("💥 [DEBUG] Error in startDataMesh:", err);
+      console.error("💥 [DEBUG] Error details:", {
+        message: err instanceof Error ? err.message : "Unknown error",
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+    } finally {
+      console.log("🏁 [DEBUG] startDataMesh finished");
+      setIsProcessing(false);
+      setProcessingStep("");
+    }
+  }
+
 
   const startProcessing = async () => {
     console.log("🚀 [DEBUG] startProcessing called");
@@ -222,6 +304,23 @@ export default function Home() {
                 </span>
               )}
             </button>
+             <button
+               onClick={startDataMesh}
+               disabled={isProcessing}
+               className="rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 px-8 py-3 font-semibold text-white shadow-lg transition-all hover:from-purple-700 hover:to-purple-900 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 dark:from-purple-500 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:to-purple-800"
+             >
+               {isProcessing ? (
+                 <span className="flex items-center gap-2">
+                   <Loader2 className="h-5 w-5 animate-spin" />
+                   Analyzing...
+                 </span>
+               ) : (
+                 <span className="flex items-center gap-2">
+                   <Zap className="h-5 w-5" />
+                   Data Mesh
+                 </span>
+               )}
+             </button>
           </div>
         )}
 
@@ -280,6 +379,62 @@ export default function Home() {
                   {aiOutput.metadata.assumptions.length}
                 </div>
                 <div className="text-xs text-zinc-600 dark:text-zinc-400">Assumptions</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Data Mesh Output */}
+        {dataMeshOutput && (
+          <div className="mb-8 rounded-lg border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-purple-100/30 p-6 dark:border-purple-800/50 dark:from-purple-950/30 dark:to-purple-900/20">
+            <div className="mb-4 flex items-center gap-2">
+              <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <h2 className="text-xl font-semibold text-foreground">Data Mesh Network</h2>
+            </div>
+            <div className="mb-4 rounded-lg bg-white/50 p-4 dark:bg-zinc-900/50">
+              <h3 className="mb-2 text-sm font-semibold text-purple-700 dark:text-purple-300">
+                Summary
+              </h3>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">{dataMeshOutput.summary}</p>
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                Relations ({dataMeshOutput.relations.length})
+              </h3>
+              <div className="max-h-[600px] overflow-auto space-y-2">
+                {dataMeshOutput.relations.map((relation, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-purple-200/50 bg-white/50 p-4 dark:border-purple-800/50 dark:bg-zinc-900/50"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
+                          {relation.element1}
+                        </span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          ({relation.element1Source.file}
+                          {relation.element1Source.column && ` / ${relation.element1Source.column}`}
+                          {relation.element1Source.rowIndex !== undefined && ` / Row ${relation.element1Source.rowIndex + 1}`})
+                        </span>
+                      </div>
+                      <span className="text-purple-600 dark:text-purple-400">↔</span>
+                      <div className="flex items-center gap-1">
+                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
+                          {relation.element2}
+                        </span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          ({relation.element2Source.file}
+                          {relation.element2Source.column && ` / ${relation.element2Source.column}`}
+                          {relation.element2Source.rowIndex !== undefined && ` / Row ${relation.element2Source.rowIndex + 1}`})
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {relation.relationExplanation}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

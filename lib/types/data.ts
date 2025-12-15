@@ -148,3 +148,23 @@ export interface UnifiedAIOutput {
   };
 }
 
+export interface DataMeshRelation {
+  element1: string; // First element (e.g., column name, file name, or data point)
+  element1Source: {
+    file: string; // Source file name
+    column?: string; // Column name if applicable
+    rowIndex?: number; // Row index if applicable (0-based)
+  };
+  element2: string; // Second element (e.g., column name, file name, or data point)
+  element2Source: {
+    file: string; // Source file name
+    column?: string; // Column name if applicable
+    rowIndex?: number; // Row index if applicable (0-based)
+  };
+  relationExplanation: string; // Detailed explanation of the relationship/connection
+}
+
+export interface DataMeshOutput {
+  relations: DataMeshRelation[];
+  summary: string; // Overall summary of the data mesh/network
+}

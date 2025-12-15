@@ -17,6 +17,7 @@ import type {
   Metadata,
   UnifiedAIOutput,
 } from "@/lib/types/data";
+import { JsonTreeView } from "@/components/json-tree-view";
 
 export default function Home() {
   const [csvData, setCsvData] = useState<CSVData[]>([]);
@@ -26,8 +27,97 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<UnifiedAIOutput | null>(null);
   const [userPrompt, setUserPrompt] = useState<string>("");
+  const [inputPayload, setInputPayload] = useState<{
+    metadataArray: Metadata[];
+    dataSlices: CSVData[];
+    userPrompt: string;
+  } | null>(null);
+
+  const startProcessing = async () => {
+    console.log("🚀 [DEBUG] startProcessing called");
+    setError(null);
+    setIsProcessing(true);
+    setAiOutput(null);
+    setMetadataInput([]);
+    setInputPayload(null);
+
+    try {
+      console.log("📊 [DEBUG] CSV data count:", csvData.length);
+      const metadataExtractor = new MetadataExtractor();
+      // Extract metadata
+      setProcessingStep("Metadaten werden extrahiert...");
+      console.log("🔍 [DEBUG] Extracting metadata...");
+      const metadataArray = metadataExtractor.extractAll(csvData);
+      console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
+      setMetadataInput(metadataArray);
+
+      // Prepare data slices (5 elements from each CSV)
+      setProcessingStep("Datenstichproben werden vorbereitet...");
+      console.log("🔍 [DEBUG] Preparing data slices...");
+      const dataSlices: CSVData[] = csvData.map((data) => ({
+        ...data,
+        rows: data.rows.slice(0, 5), // Take first 5 rows
+      }));
+      console.log("✅ [DEBUG] Data slices prepared:", dataSlices.length);
+
+      // Store input payload
+      const payload = {
+        metadataArray,
+        dataSlices,
+        userPrompt: userPrompt || "",
+      };
+      setInputPayload(payload);
+
+      // Unified AI Analysis
+      setProcessingStep("KI analysiert Daten und erstellt Visualisierungsstrategie...");
+      console.log("🔍 [DEBUG] Starting unified AI analysis");
+      console.log("📝 [DEBUG] User prompt:", userPrompt);
+      console.log("📦 [DEBUG] Request payload:", {
+        metadataCount: metadataArray.length,
+        dataSlicesCount: dataSlices.length,
+        userPrompt: userPrompt || "(empty)",
+      });
+
+      const analyzeResponse = await fetch("/api/ai/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      console.log("📡 [DEBUG] Fetch response received, status:", analyzeResponse.status);
+
+      if (!analyzeResponse.ok) {
+        const errorText = await analyzeResponse.text();
+        console.error("❌ [DEBUG] AI analysis failed:", analyzeResponse.status, errorText);
+        throw new Error(`AI analysis failed: ${errorText}`);
+      }
+
+      console.log("📥 [DEBUG] Parsing response JSON...");
+      const unifiedOutput: UnifiedAIOutput = await analyzeResponse.json();
+      console.log("✅ [DEBUG] Unified AI output received:", {
+        visualizations: unifiedOutput.visualizations?.length || 0,
+        relations: unifiedOutput.relations?.length || 0,
+        insights: unifiedOutput.metadata?.insights?.length || 0,
+      });
+      console.log("✅ [DEBUG] Full unified AI output:", unifiedOutput);
+      setAiOutput(unifiedOutput);
+
+    } catch (err) {
+      console.error("💥 [DEBUG] Error in startProcessing:", err);
+      console.error("💥 [DEBUG] Error details:", {
+        message: err instanceof Error ? err.message : "Unknown error",
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+    } finally {
+      console.log("🏁 [DEBUG] startProcessing finished");
+      setIsProcessing(false);
+      setProcessingStep("");
+    }
+  }
 
   const handleFilesSelected = async (selectedFiles: File[]) => {
+    console.log("📁 [DEBUG] handleFilesSelected called with", selectedFiles.length, "files");
     setError(null);
     setIsProcessing(true);
     setAiOutput(null);
@@ -40,60 +130,31 @@ export default function Home() {
 
       // Step 1: Parse files
       setProcessingStep("Dateien werden geparst...");
+      console.log("🔍 [DEBUG] Parsing", selectedFiles.length, "files...");
       for (const file of selectedFiles) {
         try {
+          console.log("📄 [DEBUG] Parsing file:", file.name);
           const content = await file.text();
           if (!parser.validate(content)) {
+            console.warn("⚠️ [DEBUG] File validation failed:", file.name);
             continue;
           }
           const data = await parser.parse(file);
           parsedData.push(data);
+          console.log("✅ [DEBUG] File parsed successfully:", file.name);
         } catch (err) {
-          console.error(`Error parsing ${file.name}:`, err);
+          console.error(`❌ [DEBUG] Error parsing ${file.name}:`, err);
         }
       }
 
+      console.log("✅ [DEBUG] All files parsed. Total:", parsedData.length);
       setCsvData(parsedData);
 
-      // Step 2: Extract metadata
-      setProcessingStep("Metadaten werden extrahiert...");
-      const metadataArray = metadataExtractor.extractAll(parsedData);
-      setMetadataInput(metadataArray);
-
-      // Step 3: Prepare data slices (5 elements from each CSV)
-      setProcessingStep("Datenstichproben werden vorbereitet...");
-      const dataSlices: CSVData[] = parsedData.map((data) => ({
-        ...data,
-        rows: data.rows.slice(0, 5), // Take first 5 rows
-      }));
-
-      // Step 4: Unified AI Analysis
-      setProcessingStep("KI analysiert Daten und erstellt Visualisierungsstrategie...");
-      console.log("🔍 [DEBUG] Starting unified AI analysis");
-      console.log("📝 [DEBUG] User prompt:", userPrompt);
-      
-      const analyzeResponse = await fetch("/api/ai/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          metadataArray,
-          dataSlices,
-          userPrompt: userPrompt || "",
-        }),
-      });
-
-      if (!analyzeResponse.ok) {
-        const errorText = await analyzeResponse.text();
-        console.error("❌ [DEBUG] AI analysis failed:", analyzeResponse.status, errorText);
-        throw new Error(`AI analysis failed: ${errorText}`);
-      }
-
-      const unifiedOutput: UnifiedAIOutput = await analyzeResponse.json();
-      console.log("✅ [DEBUG] Unified AI output:", unifiedOutput);
-      setAiOutput(unifiedOutput);
     } catch (err) {
+      console.error("💥 [DEBUG] Error in handleFilesSelected:", err);
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
+      console.log("🏁 [DEBUG] handleFilesSelected finished");
       setIsProcessing(false);
       setProcessingStep("");
     }
@@ -140,6 +201,29 @@ export default function Home() {
             Dieser Kontext hilft der KI, passendere Visualisierungen zu erstellen.
           </p>
         </div>
+
+        {/* Analyze Button */}
+        {csvData.length > 0 && (
+          <div className="mb-8 flex justify-center">
+            <button
+              onClick={startProcessing}
+              disabled={isProcessing}
+              className="rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 px-8 py-3 font-semibold text-white shadow-lg transition-all hover:from-purple-700 hover:to-purple-900 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 dark:from-purple-500 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:to-purple-800"
+            >
+              {isProcessing ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Analysiere...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Analyse starten
+                </span>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -196,6 +280,37 @@ export default function Home() {
                   {aiOutput.metadata.assumptions.length}
                 </div>
                 <div className="text-xs text-zinc-600 dark:text-zinc-400">Annahmen</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Input/Output JSON Tree View */}
+        {inputPayload && aiOutput && (
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
+            <div className="mb-4 flex items-center gap-2">
+              <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <h2 className="text-xl font-semibold text-foreground">Input / Output</h2>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Input Section */}
+              <div className="rounded-lg border border-blue-200/50 bg-blue-50/30 p-4 dark:border-blue-800/50 dark:bg-blue-950/20">
+                <h3 className="mb-3 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                  Input
+                </h3>
+                <div className="max-h-[600px] overflow-auto rounded bg-white/50 p-3 dark:bg-zinc-900/50">
+                  <JsonTreeView data={inputPayload} />
+                </div>
+              </div>
+
+              {/* Output Section */}
+              <div className="rounded-lg border border-green-200/50 bg-green-50/30 p-4 dark:border-green-800/50 dark:bg-green-950/20">
+                <h3 className="mb-3 text-sm font-semibold text-green-700 dark:text-green-300">
+                  Output
+                </h3>
+                <div className="max-h-[600px] overflow-auto rounded bg-white/50 p-3 dark:bg-zinc-900/50">
+                  <JsonTreeView data={aiOutput} />
+                </div>
               </div>
             </div>
           </div>

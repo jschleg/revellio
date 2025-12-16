@@ -1,19 +1,23 @@
 -- CreateTable
 CREATE TABLE "Session" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL DEFAULT 'Untitled Session',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "dataMeshPrompt" TEXT,
     "userPrompt" TEXT,
+    "meshInputPayload" TEXT,
+    "aiInputPayload" TEXT,
     "dataMeshSummary" TEXT,
     "aiOutputReasoning" TEXT,
-    "aiOutputMetadata" TEXT
+    "aiOutputMetadata" TEXT,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "CSVFile" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
     "rawContent" TEXT NOT NULL DEFAULT '',
@@ -21,33 +25,36 @@ CREATE TABLE "CSVFile" (
     "rowCount" INTEGER NOT NULL,
     "columns" TEXT NOT NULL,
     "metadata" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "CSVFile_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CSVFile_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "CSVRow" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "csvFileId" TEXT NOT NULL,
     "rowData" TEXT NOT NULL,
     "rowIndex" INTEGER NOT NULL,
-    CONSTRAINT "CSVRow_csvFileId_fkey" FOREIGN KEY ("csvFileId") REFERENCES "CSVFile" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "CSVRow_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "DataMeshRelation" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "relationExplanation" TEXT NOT NULL,
     "elements" TEXT NOT NULL,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    CONSTRAINT "DataMeshRelation_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "DataMeshRelation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "VisualizationInstruction" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "module" TEXT NOT NULL,
@@ -55,19 +62,21 @@ CREATE TABLE "VisualizationInstruction" (
     "config" TEXT NOT NULL,
     "schema" TEXT,
     "orderIndex" INTEGER NOT NULL DEFAULT 0,
-    CONSTRAINT "VisualizationInstruction_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "VisualizationInstruction_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Relation" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "sourceColumn" TEXT NOT NULL,
     "targetColumn" TEXT NOT NULL,
-    "confidence" REAL NOT NULL,
+    "confidence" DOUBLE PRECISION NOT NULL,
     "description" TEXT NOT NULL,
-    CONSTRAINT "Relation_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "Relation_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -93,3 +102,18 @@ CREATE INDEX "VisualizationInstruction_sessionId_idx" ON "VisualizationInstructi
 
 -- CreateIndex
 CREATE INDEX "Relation_sessionId_idx" ON "Relation"("sessionId");
+
+-- AddForeignKey
+ALTER TABLE "CSVFile" ADD CONSTRAINT "CSVFile_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CSVRow" ADD CONSTRAINT "CSVRow_csvFileId_fkey" FOREIGN KEY ("csvFileId") REFERENCES "CSVFile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DataMeshRelation" ADD CONSTRAINT "DataMeshRelation_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "VisualizationInstruction" ADD CONSTRAINT "VisualizationInstruction_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Relation" ADD CONSTRAINT "Relation_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;

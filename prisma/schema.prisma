@@ -5,8 +5,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Note: This schema supports both SQLite (local dev) and Postgres (production)
+// The provider is determined at runtime based on DATABASE_URL
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql" // Use postgresql for production
+  // For local SQLite, Prisma will use the adapter in lib/db/prisma.ts
 }
 
 model Session {

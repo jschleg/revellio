@@ -12,7 +12,7 @@ import type { CSVData, DataPointReference, Row } from "@/lib/types/data";
 export function extractDataPoint(
   csvDataArray: CSVData[],
   reference: DataPointReference
-): (string | number | boolean | null)[] {
+): (string | number | boolean | string[] | null)[] {
   const file = csvDataArray.find((d) => d.fileName === reference.file);
   if (!file) {
     throw new Error(`File not found: ${reference.file}`);
@@ -46,7 +46,7 @@ export function extractDataPoint(
 export function extractMultipleDataPoints(
   csvDataArray: CSVData[],
   references: DataPointReference[]
-): Array<Record<string, string | number | boolean | null>> {
+): Array<Record<string, string | number | boolean | string[] | null>> {
   if (references.length === 0) {
     return [];
   }
@@ -68,10 +68,10 @@ export function extractMultipleDataPoints(
   );
 
   // Extract data row by row
-  const result: Array<Record<string, string | number | boolean | null>> = [];
+  const result: Array<Record<string, string | number | boolean | string[] | null>> = [];
 
   for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
-    const row: Record<string, string | number | boolean | null> = {};
+    const row: Record<string, string | number | boolean | string[] | null> = {};
 
     for (const ref of references) {
       const file = fileMap.get(ref.file)!;
@@ -102,7 +102,7 @@ export function extractDataWithMetadata(
   csvDataArray: CSVData[],
   references: DataPointReference[]
 ): Array<
-  Record<string, string | number | boolean | null> & {
+  Record<string, string | number | boolean | string[] | null> & {
     _metadata: {
       rowIndex: number;
       sourceFile: string;
@@ -118,7 +118,14 @@ export function extractDataWithMetadata(
       rowIndex: index,
       sourceFile: primaryFile || "",
     },
-  }));
+  })) as Array<
+    Record<string, string | number | boolean | string[] | null> & {
+      _metadata: {
+        rowIndex: number;
+        sourceFile: string;
+      };
+    }
+  >;
 }
 
 /**

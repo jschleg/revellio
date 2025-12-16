@@ -155,6 +155,11 @@ export interface DataPointIdentifier {
 }
 
 /**
+ * Alias for DataPointIdentifier for backward compatibility
+ */
+export type DataPointReference = DataPointIdentifier;
+
+/**
  * Complete visualization schema - defines the exact structure and data points for a visualization
  */
 export interface VisualizationSchema {

@@ -6,11 +6,7 @@
 import type {
   VisualizationInstruction,
   DataPointReference,
-  BarChartSchema,
-  LineChartSchema,
-  PieChartSchema,
-  ScatterPlotSchema,
-  TableSchema,
+  VisualizationSchema,
 } from "@/lib/types/data";
 
 /**
@@ -44,86 +40,52 @@ export function migrateInstructionToSchema(
     column,
   });
 
-  // Migrate based on visualization type
-  switch (instruction.type) {
-    case "bar-chart":
-      if (columns.length < 2) {
-        throw new Error("Bar chart requires at least 2 columns");
-      }
-      return {
-        ...instruction,
-        schema: {
-          type: "bar-chart",
-          dataPoints: {
-            category: createRef(columns[0]),
-            values: columns.slice(1).map(createRef),
-          },
-          aggregation: aggregation ?? null,
-        } as BarChartSchema,
-      };
+  // Create data points for all columns
+  const dataPoints = columns.map((col) => createRef(col));
 
-    case "line-chart":
-      if (columns.length < 2) {
-        throw new Error("Line chart requires at least 2 columns");
-      }
-      return {
-        ...instruction,
-        schema: {
-          type: "line-chart",
-          dataPoints: {
-            time: createRef(columns[0]),
-            series: columns.slice(1).map(createRef),
-          },
-          aggregation: aggregation ?? null,
-        } as LineChartSchema,
-      };
+  // Create schema structure based on visualization type
+  let structure: VisualizationSchema["structure"] = {};
 
-    case "pie-chart":
-      if (columns.length < 2) {
-        throw new Error("Pie chart requires at least 2 columns");
-      }
-      return {
-        ...instruction,
-        schema: {
-          type: "pie-chart",
-          dataPoints: {
-            category: createRef(columns[0]),
-            value: createRef(columns[1]),
-          },
-          aggregation: aggregation ?? null,
-        } as PieChartSchema,
+  if (columns.length >= 2) {
+    if (instruction.type === "bar-chart" || instruction.type === "line-chart" || instruction.type === "scatter-plot") {
+      structure = {
+        xAxis: {
+          column: columns[0],
+          file,
+          type: instruction.type === "scatter-plot" ? "numerical" : instruction.type === "line-chart" ? "temporal" : "categorical",
+        },
+        yAxis: {
+          columns: columns.slice(1).map((col) => ({
+            column: col,
+            file,
+          })),
+        },
       };
-
-    case "scatter-plot":
-      if (columns.length < 2) {
-        throw new Error("Scatter plot requires at least 2 columns");
-      }
-      return {
-        ...instruction,
-        schema: {
-          type: "scatter-plot",
-          dataPoints: {
-            x: createRef(columns[0]),
-            y: createRef(columns[1]),
-            group: columns[2] ? createRef(columns[2]) : undefined,
-          },
-        } as ScatterPlotSchema,
+    } else if (instruction.type === "pie-chart") {
+      structure = {
+        groupBy: {
+          column: columns[0],
+          file,
+        },
+        aggregate: {
+          method: (aggregation as "sum" | "avg" | "count" | "min" | "max") || "sum",
+          column: columns[1],
+          file,
+        },
       };
-
-    case "table":
-      return {
-        ...instruction,
-        schema: {
-          type: "table",
-          dataPoints: {
-            columns: columns.map(createRef),
-          },
-        } as TableSchema,
-      };
-
-    // Add more cases as needed
-    default:
-      throw new Error(`Migration not yet implemented for type: ${instruction.type}`);
+    }
   }
+
+  const schema: VisualizationSchema = {
+    dataPoints,
+    structure,
+    aggregation: aggregation ?? null,
+    filters: {},
+  };
+
+  return {
+    ...instruction,
+    schema,
+  };
 }
 

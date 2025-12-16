@@ -1,4 +1,6 @@
-import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+"use client";
+
+import type { CSVData } from "@/lib/types/data";
 
 /**
  * Apply aggregation to data based on instruction config

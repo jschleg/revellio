@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Shared Nivo theme configuration for all visualizations
  * Ensures consistent styling across all charts with dark mode support

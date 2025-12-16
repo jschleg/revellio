@@ -1,11 +1,9 @@
 "use client";
 
 import { FileText, Columns, FileCheck } from "lucide-react";
-import type { CSVData } from "@/lib/types/data";
 
 interface DataHierarchyProps {
   files: string[];
-  csvData: CSVData[];
   editingConnectionPoint: number | null;
   onElementClick: (file: string, column?: string, rowIndex?: number, e?: React.MouseEvent) => void;
   getElementId: (file: string, column?: string, rowIndex?: number) => string;
@@ -16,7 +14,6 @@ interface DataHierarchyProps {
 
 export function DataHierarchy({
   files,
-  csvData,
   editingConnectionPoint,
   onElementClick,
   getElementId,

@@ -9,7 +9,24 @@ import type {
   DataMeshOutput,
   UnifiedAIOutput,
   DataMeshRelation,
+  Metadata,
+  Row,
+  VisualizationInstruction,
+  Relation,
 } from "@/lib/types/data";
+
+export interface MeshInputPayload {
+  metadataArray: Metadata[];
+  dataSlices?: CSVData[];
+  userPrompt?: string;
+}
+
+export interface AIInputPayload {
+  metadataArray: Metadata[];
+  dataSlices?: CSVData[];
+  userPrompt?: string;
+  relations?: DataMeshRelation[];
+}
 
 export interface SessionData {
   name?: string;
@@ -18,6 +35,8 @@ export interface SessionData {
   aiOutput?: UnifiedAIOutput | null;
   dataMeshPrompt?: string | null;
   userPrompt?: string | null;
+  meshInputPayload?: MeshInputPayload | null;
+  aiInputPayload?: AIInputPayload | null;
 }
 
 export interface SessionResponse {
@@ -30,6 +49,8 @@ export interface SessionResponse {
   csvData: CSVData[];
   dataMeshOutput: DataMeshOutput | null;
   aiOutput: UnifiedAIOutput | null;
+  meshInputPayload: MeshInputPayload | null;
+  aiInputPayload: AIInputPayload | null;
 }
 
 /**
@@ -43,6 +64,12 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
         name: data.name || "Untitled Session",
         dataMeshPrompt: data.dataMeshPrompt || null,
         userPrompt: data.userPrompt || null,
+        meshInputPayload: data.meshInputPayload
+          ? JSON.stringify(data.meshInputPayload)
+          : null,
+        aiInputPayload: data.aiInputPayload
+          ? JSON.stringify(data.aiInputPayload)
+          : null,
         dataMeshSummary: data.dataMeshOutput?.summary || null,
         aiOutputReasoning: data.aiOutput?.reasoning || null,
         aiOutputMetadata: data.aiOutput?.metadata
@@ -72,7 +99,7 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
           for (let i = 0; i < csv.rows.length; i += batchSize) {
             const batch = csv.rows.slice(i, i + batchSize);
             await tx.cSVRow.createMany({
-              data: batch.map((row: any, index: number) => ({
+              data: batch.map((row: Row, index: number) => ({
                 csvFileId: csvFile.id,
                 rowData: JSON.stringify(row),
                 rowIndex: i + index,
@@ -109,7 +136,7 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
       data.aiOutput.visualizations.length > 0
     ) {
       await tx.visualizationInstruction.createMany({
-        data: data.aiOutput.visualizations.map((viz: any, index: number) => ({
+        data: data.aiOutput.visualizations.map((viz: VisualizationInstruction, index: number) => ({
           sessionId: session.id,
           type: viz.type,
           module: viz.module,
@@ -128,7 +155,7 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
       data.aiOutput.relations.length > 0
     ) {
       await tx.relation.createMany({
-        data: data.aiOutput.relations.map((rel: any) => ({
+        data: data.aiOutput.relations.map((rel: Relation) => ({
           sessionId: session.id,
           type: rel.type,
           sourceColumn: rel.sourceColumn,
@@ -202,14 +229,14 @@ export async function getSessionById(
   const aiOutput: UnifiedAIOutput | null = session.aiOutputReasoning
     ? {
         visualizations: session.aiVisualizations.map((viz) => ({
-          type: viz.type as any,
+          type: viz.type as VisualizationInstruction["type"],
           module: viz.module,
           reasoning: viz.reasoning,
           config: JSON.parse(viz.config),
           schema: viz.schema ? JSON.parse(viz.schema) : undefined,
         })),
         relations: session.aiRelations.map((rel) => ({
-          type: rel.type as any,
+          type: rel.type as Relation["type"],
           sourceColumn: rel.sourceColumn,
           targetColumn: rel.targetColumn,
           confidence: rel.confidence,
@@ -222,6 +249,14 @@ export async function getSessionById(
       }
     : null;
 
+  // Reconstruct payloads
+  const meshInputPayload: MeshInputPayload | null = session.meshInputPayload
+    ? JSON.parse(session.meshInputPayload)
+    : null;
+  const aiInputPayload: AIInputPayload | null = session.aiInputPayload
+    ? JSON.parse(session.aiInputPayload)
+    : null;
+
   return {
     id: session.id,
     name: session.name,
@@ -232,6 +267,8 @@ export async function getSessionById(
     csvData,
     dataMeshOutput,
     aiOutput,
+    meshInputPayload,
+    aiInputPayload,
   };
 }
 
@@ -252,32 +289,51 @@ export async function updateSession(
   }
 
   await prisma.$transaction(async (tx) => {
+    // Build update data object with only defined fields
+    const updateData: {
+      name?: string;
+      dataMeshPrompt?: string | null;
+      userPrompt?: string | null;
+      meshInputPayload?: string | null;
+      aiInputPayload?: string | null;
+      dataMeshSummary?: string | null;
+      aiOutputReasoning?: string | null;
+      aiOutputMetadata?: string | null;
+    } = {};
+
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+    if (data.dataMeshPrompt !== undefined) {
+      updateData.dataMeshPrompt = data.dataMeshPrompt;
+    }
+    if (data.userPrompt !== undefined) {
+      updateData.userPrompt = data.userPrompt;
+    }
+    if (data.meshInputPayload !== undefined) {
+      updateData.meshInputPayload = data.meshInputPayload
+        ? JSON.stringify(data.meshInputPayload)
+        : null;
+    }
+    if (data.aiInputPayload !== undefined) {
+      updateData.aiInputPayload = data.aiInputPayload
+        ? JSON.stringify(data.aiInputPayload)
+        : null;
+    }
+    if (data.dataMeshOutput?.summary !== undefined) {
+      updateData.dataMeshSummary = data.dataMeshOutput.summary;
+    }
+    if (data.aiOutput?.reasoning !== undefined) {
+      updateData.aiOutputReasoning = data.aiOutput.reasoning;
+    }
+    if (data.aiOutput?.metadata !== undefined) {
+      updateData.aiOutputMetadata = JSON.stringify(data.aiOutput.metadata);
+    }
+
     // Update session basic info
     await tx.session.update({
       where: { id: sessionId },
-      data: {
-        name: data.name !== undefined ? data.name : existingSession.name,
-        dataMeshPrompt:
-          data.dataMeshPrompt !== undefined
-            ? data.dataMeshPrompt
-            : existingSession.dataMeshPrompt,
-        userPrompt:
-          data.userPrompt !== undefined
-            ? data.userPrompt
-            : existingSession.userPrompt,
-        dataMeshSummary:
-          data.dataMeshOutput?.summary !== undefined
-            ? data.dataMeshOutput.summary
-            : existingSession.dataMeshSummary,
-        aiOutputReasoning:
-          data.aiOutput?.reasoning !== undefined
-            ? data.aiOutput.reasoning
-            : existingSession.aiOutputReasoning,
-        aiOutputMetadata:
-          data.aiOutput?.metadata !== undefined
-            ? JSON.stringify(data.aiOutput.metadata)
-            : existingSession.aiOutputMetadata,
-      },
+      data: updateData,
     });
 
     // Update CSV files if provided
@@ -305,7 +361,7 @@ export async function updateSession(
             for (let i = 0; i < csv.rows.length; i += batchSize) {
               const batch = csv.rows.slice(i, i + batchSize);
               await tx.cSVRow.createMany({
-                data: batch.map((row: any, index: number) => ({
+                data: batch.map((row: Row, index: number) => ({
                   csvFileId: csvFile.id,
                   rowData: JSON.stringify(row),
                   rowIndex: i + index,
@@ -348,7 +404,7 @@ export async function updateSession(
         data.aiOutput.visualizations.length > 0
       ) {
         await tx.visualizationInstruction.createMany({
-          data: data.aiOutput.visualizations.map((viz: any, index: number) => ({
+          data: data.aiOutput.visualizations.map((viz: VisualizationInstruction, index: number) => ({
             sessionId,
             type: viz.type,
             module: viz.module,
@@ -370,7 +426,7 @@ export async function updateSession(
         data.aiOutput.relations.length > 0
       ) {
         await tx.relation.createMany({
-          data: data.aiOutput.relations.map((rel: any) => ({
+          data: data.aiOutput.relations.map((rel: Relation) => ({
             sessionId,
             type: rel.type,
             sourceColumn: rel.sourceColumn,

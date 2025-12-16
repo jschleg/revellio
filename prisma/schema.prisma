@@ -19,6 +19,10 @@ model Session {
   dataMeshPrompt    String?
   userPrompt        String?
   
+  // Input payloads (stored as JSON)
+  meshInputPayload  String? // JSON string for mesh input payload
+  aiInputPayload    String? // JSON string for AI analysis input payload
+  
   // CSV Files
   csvFiles          CSVFile[]
   

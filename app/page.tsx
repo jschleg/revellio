@@ -27,37 +27,71 @@ import type {
 } from "@/lib/types/data";
 import { JsonTreeView } from "@/components/json-tree-view";
 
+// Unified session state interface
+interface SessionState {
+  // Session info
+  id: string | null;
+  name: string;
+  
+  // Data
+  csvData: CSVData[];
+  metadataInput: Metadata[];
+  
+  // Prompts
+  dataMeshPrompt: string;
+  userPrompt: string;
+  
+  // Data Mesh
+  meshOutput: DataMeshOutput | null;
+  meshRelations: DataMeshRelation[];
+  meshInputPayload: {
+    metadataArray: Metadata[];
+    dataSlices?: CSVData[];
+    userPrompt?: string;
+  } | null;
+  
+  // AI Analysis
+  aiOutput: UnifiedAIOutput | null;
+  aiInputPayload: {
+    metadataArray: Metadata[];
+    dataSlices?: CSVData[];
+    userPrompt?: string;
+    relations?: DataMeshRelation[];
+  } | null;
+}
+
+// Helper function to create empty session state
+const createEmptySessionState = (): SessionState => ({
+  id: null,
+  name: "Untitled Session",
+  csvData: [],
+  metadataInput: [],
+  dataMeshPrompt: "",
+  userPrompt: "",
+  meshOutput: null,
+  meshRelations: [],
+  meshInputPayload: null,
+  aiOutput: null,
+  aiInputPayload: null,
+});
+
 export default function Home() {
-  // Session state
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [sessionName, setSessionName] = useState<string>("Untitled Session");
+  // Unified session state
+  const [session, setSession] = useState<SessionState>(createEmptySessionState());
+  
+  // UI state
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Application state
-  const [csvData, setCsvData] = useState<CSVData[]>([]);
-  const [metadataInput, setMetadataInput] = useState<Metadata[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDataMeshProcessing, setIsDataMeshProcessing] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState<string>("");
   const [dataMeshStep, setDataMeshStep] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [aiOutput, setAiOutput] = useState<UnifiedAIOutput | null>(null);
-  const [dataMeshOutput, setDataMeshOutput] = useState<DataMeshOutput | null>(null);
-  const [currentRelations, setCurrentRelations] = useState<DataMeshRelation[]>([]);
-  const [userPrompt, setUserPrompt] = useState<string>("");
-  const [dataMeshPrompt, setDataMeshPrompt] = useState<string>("");
   const [showMetadata, setShowMetadata] = useState<boolean>(false);
   const [showFileDisplay, setShowFileDisplay] = useState<boolean>(false);
-  const [inputPayload, setInputPayload] = useState<{
-    metadataArray: Metadata[];
-    dataSlices?: CSVData[];
-    userPrompt?: string;
-    relations?: DataMeshRelation[];
-  } | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Create new session
   const handleNewSession = useCallback(async () => {
@@ -78,28 +112,21 @@ export default function Home() {
         throw new Error(errorMessage);
       }
 
-      const session = await response.json();
-      setCurrentSessionId(session.id);
-      setSessionName(session.name);
-      // Reset all state
-      setCsvData([]);
-      setMetadataInput([]);
-      setAiOutput(null);
-      setDataMeshOutput(null);
-      setCurrentRelations([]);
-      setUserPrompt("");
-      setDataMeshPrompt("");
-      setInputPayload(null);
+      const sessionData = await response.json();
+      setSession({
+        ...createEmptySessionState(),
+        id: sessionData.id,
+        name: sessionData.name,
+      });
       setError(null);
-      
+
       // Trigger sidebar refresh
       setSidebarRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error("Error creating session:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to create new session";
       setError(errorMessage);
-      // Don't set session ID if creation failed
-      setCurrentSessionId(null);
+      setSession(createEmptySessionState());
     }
   }, []);
 
@@ -110,7 +137,7 @@ export default function Home() {
       await handleNewSession();
       return;
     }
-    
+
     // Don't save during processing states
     if (isAnalyzing || isDataMeshProcessing) {
       return;
@@ -122,43 +149,45 @@ export default function Home() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: sessionName,
-          csvData,
-          dataMeshOutput,
-          aiOutput,
-          dataMeshPrompt,
-          userPrompt,
+          name: session.name,
+          csvData: session.csvData,
+          dataMeshOutput: session.meshOutput,
+          aiOutput: session.aiOutput,
+          dataMeshPrompt: session.dataMeshPrompt,
+          userPrompt: session.userPrompt,
+          meshInputPayload: session.meshInputPayload,
+          aiInputPayload: session.aiInputPayload,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
         const errorMessage = errorData.details || errorData.error || "Failed to save session";
-        
+
         // If session not found, create a new one
         if (response.status === 404 || errorMessage.includes("not found")) {
           console.warn("Session not found, creating new session");
-          setCurrentSessionId(null);
+          setSession(prev => ({ ...prev, id: null }));
           await handleNewSession();
           return;
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
       // Trigger sidebar refresh after successful save
       setSidebarRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error("Error saving session:", err);
       // If it's a not found error, try to create a new session
       if (err instanceof Error && err.message.includes("not found")) {
-        setCurrentSessionId(null);
+        setSession(prev => ({ ...prev, id: null }));
         await handleNewSession();
       }
     } finally {
       setIsSaving(false);
     }
-  }, [sessionName, csvData, dataMeshOutput, aiOutput, dataMeshPrompt, userPrompt, isAnalyzing, isDataMeshProcessing, handleNewSession]);
+  }, [session, isAnalyzing, isDataMeshProcessing, handleNewSession]);
 
   // Auto-save with debounce
   const triggerAutoSave = useCallback(() => {
@@ -166,16 +195,16 @@ export default function Home() {
     if (isAnalyzing || isDataMeshProcessing) {
       return;
     }
-    
+
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
     autoSaveTimeoutRef.current = setTimeout(() => {
-      if (currentSessionId) {
-        saveSession(currentSessionId);
+      if (session.id) {
+        saveSession(session.id);
       }
     }, 2000); // Auto-save after 2 seconds of inactivity
-  }, [currentSessionId, saveSession, isAnalyzing, isDataMeshProcessing]);
+  }, [session.id, saveSession, isAnalyzing, isDataMeshProcessing]);
 
   // Load session
   const handleLoadSession = useCallback(async (sessionId: string) => {
@@ -183,34 +212,39 @@ export default function Home() {
     setError(null);
     try {
       const response = await fetch(`/api/sessions/${sessionId}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
         const errorMessage = errorData.error || "Failed to load session";
         throw new Error(errorMessage);
       }
 
-      const session = await response.json();
-      setCurrentSessionId(session.id);
-      setSessionName(session.name);
-      setCsvData(session.csvData || []);
-      setDataMeshOutput(session.dataMeshOutput || null);
-      setAiOutput(session.aiOutput || null);
-      setCurrentRelations(session.dataMeshOutput?.relations || []);
-      setUserPrompt(session.userPrompt || "");
-      setDataMeshPrompt(session.dataMeshPrompt || "");
-
+      const sessionData = await response.json();
+      
       // Extract metadata if CSV data exists
-      if (session.csvData && session.csvData.length > 0) {
+      let metadataArray: Metadata[] = [];
+      if (sessionData.csvData && sessionData.csvData.length > 0) {
         const metadataExtractor = new MetadataExtractor();
-        const metadataArray = metadataExtractor.extractAll(session.csvData);
-        setMetadataInput(metadataArray);
-        // Automatically show file display when CSV data is loaded
+        metadataArray = metadataExtractor.extractAll(sessionData.csvData);
         setShowFileDisplay(true);
       } else {
-        setMetadataInput([]);
         setShowFileDisplay(false);
       }
+
+      // Update session state with all loaded data
+      setSession({
+        id: sessionData.id,
+        name: sessionData.name,
+        csvData: sessionData.csvData || [],
+        metadataInput: metadataArray,
+        dataMeshPrompt: sessionData.dataMeshPrompt || "",
+        userPrompt: sessionData.userPrompt || "",
+        meshOutput: sessionData.dataMeshOutput || null,
+        meshRelations: sessionData.dataMeshOutput?.relations || [],
+        meshInputPayload: sessionData.meshInputPayload || null,
+        aiOutput: sessionData.aiOutput || null,
+        aiInputPayload: sessionData.aiInputPayload || null,
+      });
     } catch (err) {
       console.error("Error loading session:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to load session";
@@ -230,17 +264,8 @@ export default function Home() {
 
       if (response.ok) {
         // If we deleted the current session, create a new one
-        if (currentSessionId === sessionId) {
-          setCurrentSessionId(null);
-          setSessionName("Untitled Session");
-          setCsvData([]);
-          setMetadataInput([]);
-          setAiOutput(null);
-          setDataMeshOutput(null);
-          setCurrentRelations([]);
-          setUserPrompt("");
-          setDataMeshPrompt("");
-          setInputPayload(null);
+        if (session.id === sessionId) {
+          setSession(createEmptySessionState());
           await handleNewSession();
         }
         // Trigger sidebar refresh
@@ -250,12 +275,12 @@ export default function Home() {
       console.error("Error deleting session:", err);
       setError("Fehler beim Löschen der Session");
     }
-  }, [currentSessionId, handleNewSession]);
+  }, [session.id, handleNewSession]);
 
   // Initialize session on mount - load most recent session or create new one
   useEffect(() => {
     let isMounted = true;
-    
+
     const initializeSession = async () => {
       try {
         // Try to load the most recent session
@@ -283,9 +308,9 @@ export default function Home() {
         }
       }
     };
-    
+
     initializeSession();
-    
+
     return () => {
       isMounted = false;
     };
@@ -295,7 +320,7 @@ export default function Home() {
   // Auto-save when data changes
   useEffect(() => {
     // Only auto-save if we have a valid session ID and some data
-    if (currentSessionId && (csvData.length > 0 || dataMeshOutput || aiOutput || sessionName !== "Untitled Session")) {
+    if (session.id && (session.csvData.length > 0 || session.meshOutput || session.aiOutput || session.name !== "Untitled Session")) {
       triggerAutoSave();
     }
     return () => {
@@ -303,17 +328,17 @@ export default function Home() {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [currentSessionId, csvData, dataMeshOutput, aiOutput, currentRelations, userPrompt, dataMeshPrompt, sessionName, triggerAutoSave]);
+  }, [session, triggerAutoSave]);
 
-  const generateSampleDataMesh = (): DataMeshOutput => {
+  const generateSampleDataMesh = (csvData: CSVData[]): DataMeshOutput => {
     const relations: DataMeshRelation[] = [];
-    
+
     // Generate relations between files
     for (let i = 0; i < csvData.length; i++) {
       for (let j = i + 1; j < csvData.length; j++) {
         const file1 = csvData[i];
         const file2 = csvData[j];
-        
+
         // File-to-file relation
         relations.push({
           title: `File Relationship: ${file1.fileName} ↔ ${file2.fileName}`,
@@ -329,13 +354,13 @@ export default function Home() {
           file2.columns.forEach((col2) => {
             const col1Lower = col1.toLowerCase();
             const col2Lower = col2.toLowerCase();
-            
+
             // Check for similar column names
-            if (col1Lower === col2Lower || 
-                col1Lower.includes(col2Lower) || 
-                col2Lower.includes(col1Lower) ||
-                col1Lower.includes('date') && col2Lower.includes('date') ||
-                col1Lower.includes('id') && col2Lower.includes('id')) {
+            if (col1Lower === col2Lower ||
+              col1Lower.includes(col2Lower) ||
+              col2Lower.includes(col1Lower) ||
+              col1Lower.includes('date') && col2Lower.includes('date') ||
+              col1Lower.includes('id') && col2Lower.includes('id')) {
               relations.push({
                 title: `Column Match: ${col1} ↔ ${col2}`,
                 elements: [
@@ -357,7 +382,7 @@ export default function Home() {
           for (let j = i + 1; j < file.columns.length; j++) {
             const col1 = file.columns[i];
             const col2 = file.columns[j];
-            
+
             // Add relation between columns in same file
             relations.push({
               title: `Dataset Columns: ${col1} ↔ ${col2}`,
@@ -381,7 +406,7 @@ export default function Home() {
   };
 
   const useSampleDataMesh = () => {
-    if (csvData.length === 0) {
+    if (session.csvData.length === 0) {
       setError("Please upload files first before using sample data.");
       return;
     }
@@ -393,21 +418,24 @@ export default function Home() {
     // Simulate processing delay
     setTimeout(() => {
       const metadataExtractor = new MetadataExtractor();
-      const metadataArray = metadataExtractor.extractAll(csvData);
-      setMetadataInput(metadataArray);
+      const metadataArray = metadataExtractor.extractAll(session.csvData);
 
-      const sampleDataMesh = generateSampleDataMesh();
-      setDataMeshOutput(sampleDataMesh);
-      setCurrentRelations(sampleDataMesh.relations);
+      const sampleDataMesh = generateSampleDataMesh(session.csvData);
       
-      setInputPayload({
-        metadataArray,
-        dataSlices: csvData.map((data) => ({
-          ...data,
-          rows: data.rows.slice(0, 20),
-        })),
-        userPrompt: dataMeshPrompt || "",
-      });
+      setSession(prev => ({
+        ...prev,
+        metadataInput: metadataArray,
+        meshOutput: sampleDataMesh,
+        meshRelations: sampleDataMesh.relations,
+        meshInputPayload: {
+          metadataArray,
+          dataSlices: session.csvData.map((data) => ({
+            ...data,
+            rows: data.rows.slice(0, 20),
+          })),
+          userPrompt: prev.dataMeshPrompt || "",
+        },
+      }));
 
       setIsDataMeshProcessing(false);
       setDataMeshStep("");
@@ -418,17 +446,14 @@ export default function Home() {
     setError(null);
     setIsDataMeshProcessing(true);
     setDataMeshStep("");
-    setDataMeshOutput(null);
-    setInputPayload(null);
 
     try {
       const metadataExtractor = new MetadataExtractor();
       setDataMeshStep("Extracting metadata...");
-      const metadataArray = metadataExtractor.extractAll(csvData);
-      setMetadataInput(metadataArray);
+      const metadataArray = metadataExtractor.extractAll(session.csvData);
 
       setDataMeshStep("Preparing data samples (20 rows per file)...");
-      const dataSlices: CSVData[] = csvData.map((data) => {
+      const dataSlices: CSVData[] = session.csvData.map((data) => {
         const slicedRows = data.rows.slice(0, 20);
         return {
           ...data,
@@ -448,9 +473,8 @@ export default function Home() {
       const payload = {
         metadataArray,
         dataSlices,
-        userPrompt: dataMeshPrompt || "",
+        userPrompt: session.dataMeshPrompt || "",
       };
-      setInputPayload(payload);
 
       setDataMeshStep("Analyzing data mesh network...");
       const dataMeshResponse = await fetch("/api/ai/data-mesh", {
@@ -465,8 +489,14 @@ export default function Home() {
       }
 
       const dataMesh: DataMeshOutput = await dataMeshResponse.json();
-      setDataMeshOutput(dataMesh);
-      setCurrentRelations(dataMesh.relations);
+      
+      setSession(prev => ({
+        ...prev,
+        metadataInput: metadataArray,
+        meshOutput: dataMesh,
+        meshRelations: dataMesh.relations,
+        meshInputPayload: payload,
+      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
@@ -476,7 +506,7 @@ export default function Home() {
   }
 
   const startProcessing = async () => {
-    if (!dataMeshOutput || currentRelations.length === 0) {
+    if (!session.meshOutput || session.meshRelations.length === 0) {
       setError("Please complete Data Mesh analysis first to define relations.");
       return;
     }
@@ -484,17 +514,14 @@ export default function Home() {
     setError(null);
     setIsAnalyzing(true);
     setAnalyzingStep("");
-    setAiOutput(null);
-    setInputPayload(null);
 
     try {
       const metadataExtractor = new MetadataExtractor();
       setAnalyzingStep("Extracting metadata...");
-      const metadataArray = metadataExtractor.extractAll(csvData);
-      setMetadataInput(metadataArray);
+      const metadataArray = metadataExtractor.extractAll(session.csvData);
 
       setAnalyzingStep("Preparing data samples...");
-      const dataSlices: CSVData[] = csvData.map((data) => ({
+      const dataSlices: CSVData[] = session.csvData.map((data) => ({
         ...data,
         rows: data.rows.slice(0, 5),
       }));
@@ -502,10 +529,9 @@ export default function Home() {
       const payload = {
         metadataArray,
         dataSlices,
-        userPrompt: userPrompt || "",
-        relations: currentRelations,
+        userPrompt: session.userPrompt || "",
+        relations: session.meshRelations,
       };
-      setInputPayload(payload);
 
       setAnalyzingStep("AI is analyzing data and creating visualization strategy...");
       const analyzeResponse = await fetch("/api/ai/analyze", {
@@ -520,7 +546,13 @@ export default function Home() {
       }
 
       const unifiedOutput: UnifiedAIOutput = await analyzeResponse.json();
-      setAiOutput(unifiedOutput);
+      
+      setSession(prev => ({
+        ...prev,
+        metadataInput: metadataArray,
+        aiOutput: unifiedOutput,
+        aiInputPayload: payload,
+      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
@@ -531,9 +563,6 @@ export default function Home() {
 
   const handleFilesSelected = async (selectedFiles: File[]) => {
     setError(null);
-    setAiOutput(null);
-    setDataMeshOutput(null);
-    setMetadataInput([]);
 
     try {
       const parser = new CSVParser();
@@ -547,12 +576,23 @@ export default function Home() {
           }
           const data = await parser.parse(file);
           parsedData.push(data);
-        } catch (err) {
+        } catch {
           // Silently skip invalid files
         }
       }
 
-      setCsvData(parsedData);
+      // Reset session data when new files are uploaded
+      setSession(prev => ({
+        ...prev,
+        csvData: parsedData,
+        metadataInput: [],
+        aiOutput: null,
+        meshOutput: null,
+        meshRelations: [],
+        meshInputPayload: null,
+        aiInputPayload: null,
+      }));
+      
       // Automatically show file display when files are uploaded
       if (parsedData.length > 0) {
         setShowFileDisplay(true);
@@ -563,30 +603,30 @@ export default function Home() {
   };
 
   const handleManualSave = async () => {
-    if (!currentSessionId) {
+    if (!session.id) {
       // Try to create a session first if none exists
       await handleNewSession();
       // Wait a bit for session to be created
       await new Promise(resolve => setTimeout(resolve, 100));
-      if (!currentSessionId) {
+      if (!session.id) {
         setError("Keine Session zum Speichern vorhanden. Bitte versuchen Sie es erneut.");
         return;
       }
     }
-    
+
     if (isAnalyzing || isDataMeshProcessing) {
       setError("Bitte warten Sie, bis die Verarbeitung abgeschlossen ist");
       return;
     }
-    
-    await saveSession(currentSessionId);
+
+    await saveSession(session.id);
   };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-50/80 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950/80">
       {/* Sidebar */}
       <Sidebar
-        currentSessionId={currentSessionId}
+        currentSessionId={session.id}
         onSessionSelect={handleLoadSession}
         onNewSession={handleNewSession}
         onSessionDelete={handleDeleteSession}
@@ -619,10 +659,10 @@ export default function Home() {
                 <div className="mt-2 flex items-center gap-3">
                   <input
                     type="text"
-                    value={sessionName}
-                    onChange={(e) => setSessionName(e.target.value)}
+                    value={session.name}
+                    onChange={(e) => setSession(prev => ({ ...prev, name: e.target.value }))}
                     onBlur={() => {
-                      if (currentSessionId) {
+                      if (session.id) {
                         triggerAutoSave();
                       }
                     }}
@@ -639,7 +679,7 @@ export default function Home() {
                     onClick={handleManualSave}
                     disabled={isSaving || isAnalyzing || isDataMeshProcessing}
                     className="flex items-center gap-2 rounded-lg border border-zinc-200/80 bg-white/80 px-3 py-1.5 text-sm font-medium text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 hover:shadow disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700/80 dark:bg-zinc-800/60 dark:text-zinc-100 dark:hover:bg-zinc-800/80"
-                    title={isAnalyzing || isDataMeshProcessing ? "Speichern während der Verarbeitung nicht möglich" : currentSessionId ? "Session speichern" : "Neue Session erstellen und speichern"}
+                    title={isAnalyzing || isDataMeshProcessing ? "Speichern während der Verarbeitung nicht möglich" : session.id ? "Session speichern" : "Neue Session erstellen und speichern"}
                   >
                     <Save className="h-4 w-4" />
                     Speichern
@@ -672,7 +712,7 @@ export default function Home() {
               </div>
 
               {/* Step 1: Data Mesh Analysis */}
-              {csvData.length > 0 && (
+              {session.csvData.length > 0 && (
                 <div className="mb-8 space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white dark:bg-indigo-500">
@@ -690,8 +730,8 @@ export default function Home() {
                       Additional Context (optional)
                     </h3>
                     <textarea
-                      value={dataMeshPrompt}
-                      onChange={(e) => setDataMeshPrompt(e.target.value)}
+                      value={session.dataMeshPrompt}
+                      onChange={(e) => setSession(prev => ({ ...prev, dataMeshPrompt: e.target.value }))}
                       placeholder="Describe what relationships you expect to find, specific connections to look for, or any domain-specific context..."
                       className="w-full rounded-lg border border-zinc-200/80 bg-white/80 px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700/80 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                       rows={3}
@@ -700,7 +740,38 @@ export default function Home() {
                       This context helps the AI identify relevant relationships and connections in your data.
                     </p>
                   </div>
-                  
+
+                  {/* Data Mesh Input/Output JSON Tree View */}
+                  {session.meshInputPayload && session.meshOutput && (
+                    <div className="mb-8 rounded-xl border border-zinc-200/80 bg-white/60 backdrop-blur-sm p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/60">
+                      <div className="mb-4 flex items-center gap-2">
+                        <Eye className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Data Mesh Input / Output</h2>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {/* Input Section */}
+                        <div className="rounded-lg border border-blue-200/80 bg-blue-50/60 backdrop-blur-sm p-4 shadow-sm dark:border-blue-800/80 dark:bg-blue-950/40">
+                          <h3 className="mb-3 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                            Input
+                          </h3>
+                          <div className="max-h-[600px] overflow-auto rounded bg-white/80 p-3 shadow-sm dark:bg-zinc-800/60">
+                            <JsonTreeView data={session.meshInputPayload} />
+                          </div>
+                        </div>
+
+                        {/* Output Section */}
+                        <div className="rounded-lg border border-green-200/80 bg-green-50/60 backdrop-blur-sm p-4 shadow-sm dark:border-green-800/80 dark:bg-green-950/40">
+                          <h3 className="mb-3 text-sm font-semibold text-green-700 dark:text-green-300">
+                            Output
+                          </h3>
+                          <div className="max-h-[600px] overflow-auto rounded bg-white/80 p-3 shadow-sm dark:bg-zinc-800/60">
+                            <JsonTreeView data={session.meshOutput} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Data Mesh Buttons */}
                   <div className="ml-11 flex flex-col gap-3 sm:flex-row">
                     <button
@@ -720,10 +791,10 @@ export default function Home() {
                         </span>
                       )}
                     </button>
-                    
+
                     <button
                       onClick={useSampleDataMesh}
-                      disabled={isAnalyzing || isDataMeshProcessing || csvData.length === 0}
+                      disabled={isAnalyzing || isDataMeshProcessing || session.csvData.length === 0}
                       className="group relative rounded-xl border-2 border-indigo-200 bg-indigo-50/80 px-6 py-4 font-semibold text-indigo-700 shadow-sm transition-all duration-200 hover:bg-indigo-100/80 hover:shadow-md hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                     >
                       <span className="flex items-center justify-center gap-2">
@@ -736,22 +807,22 @@ export default function Home() {
               )}
 
               {/* Data Mesh Output */}
-              {dataMeshOutput && (
+              {session.meshOutput && (
                 <div className="mb-8 rounded-xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 to-white/60 backdrop-blur-sm p-6 shadow-sm dark:border-indigo-800/80 dark:from-indigo-950/40 dark:to-zinc-900/60">
                   <div className="mb-4 flex items-center gap-2">
                     <Zap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Data Mesh Network</h2>
                   </div>
                   <DataMeshVisualization
-                    dataMeshOutput={dataMeshOutput}
-                    csvData={csvData}
-                    onUpdateRelations={setCurrentRelations}
+                    dataMeshOutput={session.meshOutput}
+                    csvData={session.csvData}
+                    onUpdateRelations={(relations) => setSession(prev => ({ ...prev, meshRelations: relations }))}
                   />
                 </div>
               )}
 
               {/* Step 2: Visualization Analysis */}
-              {csvData.length > 0 && dataMeshOutput && currentRelations.length > 0 && (
+              {session.csvData.length > 0 && session.meshOutput && session.meshRelations.length > 0 && (
                 <div className="mb-8 space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-sm font-bold text-white dark:bg-purple-500">
@@ -769,8 +840,8 @@ export default function Home() {
                       Additional Context (optional)
                     </h3>
                     <textarea
-                      value={userPrompt}
-                      onChange={(e) => setUserPrompt(e.target.value)}
+                      value={session.userPrompt}
+                      onChange={(e) => setSession(prev => ({ ...prev, userPrompt: e.target.value }))}
                       placeholder="Describe what you want to learn from the data or what questions you have..."
                       className="w-full rounded-lg border border-zinc-200/80 bg-white/80 px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700/80 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                       rows={3}
@@ -784,7 +855,7 @@ export default function Home() {
                   <div className="ml-11">
                     <button
                       onClick={startProcessing}
-                      disabled={isAnalyzing || isDataMeshProcessing || !dataMeshOutput || currentRelations.length === 0}
+                      disabled={isAnalyzing || isDataMeshProcessing || !session.meshOutput || session.meshRelations.length === 0}
                       className="group relative rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 hover:shadow-xl hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:from-purple-500 dark:via-purple-600 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:via-purple-700 dark:hover:to-purple-800"
                     >
                       {isAnalyzing ? (
@@ -817,37 +888,37 @@ export default function Home() {
               {/* Processing Indicators */}
               {(isAnalyzing || isDataMeshProcessing) && (
                 <div className="mb-6 space-y-3">
-            {isAnalyzing && (
-              <div className="rounded-xl border border-purple-200/80 bg-gradient-to-r from-purple-50/60 to-white/60 backdrop-blur-sm p-4 shadow-sm dark:border-purple-800/80 dark:from-purple-950/40 dark:to-zinc-900/60">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-purple-600 dark:text-purple-400" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-purple-900 dark:text-purple-200">AI Analysis in Progress</p>
-                    {analyzingStep && (
-                      <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">{analyzingStep}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            {isDataMeshProcessing && (
-              <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/60 to-white/60 backdrop-blur-sm p-4 shadow-sm dark:border-indigo-800/80 dark:from-indigo-950/40 dark:to-zinc-900/60">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-indigo-600 dark:text-indigo-400" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-indigo-900 dark:text-indigo-200">Data Mesh Analysis in Progress</p>
-                    {dataMeshStep && (
-                      <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{dataMeshStep}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+                  {isAnalyzing && (
+                    <div className="rounded-xl border border-purple-200/80 bg-gradient-to-r from-purple-50/60 to-white/60 backdrop-blur-sm p-4 shadow-sm dark:border-purple-800/80 dark:from-purple-950/40 dark:to-zinc-900/60">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-purple-600 dark:text-purple-400" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-purple-900 dark:text-purple-200">AI Analysis in Progress</p>
+                          {analyzingStep && (
+                            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">{analyzingStep}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {isDataMeshProcessing && (
+                    <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/60 to-white/60 backdrop-blur-sm p-4 shadow-sm dark:border-indigo-800/80 dark:from-indigo-950/40 dark:to-zinc-900/60">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-indigo-600 dark:text-indigo-400" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-indigo-900 dark:text-indigo-200">Data Mesh Analysis in Progress</p>
+                          {dataMeshStep && (
+                            <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{dataMeshStep}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Results Overview - Compact Summary */}
-              {aiOutput && (
+              {session.aiOutput && (
                 <div className="mb-8 rounded-lg border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-purple-100/30 p-6 dark:border-purple-800/50 dark:from-purple-950/30 dark:to-purple-900/20">
                   <div className="mb-4 flex items-center gap-2">
                     <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -856,13 +927,13 @@ export default function Home() {
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                     <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {aiOutput.visualizations.length}
+                        {session.aiOutput.visualizations.length}
                       </div>
                       <div className="text-xs text-zinc-600 dark:text-zinc-400">Visualizations</div>
                     </div>
                     <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {aiOutput.relations.length}
+                        {session.aiOutput.relations.length}
                       </div>
                       <div className="text-xs text-zinc-600 dark:text-zinc-400">Relations</div>
                     </div>
@@ -870,12 +941,12 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Input/Output JSON Tree View */}
-              {inputPayload && aiOutput && (
+              {/* AI Analysis Input/Output JSON Tree View */}
+              {session.aiInputPayload && session.aiOutput && (
                 <div className="mb-8 rounded-xl border border-zinc-200/80 bg-white/60 backdrop-blur-sm p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/60">
                   <div className="mb-4 flex items-center gap-2">
                     <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Input / Output</h2>
+                    <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">AI Analysis Input / Output</h2>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {/* Input Section */}
@@ -884,7 +955,7 @@ export default function Home() {
                         Input
                       </h3>
                       <div className="max-h-[600px] overflow-auto rounded bg-white/80 p-3 shadow-sm dark:bg-zinc-800/60">
-                        <JsonTreeView data={inputPayload} />
+                        <JsonTreeView data={session.aiInputPayload} />
                       </div>
                     </div>
 
@@ -894,7 +965,7 @@ export default function Home() {
                         Output
                       </h3>
                       <div className="max-h-[600px] overflow-auto rounded bg-white/80 p-3 shadow-sm dark:bg-zinc-800/60">
-                        <JsonTreeView data={aiOutput} />
+                        <JsonTreeView data={session.aiOutput} />
                       </div>
                     </div>
                   </div>
@@ -902,7 +973,7 @@ export default function Home() {
               )}
 
               {/* Input: Metadata Display - Collapsible */}
-              {metadataInput.length > 0 && (
+              {session.metadataInput.length > 0 && (
                 <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card dark:border-zinc-800/50">
                   <button
                     onClick={() => setShowMetadata(!showMetadata)}
@@ -912,7 +983,7 @@ export default function Home() {
                       <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       <h2 className="text-xl font-semibold text-foreground">Input: Metadata</h2>
                       <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        ({metadataInput.length} files)
+                        ({session.metadataInput.length} files)
                       </span>
                     </div>
                     {showMetadata ? (
@@ -924,7 +995,7 @@ export default function Home() {
                   {showMetadata && (
                     <div className="border-t border-zinc-200/50 p-6 dark:border-zinc-800/50">
                       <div className="grid gap-4 md:grid-cols-2">
-                        {metadataInput.map((meta, index) => (
+                        {session.metadataInput.map((meta, index) => (
                           <div
                             key={index}
                             className="rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50"
@@ -950,10 +1021,10 @@ export default function Home() {
               )}
 
               {/* AI Output - Visualizer Component */}
-              {aiOutput && <Visualizer aiOutput={aiOutput} csvData={csvData} />}
+              {session.aiOutput && <Visualizer aiOutput={session.aiOutput} csvData={session.csvData} />}
 
               {/* File Display with Tables - Collapsible */}
-              {csvData.length > 0 && (
+              {session.csvData.length > 0 && (
                 <div className="mb-8 rounded-xl border border-zinc-200/80 bg-white/60 backdrop-blur-sm shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/60">
                   <button
                     onClick={() => setShowFileDisplay(!showFileDisplay)}
@@ -963,7 +1034,7 @@ export default function Home() {
                       <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">File Data Tables</h2>
                       <span className="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        ({csvData.length} file{csvData.length !== 1 ? "s" : ""})
+                        ({session.csvData.length} file{session.csvData.length !== 1 ? "s" : ""})
                       </span>
                     </div>
                     {showFileDisplay ? (
@@ -974,7 +1045,7 @@ export default function Home() {
                   </button>
                   {showFileDisplay && (
                     <div className="border-t border-zinc-200/80 p-6 dark:border-zinc-800/80">
-                      <FileDisplay csvData={csvData} />
+                      <FileDisplay csvData={session.csvData} />
                     </div>
                   )}
                 </div>

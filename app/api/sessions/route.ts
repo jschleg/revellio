@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
       aiOutput,
       dataMeshPrompt,
       userPrompt,
+      meshInputPayload,
+      aiInputPayload,
     } = body;
 
     const sessionData: SessionData = {
@@ -42,6 +44,8 @@ export async function POST(request: NextRequest) {
       aiOutput,
       dataMeshPrompt,
       userPrompt,
+      meshInputPayload,
+      aiInputPayload,
     };
 
     const session = await createSession(sessionData);

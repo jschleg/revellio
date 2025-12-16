@@ -48,6 +48,8 @@ export async function PUT(
       aiOutput,
       dataMeshPrompt,
       userPrompt,
+      meshInputPayload,
+      aiInputPayload,
     } = body;
 
     const sessionData: Partial<SessionData> = {
@@ -57,6 +59,8 @@ export async function PUT(
       aiOutput,
       dataMeshPrompt,
       userPrompt,
+      meshInputPayload,
+      aiInputPayload,
     };
 
     const session = await updateSession(id, sessionData);

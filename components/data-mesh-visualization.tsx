@@ -49,10 +49,16 @@ export function DataMeshVisualization({
   const contentRef = useRef<HTMLDivElement>(null);
   const elementPositionsRef = useRef<Map<string, ElementPosition>>(new Map());
 
-  // Sync local relations with prop changes
+  // Sync local relations with prop changes (using requestAnimationFrame to avoid sync setState)
   useEffect(() => {
-    setLocalRelations(dataMeshOutput.relations);
-  }, [dataMeshOutput.relations]);
+    const relationsChanged = JSON.stringify(localRelations) !== JSON.stringify(dataMeshOutput.relations);
+    if (relationsChanged) {
+      const rafId = requestAnimationFrame(() => {
+        setLocalRelations(dataMeshOutput.relations);
+      });
+      return () => cancelAnimationFrame(rafId);
+    }
+  }, [dataMeshOutput.relations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Helper functions
   const getElementId = useCallback((file: string, column?: string, rowIndex?: number): string => {
@@ -288,7 +294,6 @@ export function DataMeshVisualization({
         const y2 = pos2.y + pos2.height / 2;
         
         const dx = x2 - x1;
-        const dy = y2 - y1;
         const controlOffset = Math.min(Math.abs(dx) * 0.5, 100);
         
         paths.push(`M ${x1} ${y1} C ${x1 + controlOffset} ${y1} ${x2 - controlOffset} ${y2} ${x2} ${y2}`);
@@ -359,9 +364,12 @@ export function DataMeshVisualization({
     setPositionsUpdateKey((prev) => prev + 1);
   }, [zoomLevel, localRelations, getElementId]);
 
-  // Update positions when zoom or relations change
+  // Update positions when zoom or relations change (using requestAnimationFrame to avoid sync setState)
   useEffect(() => {
-    updatePositions();
+    const rafId = requestAnimationFrame(() => {
+      updatePositions();
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [updatePositions]);
 
   // Update positions on resize (debounced)
@@ -503,7 +511,6 @@ export function DataMeshVisualization({
 
               <DataHierarchy
                 files={files}
-                csvData={csvData}
                 editingConnectionPoint={editingConnectionPoint}
                 onElementClick={handleElementClick}
                 getElementId={getElementId}

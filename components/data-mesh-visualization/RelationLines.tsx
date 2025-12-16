@@ -2,14 +2,6 @@
 
 import type { DataMeshRelation } from "@/lib/types/data";
 
-interface ElementPosition {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 interface RelationLinesProps {
   relations: DataMeshRelation[];
   selectedRelations: Set<number>;
@@ -31,7 +23,7 @@ export function RelationLines({
   onTooltipPositionUpdate,
   getRelationPaths,
   getRelationColor,
-  canvasRef,
+  canvasRef: _canvasRef,
 }: RelationLinesProps) {
   const handleMouseEnter = (index: number, e: React.MouseEvent) => {
     onRelationHover(index);

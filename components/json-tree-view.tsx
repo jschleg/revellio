@@ -35,8 +35,8 @@ export function JsonTreeView({ data, level = 0, maxLevel = 10 }: JsonTreeViewPro
   if (typeof data === "string") {
     return (
       <span className="text-xs text-green-600 dark:text-green-400">
-        "{String(data).slice(0, 100)}
-        {String(data).length > 100 ? "..." : ""}"
+        &quot;{String(data).slice(0, 100)}
+        {String(data).length > 100 ? "..." : ""}&quot;
       </span>
     );
   }

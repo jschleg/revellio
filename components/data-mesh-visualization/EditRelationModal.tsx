@@ -22,7 +22,7 @@ interface EditRelationModalProps {
 
 export function EditRelationModal({
   relation,
-  relationIndex,
+  relationIndex: _relationIndex,
   editedTitle,
   editedExplanation,
   editingConnectionPoint,

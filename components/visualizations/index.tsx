@@ -38,7 +38,7 @@ export function DynamicVisualization({
     return (
       <div className="rounded-lg border border-yellow-200/50 bg-yellow-50/50 p-4 dark:border-yellow-800/50 dark:bg-yellow-900/20">
         <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          Datenquelle "{instruction.config.dataSource}" nicht gefunden
+          Datenquelle &quot;{instruction.config.dataSource}&quot; nicht gefunden
         </p>
       </div>
     );

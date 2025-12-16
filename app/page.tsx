@@ -58,6 +58,7 @@ export default function Home() {
         
         // File-to-file relation
         relations.push({
+          title: `File Relationship: ${file1.fileName} ↔ ${file2.fileName}`,
           elements: [
             { name: file1.fileName, source: { file: file1.fileName } },
             { name: file2.fileName, source: { file: file2.fileName } },
@@ -78,6 +79,7 @@ export default function Home() {
                 col1Lower.includes('date') && col2Lower.includes('date') ||
                 col1Lower.includes('id') && col2Lower.includes('id')) {
               relations.push({
+                title: `Column Match: ${col1} ↔ ${col2}`,
                 elements: [
                   { name: col1, source: { file: file1.fileName, column: col1 } },
                   { name: col2, source: { file: file2.fileName, column: col2 } },
@@ -100,6 +102,7 @@ export default function Home() {
             
             // Add relation between columns in same file
             relations.push({
+              title: `Dataset Columns: ${col1} ↔ ${col2}`,
               elements: [
                 { name: col1, source: { file: file.fileName, column: col1 } },
                 { name: col2, source: { file: file.fileName, column: col2 } },

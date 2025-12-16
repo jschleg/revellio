@@ -60,6 +60,9 @@ export function RelationsList({
                   )}
                 </button>
                 <div className="flex-1">
+                  <h4 className="mb-1 text-sm font-semibold text-purple-900 dark:text-purple-200">
+                    {relation.title}
+                  </h4>
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     {relation.elements.map((element, idx) => (
                       <div key={idx} className="flex items-center gap-1">

@@ -77,6 +77,23 @@ export function RelationLines({
           <g key={index} className="pointer-events-auto">
             {paths.map((path, pathIndex) => (
               <g key={pathIndex}>
+                {/* Invisible wide hitbox path for easier hover/click */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={20}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  onMouseEnter={(e) => handleMouseEnter(index, e)}
+                  onMouseMove={(e) => handleMouseMove(index, e)}
+                  onMouseLeave={() => onRelationHover(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRelationClick(index);
+                  }}
+                  className="cursor-pointer"
+                />
                 {/* Background path for better visibility */}
                 <path
                   d={path}
@@ -103,7 +120,7 @@ export function RelationLines({
                     e.stopPropagation();
                     onRelationClick(index);
                   }}
-                  className="cursor-pointer transition-all"
+                  className="cursor-pointer transition-all pointer-events-none"
                   style={{
                     filter: isSelected
                       ? "drop-shadow(0 0 6px rgba(147, 51, 234, 0.6))"

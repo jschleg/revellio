@@ -25,12 +25,17 @@ export function RelationTooltip({ relation, position, color }: RelationTooltipPr
           maxWidth: '90vw',
         }}
       >
-        <div className="mb-2 flex items-center gap-2">
-          <div
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: color }}
-          ></div>
-          <p className="font-bold text-purple-900 dark:text-purple-200">
+        <div className="mb-2">
+          <div className="mb-1 flex items-center gap-2">
+            <div
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: color }}
+            ></div>
+            <p className="font-bold text-purple-900 dark:text-purple-200">
+              {relation.title}
+            </p>
+          </div>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
             {relation.elements.map((el, idx) => (
               <span key={idx}>
                 {el.name}

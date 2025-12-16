@@ -158,6 +158,7 @@ export interface DataMeshElement {
 }
 
 export interface DataMeshRelation {
+  title: string; // Short, descriptive title summarizing the relation (e.g., "Customer Order Chain", "Revenue Aggregation")
   elements: DataMeshElement[]; // Array of elements connected by this relation (minimum 2)
   relationExplanation: string; // Detailed explanation of the relationship/connection between all elements
 }

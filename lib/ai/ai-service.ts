@@ -205,7 +205,7 @@ IMPORTANT: Use these pre-defined relations when determining which visualization 
 `
       : "";
 
-    return `Analyze the following CSV data and create a complete visualization strategy:
+    return `You are an expert data visualization analyst. Analyze the following CSV data and create a comprehensive, professional visualization strategy.
 
 METADATA:
 ${metadataSummary}
@@ -216,44 +216,177 @@ ${relationsSection}
 USER PROMPT (additional context):
 ${userPrompt || "No additional context provided"}
 
+CRITICAL: Before creating visualizations, analyze the data structure:
+1. Identify column types (string, number, date, boolean)
+2. Detect temporal patterns (date/time columns)
+3. Identify categorical vs. numerical data
+4. Check for relationships between columns
+5. Determine data distribution and cardinality
+6. Identify potential aggregations needed
+
+VISUALIZATION TYPE SELECTION CRITERIA:
+
+1. BAR-CHART:
+   - USE FOR: Comparing values across categories, showing rankings, part-to-whole comparisons
+   - REQUIREMENTS: 
+     * At least 1 categorical column (X-axis) + 1+ numerical columns (Y-axis)
+     * Categorical column should have < 20 unique values (if more, aggregate or group)
+   - AGGREGATION: Usually "sum" or "avg" when grouping categories
+   - EXAMPLES: Sales by region, revenue by product, counts by category
+   - AVOID: When you have time-series data (use line-chart instead)
+
+2. LINE-CHART:
+   - USE FOR: Time series, trends over time, continuous data progression
+   - REQUIREMENTS:
+     * At least 1 date/time column (X-axis) + 1+ numerical columns (Y-axis)
+     * Data should be ordered chronologically
+   - AGGREGATION: Usually "avg" or "sum" if grouping by time periods
+   - EXAMPLES: Revenue over time, temperature trends, stock prices, monthly metrics
+   - AVOID: For non-temporal categorical comparisons
+
+3. PIE-CHART:
+   - USE FOR: Showing proportions/percentages of a whole, categorical distribution
+   - REQUIREMENTS:
+     * 1 categorical column + 1 numerical column
+     * Categorical should have 2-8 categories (ideal: 3-6)
+     * Numerical should represent counts, percentages, or sums
+   - AGGREGATION: Usually "sum" or "count"
+   - EXAMPLES: Market share, category distribution, status breakdown
+   - AVOID: More than 8 categories, when exact values matter more than proportions
+
+4. SCATTER-PLOT:
+   - USE FOR: Correlation analysis, relationship between two numerical variables, outlier detection
+   - REQUIREMENTS:
+     * 2 numerical columns (X and Y axes)
+     * Both columns should have continuous numerical values
+   - AGGREGATION: Usually null (show raw data points)
+   - EXAMPLES: Price vs. quantity, age vs. income, correlation analysis
+   - AVOID: When one variable is categorical
+
+5. TABLE:
+   - USE FOR: Detailed data inspection, exact values, multi-column comparison, small datasets
+   - REQUIREMENTS:
+     * Any number of columns
+     * Best for < 100 rows (or aggregate first)
+   - AGGREGATION: Usually null, or "count" for summary tables
+   - EXAMPLES: Transaction details, comparison tables, raw data display
+   - AVOID: For large datasets without aggregation
+
+6. AGGREGATED-OVERVIEW:
+   - USE FOR: Summary statistics, KPIs, data quality metrics, high-level insights
+   - REQUIREMENTS:
+     * Multiple numerical columns for statistics
+     * Should provide key metrics (sum, avg, min, max, count)
+   - AGGREGATION: Multiple aggregations (sum, avg, count, etc.)
+   - EXAMPLES: Dashboard summary, data quality report, key metrics overview
+   - USE WHEN: User needs quick insights before detailed analysis
+
+7. RELATIONAL-VIEW:
+   - USE FOR: Showing relationships between multiple datasets/files, data mesh visualization
+   - REQUIREMENTS:
+     * Multiple CSV files with identified relationships
+     * Pre-defined relations from data mesh analysis
+   - EXAMPLES: Foreign key relationships, cross-file connections, data lineage
+   - USE WHEN: Data mesh relations are available and relationships are the focus
+
+DATA PROCESSING RULES:
+
+1. COLUMN SELECTION:
+   - Always verify column names exist in the data
+   - For aggregations, ensure numerical columns are actually numeric
+   - For time-series, ensure date columns are properly formatted
+   - Select the most relevant columns (not all columns)
+
+2. AGGREGATION STRATEGY:
+   - "sum": For additive metrics (revenue, quantity, counts)
+   - "avg": For rates, averages, or when normalizing data
+   - "count": For counting occurrences, unique values, or frequencies
+   - Use aggregation when:
+     * Categorical data has many unique values (> 20)
+     * Time-series data needs grouping (daily → monthly)
+     * Multiple rows share the same category
+
+3. MULTI-FILE HANDLING:
+   - If relations exist, consider combining related files
+   - Use "combined" as dataSource when merging related datasets
+   - Ensure column names are unique when combining (use file prefix if needed)
+
+4. DATA QUALITY:
+   - Handle missing/null values appropriately
+   - Filter out invalid data points (NaN, null, undefined)
+   - Consider data volume: limit to reasonable sizes for visualization
+
+VISUALIZATION STRATEGY:
+
+1. START WITH OVERVIEW:
+   - Always include an "aggregated-overview" as the first visualization
+   - Provides context and key metrics before detailed analysis
+
+2. PRIORITIZE BY DATA TYPE:
+   - Time-series data → line-chart
+   - Categorical comparisons → bar-chart
+   - Proportions → pie-chart
+   - Correlations → scatter-plot
+   - Relationships → relational-view
+
+3. CREATE MULTIPLE PERSPECTIVES:
+   - Don't just create one visualization
+   - Show different aspects: overview, trends, distributions, details
+   - Aim for 3-5 visualizations that tell a complete story
+
+4. LEVERAGE RELATIONS:
+   ${dataMeshRelations.length > 0 
+     ? `- The provided Data Mesh relations reveal important connections\n- Create visualizations that highlight these relationships\n- Consider cross-file visualizations when relations exist\n- Use relational-view to show the network structure`
+     : `- Identify implicit relationships between columns/files\n- Consider how data from different files might relate`}
+
+5. USER PROMPT INTEGRATION:
+   - If user provides specific questions, create visualizations that answer them
+   - If user mentions specific metrics, prioritize those
+   - Adapt visualization types to user's analytical goals
+
+OUTPUT REQUIREMENTS:
+
 Create a JSON response with the following structure:
 {
   "visualizations": [
     {
       "type": "bar-chart" | "line-chart" | "pie-chart" | "table" | "scatter-plot" | "relational-view" | "aggregated-overview",
-      "module": "Name of visualization module",
+      "module": "Descriptive name (e.g., 'Revenue by Region', 'Time Series Analysis')",
       "config": {
-        "dataSource": "Filename or 'combined'",
-        "columns": ["Column1", "Column2"],
+        "dataSource": "Exact filename from metadata or 'combined'",
+        "columns": ["Exact column names from the data"],
         "aggregation": "sum" | "avg" | "count" | null,
         "filters": {}
       },
-      "reasoning": "Why this visualization was chosen"
+      "reasoning": "Detailed explanation: Why this type? What does it reveal? How does it answer the user's question or reveal insights?"
     }
   ],
   "relations": [
     {
       "type": "key" | "time" | "category" | "semantic",
-      "sourceColumn": "Column name from file 1",
-      "targetColumn": "Column name from file 2",
+      "sourceColumn": "Exact column name from file 1",
+      "targetColumn": "Exact column name from file 2",
       "confidence": 0.0-1.0,
-      "description": "Description of the relation"
+      "description": "Clear description of the relationship"
     }
   ],
-  "reasoning": "Overall reasoning for all decisions and visualizations",
+  "reasoning": "Overall strategy: How do the visualizations work together? What story do they tell? What insights do they reveal?",
   "metadata": {
-    "insights": ["Insight 1", "Insight 2"],
-    "assumptions": ["Assumption 1", "Assumption 2"]
+    "insights": ["Key insight 1", "Key insight 2", "Actionable finding"],
+    "assumptions": ["Assumption about data quality", "Assumption about relationships"]
   }
 }
 
-IMPORTANT:
-${dataMeshRelations.length > 0 
-  ? "- Use the pre-defined Data Mesh relations provided above when determining visualization methods\n- The relations have been carefully analyzed and should guide your visualization choices\n- Explain how each visualization leverages or represents the defined relations"
-  : "- Identify all relevant relations between files"}
-- Choose appropriate visualizations based on the data, relations, and user prompt
-- Explain each decision clearly
-- Consider the user prompt when selecting visualizations`;
+CRITICAL QUALITY CHECKS:
+- Verify all column names exist in the actual data
+- Ensure data types match visualization requirements
+- Use appropriate aggregations for the data structure
+- Create a logical sequence of visualizations (overview → detail)
+- Provide clear, actionable reasoning for each visualization
+- Consider the user's prompt and analytical goals
+- Leverage data mesh relations when available
+
+Remember: Quality over quantity. Better to have 3-4 excellent, well-reasoned visualizations than 10 generic ones.`;
   }
 
   private buildDataMeshPrompt(
@@ -302,6 +435,7 @@ Create a JSON response with the following structure:
 {
   "relations": [
     {
+      "title": "Short, descriptive title (3-8 words) summarizing the relation (e.g., 'Customer Order Chain', 'Revenue Aggregation', 'Date Sequence')",
       "elements": [
         {
           "name": "Element name (can be a column name, file name, specific data value, or conceptual element)",
@@ -343,19 +477,25 @@ CRITICAL GUIDELINES FOR CREATING RELATIONS:
    - File-level: When entire files relate conceptually
    - Mixed: Combine different granularities when it makes sense
 
-4. RELATION EXPLANATION:
+4. RELATION TITLE:
+   - Create a concise, descriptive title (3-8 words) that summarizes the relation
+   - Use clear, business-friendly language (e.g., "Customer Order Chain", "Revenue Aggregation", "Date Sequence")
+   - The title should give an immediate overview of what the relation represents
+   - Avoid generic titles like "Relation 1" or "Connection" - be specific
+
+5. RELATION EXPLANATION:
    - Must explain how ALL elements connect, not just pairs
    - Describe the type of relationship (hierarchical, transactional, categorical, temporal, etc.)
    - Include business context when possible
    - Be specific about the nature of the connection
 
-5. NETWORK STRUCTURE:
+6. NETWORK STRUCTURE:
    - Aim for a balanced network: not too sparse (few relations) or too dense (everything connected)
    - Identify key hub elements (elements that appear in multiple relations)
    - Create relations that reveal data quality issues or inconsistencies
    - Consider both explicit connections (same values) and implicit connections (semantic relationships)
 
-6. SOURCE INFORMATION:
+7. SOURCE INFORMATION:
    - ALWAYS include accurate source information (file, column, rowIndex) for traceability
    - Use rowIndex only when referring to specific data values, not entire columns
    - Omit optional fields (column, rowIndex) when not applicable
@@ -363,15 +503,18 @@ CRITICAL GUIDELINES FOR CREATING RELATIONS:
 EXAMPLES:
 
 Good 2-element relation:
-- "customer_id" column in orders.csv ↔ "id" column in customers.csv
+- Title: "Customer Order Link"
+- Elements: "customer_id" column in orders.csv ↔ "id" column in customers.csv
 - Explanation: "Foreign key relationship linking orders to their customers"
 
 Good 3-element relation:
-- "order_id" in orders.csv, "order_id" in payments.csv, "order_id" in shipments.csv
+- Title: "Order Transaction Chain"
+- Elements: "order_id" in orders.csv, "order_id" in payments.csv, "order_id" in shipments.csv
 - Explanation: "Transaction chain connecting an order to its payment and shipment records"
 
 Good 4+ element relation:
-- All "revenue" columns across different ad platform files (google_ads, meta_ads, etc.)
+- Title: "Multi-Platform Revenue Aggregation"
+- Elements: All "revenue" columns across different ad platform files (google_ads, meta_ads, etc.)
 - Explanation: "Aggregated revenue metrics from multiple advertising platforms, representing total marketing spend"
 
 IMPORTANT:

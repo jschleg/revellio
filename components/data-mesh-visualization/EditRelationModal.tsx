@@ -7,12 +7,14 @@ import { SelectionModeIndicator } from "./SelectionModeIndicator";
 interface EditRelationModalProps {
   relation: DataMeshRelation;
   relationIndex: number;
+  editedTitle: string;
   editedExplanation: string;
   editingConnectionPoint: number | null;
   strokeColor: string;
   onClose: () => void;
   onSave: () => void;
   onRemove: () => void;
+  onTitleChange: (value: string) => void;
   onExplanationChange: (value: string) => void;
   onConnectionPointEdit: (point: number | null) => void;
   onCancelSelection: () => void;
@@ -21,12 +23,14 @@ interface EditRelationModalProps {
 export function EditRelationModal({
   relation,
   relationIndex,
+  editedTitle,
   editedExplanation,
   editingConnectionPoint,
   strokeColor,
   onClose,
   onSave,
   onRemove,
+  onTitleChange,
   onExplanationChange,
   onConnectionPointEdit,
   onCancelSelection,
@@ -130,18 +134,32 @@ export function EditRelationModal({
               </div>
             </div>
 
-            {/* Edit Field */}
-            <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Relation Explanation
-              </label>
-              <textarea
-                value={editedExplanation}
-                onChange={(e) => onExplanationChange(e.target.value)}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-purple-400"
-                rows={4}
-                placeholder="Enter relation explanation..."
-              />
+            {/* Edit Fields */}
+            <div className="mb-4 space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Relation Title
+                </label>
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-purple-400"
+                  placeholder="Enter relation title..."
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Relation Explanation
+                </label>
+                <textarea
+                  value={editedExplanation}
+                  onChange={(e) => onExplanationChange(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-purple-400"
+                  rows={4}
+                  placeholder="Enter relation explanation..."
+                />
+              </div>
             </div>
 
             {/* Action Buttons */}

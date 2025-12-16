@@ -32,6 +32,7 @@ export function DataMeshVisualization({
   const [selectedRelations, setSelectedRelations] = useState<Set<number>>(new Set());
   const [hoveredRelation, setHoveredRelation] = useState<number | null>(null);
   const [editingRelation, setEditingRelation] = useState<number | null>(null);
+  const [editedTitle, setEditedTitle] = useState<string>("");
   const [editedExplanation, setEditedExplanation] = useState<string>("");
   const [editingConnectionPoint, setEditingConnectionPoint] = useState<number | null>(null);
   const [localRelations, setLocalRelations] = useState<DataMeshRelation[]>(dataMeshOutput.relations);
@@ -110,12 +111,14 @@ export function DataMeshVisualization({
   const openEditWindow = useCallback((index: number) => {
     const relation = localRelations[index];
     setEditingRelation(index);
+    setEditedTitle(relation.title);
     setEditedExplanation(relation.relationExplanation);
     setEditingConnectionPoint(null);
   }, [localRelations]);
 
   const closeEditWindow = useCallback(() => {
     setEditingRelation(null);
+    setEditedTitle("");
     setEditedExplanation("");
     setEditingConnectionPoint(null);
   }, []);
@@ -126,6 +129,7 @@ export function DataMeshVisualization({
     const updatedRelations = [...localRelations];
     updatedRelations[editingRelation] = {
       ...updatedRelations[editingRelation],
+      title: editedTitle,
       relationExplanation: editedExplanation,
     };
     
@@ -134,7 +138,7 @@ export function DataMeshVisualization({
       onUpdateRelations(updatedRelations);
     }
     closeEditWindow();
-  }, [editingRelation, localRelations, editedExplanation, onUpdateRelations, closeEditWindow]);
+  }, [editingRelation, localRelations, editedTitle, editedExplanation, onUpdateRelations, closeEditWindow]);
 
   const removeRelation = useCallback(() => {
     if (editingRelation === null) return;
@@ -517,12 +521,14 @@ export function DataMeshVisualization({
         <EditRelationModal
           relation={currentRelation}
           relationIndex={editingRelation}
+          editedTitle={editedTitle}
           editedExplanation={editedExplanation}
           editingConnectionPoint={editingConnectionPoint}
           strokeColor={relationStrokeColor}
           onClose={closeEditWindow}
           onSave={saveEditedRelation}
           onRemove={removeRelation}
+          onTitleChange={setEditedTitle}
           onExplanationChange={setEditedExplanation}
           onConnectionPointEdit={setEditingConnectionPoint}
           onCancelSelection={() => setEditingConnectionPoint(null)}

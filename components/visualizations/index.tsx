@@ -70,16 +70,16 @@ export function DynamicVisualization({
   // Map visualization types to components
   switch (instruction.type) {
     case "bar-chart":
-      return <BarChartVisualization instruction={instruction} data={data} />;
+      return <BarChartVisualization instruction={instruction} data={data} csvData={csvData} />;
     
     case "line-chart":
-      return <LineChartVisualization instruction={instruction} data={data} />;
+      return <LineChartVisualization instruction={instruction} data={data} csvData={csvData} />;
     
     case "pie-chart":
       return <PieChartVisualization instruction={instruction} data={data} />;
     
     case "scatter-plot":
-      return <ScatterPlotVisualization instruction={instruction} data={data} />;
+      return <ScatterPlotVisualization instruction={instruction} data={data} csvData={csvData} />;
     
     case "table":
       return <DataTableVisualization instruction={instruction} data={data} />;

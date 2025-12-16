@@ -146,17 +146,71 @@ export interface Explanation {
 }
 
 /**
+ * Data point identifier - exactly identifies a data point in the original file
+ */
+export interface DataPointIdentifier {
+  file: string; // Exact file name
+  column: string; // Exact column name
+  rowIndex?: number; // Optional: specific row index (0-based), if not provided, use all rows
+}
+
+/**
+ * Complete visualization schema - defines the exact structure and data points for a visualization
+ */
+export interface VisualizationSchema {
+  // Exact data point identifiers - defines which data points to use from original files
+  dataPoints: DataPointIdentifier[];
+  
+  // Complete structure for the visualization
+  structure: {
+    // For charts: defines axes, series, etc.
+    xAxis?: {
+      column: string; // Column name for X-axis
+      file: string; // Source file
+      type?: "categorical" | "numerical" | "temporal";
+    };
+    yAxis?: {
+      columns: Array<{
+        column: string; // Column name for Y-axis
+        file: string; // Source file
+        label?: string; // Display label
+      }>;
+    };
+    // For aggregated views: defines grouping and aggregation
+    groupBy?: {
+      column: string;
+      file: string;
+    };
+    aggregate?: {
+      method: "sum" | "avg" | "count" | "min" | "max";
+      column: string;
+      file: string;
+    };
+    // Additional visualization-specific configuration
+    [key: string]: unknown;
+  };
+  
+  // Aggregation method if needed
+  aggregation?: "sum" | "avg" | "count" | "min" | "max" | null;
+  
+  // Filters to apply
+  filters?: Record<string, unknown>;
+}
+
+/**
  * Unified AI output structure
  */
 export interface VisualizationInstruction {
   type: VisualizationType;
   module: string; // Which visualization module to use
   config: {
-    dataSource: string; // Which CSV file(s) to use
-    columns?: string[]; // Which columns to visualize
-    aggregation?: "sum" | "avg" | "count" | null; // Optional aggregation method
-    filters?: Record<string, unknown>; // Optional filters
+    dataSource: string; // Which CSV file(s) to use (for backward compatibility)
+    columns?: string[]; // Which columns to visualize (for backward compatibility)
+    aggregation?: "sum" | "avg" | "count" | null; // Optional aggregation method (for backward compatibility)
+    filters?: Record<string, unknown>; // Optional filters (for backward compatibility)
   };
+  // Complete schema - defines exact data points and structure for this visualization
+  schema?: VisualizationSchema; // Optional for backward compatibility, but should always be provided by AI
   reasoning: string; // Why this visualization was chosen
 }
 

@@ -3,37 +3,83 @@
 import { ResponsiveScatterPlot } from "@nivo/scatterplot";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme } from "./theme";
-import { validateColumns, getErrorMessage } from "./utils";
+import { validateColumns, getErrorMessage, extractDataFromSchema, getDataForFileColumn } from "./utils";
 
 interface ScatterPlotVisualizationProps {
   instruction: VisualizationInstruction;
   data: CSVData;
+  csvData: CSVData[];
 }
 
-export function ScatterPlotVisualization({ instruction, data }: ScatterPlotVisualizationProps) {
-  const { columns = [] } = instruction.config;
+export function ScatterPlotVisualization({ instruction, data, csvData }: ScatterPlotVisualizationProps) {
+  // Use schema if available, otherwise fall back to config (backward compatibility)
+  const schema = instruction.schema;
+  let xCol: string;
+  let yCol: string;
+  let dataPoints: Array<{ x: number; y: number }>;
 
-  // Validation
-  if (columns.length < 2) {
-    return getErrorMessage("Scatter plot requires at least 2 columns");
+  if (schema && schema.structure.xAxis && schema.structure.yAxis && schema.structure.yAxis.columns.length > 0) {
+    // Use schema to get exact data points from original files
+    const xAxis = schema.structure.xAxis;
+    const yAxis = schema.structure.yAxis.columns[0];
+    
+    xCol = xAxis.column;
+    yCol = yAxis.column;
+
+    // Get data from the exact files specified in schema
+    const xData = getDataForFileColumn(xAxis.file, xAxis.column, csvData);
+    const yData = getDataForFileColumn(yAxis.file, yAxis.column, csvData);
+
+    // Match rows by index (assuming same file or matching row indices)
+    // If from same file, use that file's rows directly
+    if (xAxis.file === yAxis.file) {
+      const fileData = csvData.find((d) => d.fileName === xAxis.file);
+      if (fileData) {
+        dataPoints = fileData.rows
+          .map((row) => {
+            const x = Number(row[xCol]);
+            const y = Number(row[yCol]);
+            if (isNaN(x) || isNaN(y)) return null;
+            return { x, y };
+          })
+          .filter((point): point is { x: number; y: number } => point !== null);
+      } else {
+        dataPoints = [];
+      }
+    } else {
+      // Different files - match by row index
+      const minLength = Math.min(xData.values.length, yData.values.length);
+      dataPoints = Array.from({ length: minLength }, (_, i) => {
+        const x = Number(xData.values[i]);
+        const y = Number(yData.values[i]);
+        if (isNaN(x) || isNaN(y)) return null;
+        return { x, y };
+      }).filter((point): point is { x: number; y: number } => point !== null);
+    }
+  } else {
+    // Fallback to config (backward compatibility)
+    const { columns = [] } = instruction.config;
+
+    if (columns.length < 2) {
+      return getErrorMessage("Scatter plot requires at least 2 columns");
+    }
+
+    const validation = validateColumns(data, columns);
+    if (!validation.valid) {
+      return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
+    }
+
+    [xCol, yCol] = columns;
+
+    dataPoints = data.rows
+      .map((row) => {
+        const x = Number(row[xCol]);
+        const y = Number(row[yCol]);
+        if (isNaN(x) || isNaN(y)) return null;
+        return { x, y };
+      })
+      .filter((point): point is { x: number; y: number } => point !== null);
   }
-
-  const validation = validateColumns(data, columns);
-  if (!validation.valid) {
-    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
-  }
-
-  const [xCol, yCol] = columns;
-
-  // Prepare chart data - Nivo expects array of { id, data: [{ x, y }] }
-  const dataPoints = data.rows
-    .map((row) => {
-      const x = Number(row[xCol]);
-      const y = Number(row[yCol]);
-      if (isNaN(x) || isNaN(y)) return null;
-      return { x, y };
-    })
-    .filter((point): point is { x: number; y: number } => point !== null);
 
   const chartData = [
     {

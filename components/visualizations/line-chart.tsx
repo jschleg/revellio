@@ -3,44 +3,88 @@
 import { ResponsiveLine } from "@nivo/line";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme, colorSchemes } from "./theme";
-import { validateColumns, getErrorMessage, parseAndSortDates } from "./utils";
+import { validateColumns, getErrorMessage, parseAndSortDates, extractDataFromSchema, getDataForFileColumn } from "./utils";
 
 interface LineChartVisualizationProps {
   instruction: VisualizationInstruction;
   data: CSVData;
+  csvData: CSVData[];
 }
 
-export function LineChartVisualization({ instruction, data }: LineChartVisualizationProps) {
-  const { columns = [] } = instruction.config;
+export function LineChartVisualization({ instruction, data, csvData }: LineChartVisualizationProps) {
+  // Use schema if available, otherwise fall back to config (backward compatibility)
+  const schema = instruction.schema;
+  let xCol: string;
+  let yCols: string[];
+  let seriesData: Array<{ id: string; data: Array<{ x: string; y: number }> }>;
 
-  // Validation
-  if (columns.length < 2) {
-    return getErrorMessage("Line chart requires at least 2 columns");
+  if (schema && schema.structure.xAxis && schema.structure.yAxis) {
+    // Use schema to get exact data points from original files
+    const xAxis = schema.structure.xAxis;
+    const yAxis = schema.structure.yAxis;
+    
+    xCol = xAxis.column;
+    yCols = yAxis.columns.map((col) => col.column);
+
+    // Get the file data - prefer xAxis file, or use first available
+    const primaryFile = csvData.find((d) => d.fileName === xAxis.file) || csvData[0];
+    
+    if (!primaryFile) {
+      return getErrorMessage("No data file found");
+    }
+
+    // Prepare chart data - Nivo expects array of { id, data: [{ x, y }] }
+    seriesData = yAxis.columns.map((yColConfig) => {
+      const yCol = yColConfig.column;
+      // Use data from the file specified in schema, or primary file
+      const fileData = csvData.find((d) => d.fileName === yColConfig.file) || primaryFile;
+      
+      const dataPoints = fileData.rows
+        .map((row) => {
+          const x = row[xCol];
+          const y = Number(row[yCol]);
+          if (x === null || x === undefined || isNaN(y)) return null;
+          return { x: String(x), y };
+        })
+        .filter((point): point is { x: string; y: number } => point !== null);
+
+      return {
+        id: yColConfig.label || yCol,
+        data: parseAndSortDates(dataPoints),
+      };
+    });
+  } else {
+    // Fallback to config (backward compatibility)
+    const { columns = [] } = instruction.config;
+
+    if (columns.length < 2) {
+      return getErrorMessage("Line chart requires at least 2 columns");
+    }
+
+    const validation = validateColumns(data, columns);
+    if (!validation.valid) {
+      return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
+    }
+
+    [xCol, ...yCols] = columns;
+
+    // Prepare chart data - Nivo expects array of { id, data: [{ x, y }] }
+    seriesData = yCols.map((yCol) => {
+      const dataPoints = data.rows
+        .map((row) => {
+          const x = row[xCol];
+          const y = Number(row[yCol]);
+          if (x === null || x === undefined || isNaN(y)) return null;
+          return { x: String(x), y };
+        })
+        .filter((point): point is { x: string; y: number } => point !== null);
+
+      return {
+        id: yCol,
+        data: parseAndSortDates(dataPoints),
+      };
+    });
   }
-
-  const validation = validateColumns(data, columns);
-  if (!validation.valid) {
-    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
-  }
-
-  const [xCol, ...yCols] = columns;
-
-  // Prepare chart data - Nivo expects array of { id, data: [{ x, y }] }
-  const seriesData = yCols.map((yCol) => {
-    const dataPoints = data.rows
-      .map((row) => {
-        const x = row[xCol];
-        const y = Number(row[yCol]);
-        if (x === null || x === undefined || isNaN(y)) return null;
-        return { x: String(x), y };
-      })
-      .filter((point): point is { x: string; y: number } => point !== null);
-
-    return {
-      id: yCol,
-      data: parseAndSortDates(dataPoints),
-    };
-  });
 
   return (
     <div className="h-[500px] w-full rounded-lg border border-zinc-200/50 bg-white dark:border-zinc-800/50 dark:bg-zinc-900">

@@ -3,31 +3,55 @@
 import { ResponsiveBar } from "@nivo/bar";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme, getColorFromString } from "./theme";
-import { applyAggregation, validateColumns, getErrorMessage } from "./utils";
+import { applyAggregation, validateColumns, getErrorMessage, extractDataFromSchema, getDataForFileColumn } from "./utils";
 
 interface BarChartVisualizationProps {
   instruction: VisualizationInstruction;
   data: CSVData;
+  csvData: CSVData[];
 }
 
-export function BarChartVisualization({ instruction, data }: BarChartVisualizationProps) {
-  const { columns = [], aggregation } = instruction.config;
+export function BarChartVisualization({ instruction, data, csvData }: BarChartVisualizationProps) {
+  // Use schema if available, otherwise fall back to config (backward compatibility)
+  const schema = instruction.schema;
+  let indexBy: string;
+  let keys: string[];
+  let processedData: Record<string, unknown>[];
+  let aggregation: "sum" | "avg" | "count" | "min" | "max" | null | undefined;
 
-  // Validation
-  if (columns.length < 2) {
-    return getErrorMessage("Bar chart requires at least 2 columns");
+  if (schema && schema.structure.xAxis && schema.structure.yAxis) {
+    // Use schema to get exact data points from original files
+    const xAxis = schema.structure.xAxis;
+    const yAxis = schema.structure.yAxis;
+    
+    indexBy = xAxis.column;
+    keys = yAxis.columns.map((col) => col.column);
+    aggregation = schema.aggregation ?? null;
+
+    // Extract data from schema - get all rows from identified files
+    const extracted = extractDataFromSchema(schema, csvData);
+    
+    // Apply aggregation if needed
+    const allColumns = [indexBy, ...keys];
+    processedData = applyAggregation(extracted.rows, allColumns, aggregation);
+  } else {
+    // Fallback to config (backward compatibility)
+    const { columns = [] } = instruction.config;
+
+    if (columns.length < 2) {
+      return getErrorMessage("Bar chart requires at least 2 columns");
+    }
+
+    const validation = validateColumns(data, columns);
+    if (!validation.valid) {
+      return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
+    }
+
+    aggregation = instruction.config.aggregation ?? null;
+    processedData = applyAggregation(data.rows, columns, aggregation);
+    indexBy = columns[0];
+    keys = columns.slice(1);
   }
-
-  const validation = validateColumns(data, columns);
-  if (!validation.valid) {
-    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
-  }
-
-  // Apply aggregation
-  const processedData = applyAggregation(data.rows, columns, aggregation ?? null);
-
-  const indexBy = columns[0];
-  const keys = columns.slice(1);
 
   // Generate color scheme
   const getColor = (bar: { data: Record<string, unknown> }) => {

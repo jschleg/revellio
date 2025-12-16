@@ -289,11 +289,78 @@ Create a JSON response with this structure:
         "aggregation": "sum" | "avg" | "count" | null,
         "filters": {}
       },
+      "schema": {
+        "dataPoints": [
+          {
+            "file": "exact-filename.csv",
+            "column": "exact-column-name",
+            "rowIndex": null // Omit or set to null to use ALL rows from this column
+          }
+          // ... all data points needed for this visualization
+        ],
+        "structure": {
+          // Structure depends on visualization type:
+          // For bar-chart, line-chart, scatter-plot:
+          "xAxis": {
+            "column": "exact-column-name",
+            "file": "exact-filename.csv",
+            "type": "categorical" | "numerical" | "temporal"
+          },
+          "yAxis": {
+            "columns": [
+              {
+                "column": "exact-column-name",
+                "file": "exact-filename.csv",
+                "label": "Display label (optional)"
+              }
+            ]
+          },
+          // For aggregated visualizations:
+          "groupBy": {
+            "column": "exact-column-name",
+            "file": "exact-filename.csv"
+          },
+          "aggregate": {
+            "method": "sum" | "avg" | "count" | "min" | "max",
+            "column": "exact-column-name",
+            "file": "exact-filename.csv"
+          }
+        },
+        "aggregation": "sum" | "avg" | "count" | "min" | "max" | null,
+        "filters": {}
+      },
       "reasoning": "Why this visualization type was chosen for this relation and how it displays the relationship"
     }
     // ... one visualization per relation
   ],
   "reasoning": "Brief summary: how the visualizations represent the relations"
+}
+
+CRITICAL REQUIREMENTS FOR SCHEMA:
+- The "schema" field is MANDATORY and must be COMPLETE for each visualization
+- "dataPoints" must list ALL data points needed, with exact file and column names
+- "structure" must define the complete visualization structure (xAxis, yAxis, groupBy, etc.)
+- Use ALL data from files (omit rowIndex or set to null) unless specific rows are needed
+- Verify all file names and column names exist in the metadata
+- The schema must be sufficient to render the visualization without additional inference
+- IMPORTANT: The schema defines which data points from the ORIGINAL files are used
+- IMPORTANT: Always set rowIndex to null or omit it to use ALL rows from the identified columns
+- IMPORTANT: The dataPoints array should include all columns needed for the visualization
+
+EXAMPLE SCHEMA FOR SCATTER-PLOT:
+{
+  "dataPoints": [
+    { "file": "sales.csv", "column": "price", "rowIndex": null },
+    { "file": "sales.csv", "column": "quantity", "rowIndex": null }
+  ],
+  "structure": {
+    "xAxis": { "column": "price", "file": "sales.csv", "type": "numerical" },
+    "yAxis": {
+      "columns": [{ "column": "quantity", "file": "sales.csv", "label": "Quantity Sold" }]
+    }
+  },
+  "aggregation": null,
+  "filters": {}
 }
 
 CRITICAL REQUIREMENTS:
@@ -302,16 +369,8 @@ CRITICAL REQUIREMENTS:
 - Use EXACT file names from metadata
 - Verify all columns exist before including them
 - Choose appropriate aggregation based on data characteristics
-- Provide clear reasoning for each visualization choice
-- DO NOT generate relations, insights, or assumptions - only visualizations
-
-CRITICAL REQUIREMENTS:
-- Generate ONE visualization per relation
-- Use EXACT column names from metadata (case-sensitive)
-- Use EXACT file names from metadata
-- Verify all columns exist before including them
-- Choose appropriate aggregation based on data characteristics
 - Provide clear, specific reasoning for each visualization choice
+- ALWAYS include a complete "schema" field with all necessary data point identifiers
 
 METADATA:
 ${metadataSummary}

@@ -2,6 +2,8 @@
 
 import { ResponsiveBoxPlot } from "@nivo/boxplot";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface BoxPlotVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +14,12 @@ export function BoxPlotVisualization({ instruction, data }: BoxPlotVisualization
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Box plot requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Box plot requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [groupCol, valueCol] = columns;
@@ -67,13 +70,6 @@ export function BoxPlotVisualization({ instruction, data }: BoxPlotVisualization
         value="value"
         margin={{ top: 60, right: 140, bottom: 60, left: 60 }}
         padding={0.12}
-        enableLabel={false}
-        labelSkipWidth={12}
-        labelSkipHeight={12}
-        labelTextColor={{
-          from: "color",
-          modifiers: [["darker", 1.2]],
-        }}
         axisTop={{
           tickSize: 5,
           tickPadding: 5,
@@ -121,15 +117,7 @@ export function BoxPlotVisualization({ instruction, data }: BoxPlotVisualization
           from: "color",
           modifiers: [["darker", 0.3]],
         }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme as any}
       />
     </div>
   );

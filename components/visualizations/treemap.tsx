@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveTreeMap } from "@nivo/treemap";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface TreemapVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +15,12 @@ export function TreemapVisualization({ instruction, data }: TreemapVisualization
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Treemap requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Treemap requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [categoryCol, valueCol] = columns;
@@ -69,15 +73,7 @@ export function TreemapVisualization({ instruction, data }: TreemapVisualization
           modifiers: [["darker", 0.1]],
         }}
         colors={getColor}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
         tooltip={({ node }) => (
           <div className="rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
             <div className="font-semibold">{node.id}</div>

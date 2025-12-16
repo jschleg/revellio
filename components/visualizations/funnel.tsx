@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveFunnel } from "@nivo/funnel";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface FunnelVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +15,12 @@ export function FunnelVisualization({ instruction, data }: FunnelVisualizationPr
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Funnel chart requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Funnel chart requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [labelCol, valueCol] = columns;
@@ -54,15 +58,7 @@ export function FunnelVisualization({ instruction, data }: FunnelVisualizationPr
         currentPartSizeExtension={10}
         currentBorderWidth={40}
         motionConfig="wobbly"
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

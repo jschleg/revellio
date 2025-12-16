@@ -24,7 +24,7 @@ export function BarChartVisualization({ instruction, data }: BarChartVisualizati
   }
 
   // Apply aggregation
-  const processedData = applyAggregation(data.rows, columns, aggregation);
+  const processedData = applyAggregation(data.rows, columns, aggregation ?? null);
 
   const indexBy = columns[0];
   const keys = columns.slice(1);

@@ -55,7 +55,6 @@ export function ScatterPlotVisualization({ instruction, data }: ScatterPlotVisua
         axisTop={null}
         axisRight={null}
         axisBottom={{
-          orient: "bottom",
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
@@ -64,7 +63,6 @@ export function ScatterPlotVisualization({ instruction, data }: ScatterPlotVisua
           legendOffset: 46,
         }}
         axisLeft={{
-          orient: "left",
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,

@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveCalendar } from "@nivo/calendar";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface CalendarVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,13 +15,12 @@ export function CalendarVisualization({ instruction, data }: CalendarVisualizati
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Calendar chart requires date column and value column
-        </p>
-      </div>
-    );
+    return getErrorMessage("Calendar chart requires date column and value column");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [dateCol, valueCol] = columns;
@@ -77,15 +79,7 @@ export function CalendarVisualization({ instruction, data }: CalendarVisualizati
             itemDirection: "right-to-left",
           },
         ]}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

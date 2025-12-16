@@ -154,7 +154,7 @@ export interface VisualizationInstruction {
   config: {
     dataSource: string; // Which CSV file(s) to use
     columns?: string[]; // Which columns to visualize
-    aggregation?: string; // Optional aggregation method
+    aggregation?: "sum" | "avg" | "count" | null; // Optional aggregation method
     filters?: Record<string, unknown>; // Optional filters
   };
   reasoning: string; // Why this visualization was chosen

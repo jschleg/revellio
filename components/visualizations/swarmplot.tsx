@@ -2,6 +2,8 @@
 
 import { ResponsiveSwarmPlot } from "@nivo/swarmplot";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface SwarmPlotVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +14,12 @@ export function SwarmPlotVisualization({ instruction, data }: SwarmPlotVisualiza
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Swarm plot requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Swarm plot requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [groupCol, valueCol] = columns;
@@ -42,7 +45,6 @@ export function SwarmPlotVisualization({ instruction, data }: SwarmPlotVisualiza
       <ResponsiveSwarmPlot
         data={chartData}
         groups={groups}
-        identity="id"
         value="value"
         valueFormat=" >-.2f"
         valueScale={{ type: "linear", min: "auto", max: "auto", reverse: false }}
@@ -90,15 +92,7 @@ export function SwarmPlotVisualization({ instruction, data }: SwarmPlotVisualiza
           legendPosition: "middle",
           legendOffset: -76,
         }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

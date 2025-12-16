@@ -40,7 +40,7 @@ export function PieChartVisualization({ instruction, data }: PieChartVisualizati
   }));
 
   // Generate color scheme
-  const getColor = (d: { id: string }) => getColorFromString(d.id);
+  const getColor = (d: { id: string | number }) => getColorFromString(String(d.id));
 
   return (
     <div className="h-[500px] w-full rounded-lg border border-zinc-200/50 bg-white dark:border-zinc-800/50 dark:bg-zinc-900">

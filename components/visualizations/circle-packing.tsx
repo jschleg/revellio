@@ -2,6 +2,8 @@
 
 import { ResponsiveCirclePacking } from "@nivo/circle-packing";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface CirclePackingVisualizationProps {
   instruction: VisualizationInstruction;
@@ -15,13 +17,12 @@ export function CirclePackingVisualization({
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Circle packing requires at least 2 columns (category, value)
-        </p>
-      </div>
-    );
+    return getErrorMessage("Circle packing requires at least 2 columns (category, value)");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [categoryCol, valueCol] = columns;
@@ -67,15 +68,7 @@ export function CirclePackingVisualization({
           from: "color",
           modifiers: [["darker", 0.5]],
         }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
         tooltip={({ id, value, formattedValue }) => (
           <div className="rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
             <div className="font-semibold">{id}</div>

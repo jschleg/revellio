@@ -2,6 +2,8 @@
 
 import { ResponsiveMarimekko } from "@nivo/marimekko";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface MarimekkoVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,13 +14,12 @@ export function MarimekkoVisualization({ instruction, data }: MarimekkoVisualiza
   const { columns = [] } = instruction.config;
 
   if (columns.length < 3) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Marimekko chart requires at least 3 columns (id, dimension, value)
-        </p>
-      </div>
-    );
+    return getErrorMessage("Marimekko chart requires at least 3 columns (id, dimension, value)");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [idCol, dimensionCol, valueCol] = columns;
@@ -55,7 +56,6 @@ export function MarimekkoVisualization({ instruction, data }: MarimekkoVisualiza
         }))}
         margin={{ top: 40, right: 80, bottom: 40, left: 80 }}
         axisTop={{
-          orient: "top",
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
@@ -63,7 +63,6 @@ export function MarimekkoVisualization({ instruction, data }: MarimekkoVisualiza
           legendOffset: 36,
         }}
         axisRight={{
-          orient: "right",
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
@@ -72,7 +71,6 @@ export function MarimekkoVisualization({ instruction, data }: MarimekkoVisualiza
           legendOffset: 70,
         }}
         axisBottom={{
-          orient: "bottom",
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
@@ -82,15 +80,7 @@ export function MarimekkoVisualization({ instruction, data }: MarimekkoVisualiza
         }}
         axisLeft={null}
         colors={{ scheme: "nivo" }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

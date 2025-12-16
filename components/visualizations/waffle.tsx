@@ -2,6 +2,8 @@
 
 import { ResponsiveWaffle } from "@nivo/waffle";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface WaffleVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +14,12 @@ export function WaffleVisualization({ instruction, data }: WaffleVisualizationPr
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Waffle chart requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Waffle chart requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [categoryCol, valueCol] = columns;
@@ -54,8 +57,6 @@ export function WaffleVisualization({ instruction, data }: WaffleVisualizationPr
           modifiers: [["darker", 0.3]],
         }}
         animate={true}
-        motionStiffness={90}
-        motionDamping={11}
         legends={[
           {
             anchor: "top-left",
@@ -81,15 +82,7 @@ export function WaffleVisualization({ instruction, data }: WaffleVisualizationPr
             ],
           },
         ]}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

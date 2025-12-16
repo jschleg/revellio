@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveNetwork } from "@nivo/network";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme, getColorFromString } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface NetworkVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,13 +15,12 @@ export function NetworkVisualization({ instruction, data }: NetworkVisualization
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Network chart requires at least 2 columns (source, target)
-        </p>
-      </div>
-    );
+    return getErrorMessage("Network chart requires at least 2 columns (source, target)");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [sourceCol, targetCol] = columns;
@@ -41,9 +43,9 @@ export function NetworkVisualization({ instruction, data }: NetworkVisualization
     radius: 8 + Math.random() * 4,
   }));
 
-  const links = Array.from(linkMap.entries()).map(([key, value]) => {
+  const links = Array.from(linkMap.entries()).map(([key, linkValue]) => {
     const [source, target] = key.split("->");
-    return { source, target, distance: 50, value };
+    return { source, target, distance: 50, value: linkValue };
   });
 
   return (
@@ -56,24 +58,16 @@ export function NetworkVisualization({ instruction, data }: NetworkVisualization
         repulsivity={6}
         nodeSize={(n) => n.radius}
         activeNodeSize={(n) => n.radius * 1.5}
-        nodeColor={(e) => e.color}
+        nodeColor={(e) => getColorFromString(e.id)}
         nodeBorderWidth={1}
         nodeBorderColor={{
           from: "color",
           modifiers: [["darker", 0.8]],
         }}
-        linkThickness={(n) => 2 + n.value * 2}
+        linkThickness={(n) => 2 + (n.data?.value || 1) * 2}
         linkBlendMode="multiply"
         motionConfig="wobbly"
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

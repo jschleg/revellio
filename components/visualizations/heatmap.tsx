@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveHeatMap } from "@nivo/heatmap";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface HeatmapVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,13 +15,12 @@ export function HeatmapVisualization({ instruction, data }: HeatmapVisualization
   const { columns = [] } = instruction.config;
 
   if (columns.length < 3) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Heatmap requires at least 3 columns (row, column, value)
-        </p>
-      </div>
-    );
+    return getErrorMessage("Heatmap requires at least 3 columns (row, column, value)");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [rowCol, colCol, valueCol] = columns;
@@ -39,14 +41,19 @@ export function HeatmapVisualization({ instruction, data }: HeatmapVisualization
     valueMap.set(key, (valueMap.get(key) || 0) + value);
   });
 
-  // Convert to Nivo format
+  // Convert to Nivo format: array of objects with id and data properties
   const chartData = Array.from(rowSet).map((id) => {
-    const data: Record<string, string | number> = { id };
-    Array.from(colSet).forEach((col) => {
+    const data = Array.from(colSet).map((col) => {
       const key = `${id}::${col}`;
-      data[col] = valueMap.get(key) || 0;
+      return {
+        x: col,
+        y: valueMap.get(key) || 0,
+      };
     });
-    return data;
+    return {
+      id,
+      data,
+    };
   });
 
   const keys = Array.from(colSet);
@@ -55,8 +62,6 @@ export function HeatmapVisualization({ instruction, data }: HeatmapVisualization
     <div className="h-[600px] w-full rounded-lg border border-zinc-200/50 bg-white dark:border-zinc-800/50 dark:bg-zinc-900">
       <ResponsiveHeatMap
         data={chartData}
-        keys={keys}
-        indexBy="id"
         margin={{ top: 100, right: 90, bottom: 60, left: 90 }}
         forceSquare={false}
         axisTop={{
@@ -91,8 +96,7 @@ export function HeatmapVisualization({ instruction, data }: HeatmapVisualization
           legendPosition: "middle",
           legendOffset: 0,
         }}
-        cellOpacity={1}
-        cellBorderColor={{
+        borderColor={{
           from: "color",
           modifiers: [["darker", 0.4]],
         }}
@@ -104,7 +108,7 @@ export function HeatmapVisualization({ instruction, data }: HeatmapVisualization
           type: "sequential",
           scheme: "blues",
           minValue: 0,
-          maxValue: "auto",
+          maxValue: "auto" as any,
         }}
         theme={{
           background: "transparent",

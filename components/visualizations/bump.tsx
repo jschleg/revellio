@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveBump } from "@nivo/bump";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface BumpVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,13 +15,12 @@ export function BumpVisualization({ instruction, data }: BumpVisualizationProps)
   const { columns = [] } = instruction.config;
 
   if (columns.length < 3) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Bump chart requires at least 3 columns (x, series, value)
-        </p>
-      </div>
-    );
+    return getErrorMessage("Bump chart requires at least 3 columns (x, series, value)");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [xCol, seriesCol, valueCol] = columns;
@@ -82,15 +84,7 @@ export function BumpVisualization({ instruction, data }: BumpVisualizationProps)
           legendPosition: "middle",
           legendOffset: -40,
         }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

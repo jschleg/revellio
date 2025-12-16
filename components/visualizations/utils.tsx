@@ -8,7 +8,7 @@ import type { CSVData } from "@/lib/types/data";
 export function applyAggregation(
   data: CSVData["rows"],
   columns: string[],
-  aggregation: "sum" | "avg" | "count" | null
+  aggregation: "sum" | "avg" | "count" | null | undefined
 ): Record<string, unknown>[] {
   if (!aggregation || columns.length < 2) {
     return data.map((row) => {

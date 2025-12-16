@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveStream } from "@nivo/stream";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface StreamVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +15,12 @@ export function StreamVisualization({ instruction, data }: StreamVisualizationPr
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Stream chart requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Stream chart requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [xCol, ...yCols] = columns;
@@ -35,13 +39,12 @@ export function StreamVisualization({ instruction, data }: StreamVisualizationPr
   return (
     <div className="h-[500px] w-full rounded-lg border border-zinc-200/50 bg-white dark:border-zinc-800/50 dark:bg-zinc-900">
       <ResponsiveStream
-        data={chartData}
+        data={chartData as any}
         keys={keys}
         margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
         axisTop={null}
         axisRight={null}
         axisBottom={{
-          orient: "bottom",
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
@@ -65,15 +68,7 @@ export function StreamVisualization({ instruction, data }: StreamVisualizationPr
             symbolShape: "circle",
           },
         ]}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

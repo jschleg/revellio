@@ -2,6 +2,8 @@
 
 import { ResponsiveIcicle } from "@nivo/icicle";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface IcicleVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,11 +14,12 @@ export function IcicleVisualization({ instruction, data }: IcicleVisualizationPr
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">Icicle chart requires at least 2 columns</p>
-      </div>
-    );
+    return getErrorMessage("Icicle chart requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [hierarchyCol, valueCol] = columns;
@@ -52,21 +55,10 @@ export function IcicleVisualization({ instruction, data }: IcicleVisualizationPr
       <ResponsiveIcicle
         data={chartData}
         margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
-        id="name"
-        value="value"
-        cornerRadius={2}
-        padAngle={2}
+        borderRadius={2}
         borderColor={{ theme: "background" }}
         colors={{ scheme: "nivo" }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
         tooltip={({ id, value, formattedValue }) => (
           <div className="rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
             <div className="font-semibold">{id}</div>

@@ -1,7 +1,11 @@
 "use client";
 
+
+// @ts-ignore - No type definitions available
 import { ResponsiveParallelCoordinates } from "@nivo/parallel-coordinates";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface ParallelCoordinatesVisualizationProps {
   instruction: VisualizationInstruction;
@@ -15,13 +19,12 @@ export function ParallelCoordinatesVisualization({
   const { columns = [] } = instruction.config;
 
   if (columns.length < 2) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Parallel coordinates requires at least 2 columns
-        </p>
-      </div>
-    );
+    return getErrorMessage("Parallel coordinates requires at least 2 columns");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   // Prepare data - all columns should be numeric
@@ -69,15 +72,7 @@ export function ParallelCoordinatesVisualization({
         lineOpacity={0.3}
         axesPlan="foreground"
         axesTicksPosition="before"
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
+        theme={nivoTheme}
       />
     </div>
   );

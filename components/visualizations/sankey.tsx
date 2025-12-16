@@ -1,7 +1,10 @@
 "use client";
 
+
 import { ResponsiveSankey } from "@nivo/sankey";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { nivoTheme } from "./theme";
+import { validateColumns, getErrorMessage } from "./utils";
 
 interface SankeyVisualizationProps {
   instruction: VisualizationInstruction;
@@ -12,13 +15,12 @@ export function SankeyVisualization({ instruction, data }: SankeyVisualizationPr
   const { columns = [] } = instruction.config;
 
   if (columns.length < 3) {
-    return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50">
-        <p className="text-sm text-zinc-500">
-          Sankey diagram requires at least 3 columns (source, target, value)
-        </p>
-      </div>
-    );
+    return getErrorMessage("Sankey diagram requires at least 3 columns (source, target, value)");
+  }
+
+  const validation = validateColumns(data, columns);
+  if (!validation.valid) {
+    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
   }
 
   const [sourceCol, targetCol, valueCol] = columns;
@@ -87,25 +89,7 @@ export function SankeyVisualization({ instruction, data }: SankeyVisualizationPr
           from: "color",
           modifiers: [["darker", 1]],
         }}
-        theme={{
-          background: "transparent",
-          text: {
-            fontSize: 11,
-            fill: "currentColor",
-            outlineWidth: 0,
-            outlineColor: "transparent",
-          },
-        }}
-        tooltip={({ link }) => (
-          <div className="rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="font-semibold">
-              {link.source.label} → {link.target.label}
-            </div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Value: {link.value}
-            </div>
-          </div>
-        )}
+        theme={nivoTheme}
       />
     </div>
   );

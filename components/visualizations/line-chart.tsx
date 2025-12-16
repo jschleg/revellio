@@ -106,7 +106,7 @@ export function LineChartVisualization({ instruction, data }: LineChartVisualiza
             ],
           },
         ]}
-        colors={colorSchemes.categorical}
+        colors={[...colorSchemes.categorical]}
         theme={nivoTheme}
       />
     </div>

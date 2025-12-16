@@ -508,13 +508,7 @@ export default function Home() {
               <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               <h2 className="text-xl font-semibold text-foreground">AI Analysis Overview</h2>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {aiOutput.metadata.insights.length}
-                </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Insights</div>
-              </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
               <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {aiOutput.visualizations.length}
@@ -526,12 +520,6 @@ export default function Home() {
                   {aiOutput.relations.length}
                 </div>
                 <div className="text-xs text-zinc-600 dark:text-zinc-400">Relations</div>
-              </div>
-              <div className="rounded-lg bg-white/50 p-3 dark:bg-zinc-900/50">
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {aiOutput.metadata.assumptions.length}
-                </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Assumptions</div>
               </div>
             </div>
           </div>

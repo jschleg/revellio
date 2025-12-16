@@ -124,7 +124,7 @@ Revellio follows a two-step AI-driven workflow that ensures users have control o
   - Array of `VisualizationInstruction` objects
   - Relations (additional ones found)
   - Reasoning for visualization choices
-  - Insights and assumptions
+  - Reasoning for visualization choices
 
 ### Step 5: Visualization Display
 

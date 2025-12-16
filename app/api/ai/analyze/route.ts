@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
       log.info("Unified analysis complete", {
         visualizations: analysis.visualizations.length,
         relations: analysis.relations.length,
-        insights: analysis.metadata.insights.length,
       });
 
       return NextResponse.json(analysis);

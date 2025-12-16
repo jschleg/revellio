@@ -10,7 +10,7 @@ This directory contains a comprehensive, professional data visualization system 
    - `type`: The visualization type (e.g., "bar-chart", "line-chart", "sankey")
    - `module`: Descriptive name for the visualization
    - `config`: Configuration including data source, columns, aggregation
-   - `reasoning`: Why this visualization was chosen and what insights it reveals
+   - `reasoning`: Why this visualization was chosen and how it displays the relation
 
 2. **Dynamic Rendering**: The `DynamicVisualization` component (`index.tsx`) maps visualization types to components using a switch statement.
 

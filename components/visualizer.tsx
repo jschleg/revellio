@@ -1,7 +1,7 @@
 "use client";
 
 import type { UnifiedAIOutput, CSVData } from "@/lib/types/data";
-import { BarChart3, GitBranch, Lightbulb, MessageSquare } from "lucide-react";
+import { BarChart3, GitBranch, MessageSquare } from "lucide-react";
 import { DynamicVisualization } from "./visualizations";
 
 interface VisualizerProps {
@@ -128,48 +128,6 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
         </div>
       )}
 
-      {/* Metadata: Insights and Assumptions */}
-      {(aiOutput.metadata.insights.length > 0 || aiOutput.metadata.assumptions.length > 0) && (
-        <div className="space-y-4">
-          {aiOutput.metadata.insights.length > 0 && (
-            <div className="rounded-lg border border-yellow-200/50 bg-gradient-to-r from-yellow-50 to-yellow-100/50 p-6 dark:border-yellow-800/50 dark:from-yellow-900/20 dark:to-yellow-950/20">
-              <div className="mb-4 flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                <h2 className="text-xl font-semibold text-foreground">Insights</h2>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {aiOutput.metadata.insights.map((insight, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-yellow-300 bg-white/80 p-3 text-sm text-yellow-900 dark:border-yellow-700 dark:bg-zinc-900/50 dark:text-yellow-200"
-                  >
-                    {insight}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {aiOutput.metadata.assumptions.length > 0 && (
-            <div className="rounded-lg border border-blue-200/50 bg-gradient-to-r from-blue-50 to-blue-100/50 p-6 dark:border-blue-800/50 dark:from-blue-900/20 dark:to-blue-950/20">
-              <div className="mb-4 flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <h2 className="text-xl font-semibold text-foreground">Assumptions</h2>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {aiOutput.metadata.assumptions.map((assumption, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-blue-300 bg-white/80 p-3 text-sm text-blue-900 dark:border-blue-700 dark:bg-zinc-900/50 dark:text-blue-200"
-                  >
-                    {assumption}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

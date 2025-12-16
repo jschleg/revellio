@@ -394,7 +394,8 @@ Each relation should contain:
    */
   async dataMesh(
     metadataArray: Metadata[],
-    dataSlices: CSVData[]
+    dataSlices: CSVData[],
+    userPrompt: string = ""
   ): Promise<DataMeshOutput> {
     if (!this.isAvailable()) {
       const errorMsg = "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.";
@@ -403,8 +404,11 @@ Each relation should contain:
     }
 
     try {
-      const prompt = this.buildDataMeshPrompt(metadataArray, dataSlices);
+      const prompt = this.buildDataMeshPrompt(metadataArray, dataSlices, userPrompt);
       console.log("🤖 [AI Service] Sending data mesh request to OpenAI...");
+      if (userPrompt) {
+        console.log("📝 [AI Service] User prompt included in data mesh analysis");
+      }
       
       const response = await this.client!.chat.completions.create({
         model: this.model,
@@ -619,7 +623,8 @@ ${dataMeshRelations.length > 0
    */
   private buildDataMeshPrompt(
     metadataArray: Metadata[],
-    dataSlices: CSVData[]
+    dataSlices: CSVData[],
+    userPrompt: string = ""
   ): string {
     const metadataSummary = metadataArray.map((meta, idx) => {
       return `
@@ -640,6 +645,15 @@ ${JSON.stringify(data.rows, null, 2)}
 `;
     }).join("\n");
 
+    const userPromptSection = userPrompt
+      ? `
+
+USER CONTEXT / ADDITIONAL INSTRUCTIONS:
+${userPrompt}
+
+Please consider this context when identifying relationships and connections.`
+      : "";
+
     return `Perform a comprehensive data mesh network analysis on the following CSV data.
 
 NOTE: Only 20 data points (rows) from each file are provided for relation determination. This is a sample to identify relationships and connections between data elements.
@@ -648,7 +662,7 @@ METADATA:
 ${metadataSummary}
 
 SAMPLE DATA (20 rows per file):
-${dataSlicesSummary}
+${dataSlicesSummary}${userPromptSection}
 
 Create a JSON response with the following structure:
 {

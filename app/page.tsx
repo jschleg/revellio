@@ -36,6 +36,7 @@ export default function Home() {
   const [dataMeshOutput, setDataMeshOutput] = useState<DataMeshOutput | null>(null);
   const [currentRelations, setCurrentRelations] = useState<DataMeshRelation[]>([]);
   const [userPrompt, setUserPrompt] = useState<string>("");
+  const [dataMeshPrompt, setDataMeshPrompt] = useState<string>("");
   const [showMetadata, setShowMetadata] = useState<boolean>(false);
   const [showFileDisplay, setShowFileDisplay] = useState<boolean>(false);
   const [inputPayload, setInputPayload] = useState<{
@@ -90,6 +91,7 @@ export default function Home() {
       const payload = {
         metadataArray,
         dataSlices, // Send 20 rows per file, not all data
+        userPrompt: dataMeshPrompt || "", // Include custom prompt if provided
       };
       setInputPayload(payload);
 
@@ -100,6 +102,7 @@ export default function Home() {
         metadataCount: metadataArray.length,
         dataSlicesCount: dataSlices.length,
         totalRowsInSlices: dataSlices.reduce((sum, data) => sum + data.rows.length, 0),
+        userPrompt: dataMeshPrompt || "(empty)",
       });
 
       const dataMeshResponse = await fetch("/api/ai/data-mesh", {
@@ -307,6 +310,23 @@ export default function Home() {
             <p className="ml-11 text-sm text-zinc-600 dark:text-zinc-400">
               Analyze relationships between your data files. Edit and refine relations before proceeding to visualization analysis.
             </p>
+
+            {/* Data Mesh Prompt Section */}
+            <div className="ml-11 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
+              <h3 className="mb-4 text-lg font-semibold text-foreground">
+                Additional Context (optional)
+              </h3>
+              <textarea
+                value={dataMeshPrompt}
+                onChange={(e) => setDataMeshPrompt(e.target.value)}
+                placeholder="Describe what relationships you expect to find, specific connections to look for, or any domain-specific context..."
+                className="w-full rounded-lg border border-zinc-300/50 bg-background px-4 py-3 text-sm text-foreground placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700/50 dark:placeholder:text-zinc-400"
+                rows={3}
+              />
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                This context helps the AI identify relevant relationships and connections in your data.
+              </p>
+            </div>
             
             {/* Data Mesh Button */}
             <div className="ml-11">

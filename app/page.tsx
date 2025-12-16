@@ -47,6 +47,112 @@ export default function Home() {
   } | null>(null);
 
 
+  const generateSampleDataMesh = (): DataMeshOutput => {
+    const relations: DataMeshRelation[] = [];
+    
+    // Generate relations between files
+    for (let i = 0; i < csvData.length; i++) {
+      for (let j = i + 1; j < csvData.length; j++) {
+        const file1 = csvData[i];
+        const file2 = csvData[j];
+        
+        // File-to-file relation
+        relations.push({
+          element1: file1.fileName,
+          element1Source: { file: file1.fileName },
+          element2: file2.fileName,
+          element2Source: { file: file2.fileName },
+          relationExplanation: `These files are related and can be analyzed together. Both contain structured data that may share common patterns or themes.`,
+        });
+
+        // Column-to-column relations (find similar column names)
+        file1.columns.forEach((col1) => {
+          file2.columns.forEach((col2) => {
+            const col1Lower = col1.toLowerCase();
+            const col2Lower = col2.toLowerCase();
+            
+            // Check for similar column names
+            if (col1Lower === col2Lower || 
+                col1Lower.includes(col2Lower) || 
+                col2Lower.includes(col1Lower) ||
+                col1Lower.includes('date') && col2Lower.includes('date') ||
+                col1Lower.includes('id') && col2Lower.includes('id')) {
+              relations.push({
+                element1: col1,
+                element1Source: { file: file1.fileName, column: col1 },
+                element2: col2,
+                element2Source: { file: file2.fileName, column: col2 },
+                relationExplanation: `Columns "${col1}" and "${col2}" appear to be related, possibly representing the same or similar data across different files.`,
+              });
+            }
+          });
+        });
+      }
+    }
+
+    // Generate column relations within files
+    csvData.forEach((file) => {
+      if (file.columns.length > 1) {
+        for (let i = 0; i < file.columns.length; i++) {
+          for (let j = i + 1; j < file.columns.length; j++) {
+            const col1 = file.columns[i];
+            const col2 = file.columns[j];
+            
+            // Add relation between columns in same file
+            relations.push({
+              element1: col1,
+              element1Source: { file: file.fileName, column: col1 },
+              element2: col2,
+              element2Source: { file: file.fileName, column: col2 },
+              relationExplanation: `Columns "${col1}" and "${col2}" are part of the same dataset and may have contextual relationships.`,
+            });
+          }
+        }
+      }
+    });
+
+    const summary = `Sample data mesh network with ${relations.length} detected relations across ${csvData.length} file(s). This is sample data for development purposes.`;
+
+    return {
+      relations,
+      summary,
+    };
+  };
+
+  const useSampleDataMesh = () => {
+    if (csvData.length === 0) {
+      setError("Please upload files first before using sample data.");
+      return;
+    }
+
+    setError(null);
+    setIsDataMeshProcessing(true);
+    setDataMeshStep("Generating sample data...");
+
+    // Simulate processing delay
+    setTimeout(() => {
+      const metadataExtractor = new MetadataExtractor();
+      const metadataArray = metadataExtractor.extractAll(csvData);
+      setMetadataInput(metadataArray);
+
+      const sampleDataMesh = generateSampleDataMesh();
+      setDataMeshOutput(sampleDataMesh);
+      setCurrentRelations(sampleDataMesh.relations);
+      
+      setInputPayload({
+        metadataArray,
+        dataSlices: csvData.map((data) => ({
+          ...data,
+          rows: data.rows.slice(0, 20),
+        })),
+        userPrompt: dataMeshPrompt || "",
+      });
+
+      setIsDataMeshProcessing(false);
+      setDataMeshStep("");
+    }, 500);
+  };
+
   const startDataMesh = async () => {
     setError(null);
     setIsDataMeshProcessing(true);
@@ -247,8 +353,8 @@ export default function Home() {
               </p>
             </div>
             
-            {/* Data Mesh Button */}
-            <div className="ml-11">
+            {/* Data Mesh Buttons */}
+            <div className="ml-11 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={startDataMesh}
                 disabled={isAnalyzing || isDataMeshProcessing}
@@ -265,6 +371,17 @@ export default function Home() {
                     <span>Analyze Data Mesh</span>
                   </span>
                 )}
+              </button>
+              
+              <button
+                onClick={useSampleDataMesh}
+                disabled={isAnalyzing || isDataMeshProcessing || csvData.length === 0}
+                className="group relative rounded-xl border-2 border-indigo-300 bg-indigo-50 px-6 py-4 font-semibold text-indigo-700 shadow-md transition-all duration-200 hover:bg-indigo-100 hover:shadow-lg hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-900/40"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  <span>Use Sample Relations</span>
+                </span>
               </button>
             </div>
           </div>

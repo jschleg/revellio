@@ -3,7 +3,7 @@
 import { ResponsiveScatterPlot } from "@nivo/scatterplot";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme } from "./theme";
-import { validateColumns, getErrorMessage, extractDataFromSchema, getDataForFileColumn } from "./utils";
+import { validateColumns, getErrorMessage, getDataForFileColumn } from "./utils";
 
 interface ScatterPlotVisualizationProps {
   instruction: VisualizationInstruction;

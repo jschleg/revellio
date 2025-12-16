@@ -506,7 +506,6 @@ export function DataMeshVisualization({
                 onTooltipPositionUpdate={setTooltipPosition}
                 getRelationPaths={getRelationPaths}
                 getRelationColor={getRelationColor}
-                canvasRef={canvasRef}
               />
 
               <DataHierarchy
@@ -527,7 +526,6 @@ export function DataMeshVisualization({
       {editingRelation !== null && currentRelation && (
         <EditRelationModal
           relation={currentRelation}
-          relationIndex={editingRelation}
           editedTitle={editedTitle}
           editedExplanation={editedExplanation}
           editingConnectionPoint={editingConnectionPoint}

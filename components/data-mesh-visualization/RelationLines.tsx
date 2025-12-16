@@ -11,7 +11,6 @@ interface RelationLinesProps {
   onTooltipPositionUpdate: (position: { x: number; y: number }) => void;
   getRelationPaths: (relation: DataMeshRelation) => string[];
   getRelationColor: (index: number, isSelected: boolean, isHovered: boolean) => string;
-  canvasRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function RelationLines({
@@ -23,7 +22,6 @@ export function RelationLines({
   onTooltipPositionUpdate,
   getRelationPaths,
   getRelationColor,
-  canvasRef: _canvasRef,
 }: RelationLinesProps) {
   const handleMouseEnter = (index: number, e: React.MouseEvent) => {
     onRelationHover(index);

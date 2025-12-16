@@ -20,7 +20,6 @@ interface DynamicVisualizationProps {
 export function DynamicVisualization({
   instruction,
   csvData,
-  relations = [],
 }: DynamicVisualizationProps) {
   // Get the data source for this visualization
   const getDataForVisualization = (): CSVData | null => {

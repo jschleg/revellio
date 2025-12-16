@@ -5,7 +5,6 @@ import type { DataMeshRelation } from "@/lib/types/data";
 
 interface EditRelationModalProps {
   relation: DataMeshRelation;
-  relationIndex: number;
   editedTitle: string;
   editedExplanation: string;
   editingConnectionPoint: number | null;
@@ -21,7 +20,6 @@ interface EditRelationModalProps {
 
 export function EditRelationModal({
   relation,
-  relationIndex: _relationIndex,
   editedTitle,
   editedExplanation,
   editingConnectionPoint,

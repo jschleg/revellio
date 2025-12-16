@@ -3,7 +3,7 @@
 import { ResponsivePie } from "@nivo/pie";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme, getColorFromString } from "./theme";
-import { validateColumns, getErrorMessage, extractDataFromSchema, getDataForFileColumn } from "./utils";
+import { validateColumns, getErrorMessage, extractDataFromSchema } from "./utils";
 
 interface PieChartVisualizationProps {
   instruction: VisualizationInstruction;

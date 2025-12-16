@@ -3,7 +3,7 @@
 import { ResponsiveLine } from "@nivo/line";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme, colorSchemes } from "./theme";
-import { validateColumns, getErrorMessage, parseAndSortDates, extractDataFromSchema, getDataForFileColumn } from "./utils";
+import { validateColumns, getErrorMessage, parseAndSortDates } from "./utils";
 
 interface LineChartVisualizationProps {
   instruction: VisualizationInstruction;

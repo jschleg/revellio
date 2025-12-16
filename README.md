@@ -2,16 +2,16 @@
 
 Revellio ist ein KI-gestütztes Analyse- und Visualisierungstool mit Fokus auf Erkenntnisgewinn. Der User liefert Daten, das System übernimmt Analyse, Strukturierung und Darstellung.
 
-## Workflow
-
-Revellio verwendet einen zweistufigen KI-Workflow:
-
-1. **Data Mesh Analyse**: KI erkennt Relationen zwischen Daten (20 Datenpunkte pro Datei)
-2. **User-Bearbeitung**: User kann Relationen überprüfen und bearbeiten
-3. **Visualisierungsanalyse**: KI erstellt Visualisierungsstrategie basierend auf bearbeiteten Relationen
-4. **Visualisierungen**: Dynamische Visualisierungen werden angezeigt
-
 A modern Next.js application built with TypeScript, Tailwind CSS, and shadcn/ui.
+
+## What is Revellio?
+
+Revellio is an AI-powered data analysis and visualization tool that helps users discover insights from CSV data without requiring data science expertise. The system uses a two-step AI workflow:
+
+1. **Data Mesh Analysis**: AI detects relationships between data elements (using 20 data points per file)
+2. **User Review & Edit**: Users can review, edit, and refine detected relations
+3. **Visualization Analysis**: AI creates visualization strategy based on edited relations
+4. **Visualizations**: Dynamic visualizations are rendered based on AI recommendations
 
 ## Prerequisites
 
@@ -74,36 +74,55 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ```
 revellio/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   │   └── ai/            # AI endpoints
-│   │       ├── data-mesh/ # Data mesh analysis
-│   │       └── analyze/   # Visualization analysis
-│   └── page.tsx           # Main application page
-├── components/             # React UI components
-│   ├── data-mesh-visualization/  # Data mesh visualization
-│   ├── visualizations/     # Dynamic visualization components
-│   ├── file-drop.tsx      # File upload component
-│   ├── file-display.tsx   # File data display
-│   └── visualizer.tsx    # Main visualizer component
-├── lib/                   # Core functionality
-│   ├── logger.ts          # Logging utility (Pino)
-│   ├── utils.ts           # General utilities
-│   ├── data/              # Data processing
-│   │   └── csv-parser.ts
-│   ├── analysis/          # Analysis logic (deterministic)
+├── app/                           # Next.js app directory
+│   ├── api/                      # API routes
+│   │   ├── ai/                   # AI endpoints
+│   │   │   ├── data-mesh/        # Data mesh analysis endpoint
+│   │   │   └── analyze/          # Visualization analysis endpoint
+│   │   └── sessions/             # Session management endpoints
+│   ├── hooks/                    # Custom React hooks (NEW)
+│   │   ├── use-session.ts        # Session state management
+│   │   ├── use-data-mesh.ts      # Data mesh processing logic
+│   │   ├── use-visualization.ts  # Visualization processing logic
+│   │   └── use-file-handling.ts  # File upload/parsing logic
+│   ├── page.tsx                  # Main application page (orchestration)
+│   └── layout.tsx                # Root layout
+├── components/                    # React UI components
+│   ├── features/                 # Feature-based components (NEW)
+│   │   ├── file-upload-section.tsx
+│   │   ├── data-mesh-section.tsx
+│   │   ├── visualization-section.tsx
+│   │   └── session-header.tsx
+│   ├── data-mesh-visualization/   # Data mesh visualization components
+│   ├── visualizations/            # Dynamic visualization components
+│   ├── file-drop.tsx             # File upload component
+│   ├── file-display.tsx          # File data display
+│   ├── visualizer.tsx            # Main visualizer component
+│   └── sidebar.tsx               # Session sidebar
+├── lib/                           # Core functionality
+│   ├── ai/                       # AI integration
+│   │   ├── ai-service.ts         # AI service (OpenAI client)
+│   │   └── prompts/              # AI prompt builders
+│   ├── analysis/                 # Analysis logic (deterministic)
 │   │   └── metadata-extractor.ts
-│   ├── ai/                # AI integration
-│   │   └── ai-service.ts  # AI service (dataMesh, unifiedAnalysis)
-│   └── types/             # TypeScript types
-│       └── data.ts
-├── docs/                  # Documentation
-│   ├── workflow.md        # Workflow documentation
+│   ├── data/                     # Data processing
+│   │   └── csv-parser.ts
+│   ├── db/                       # Database
+│   │   └── prisma.ts
+│   ├── services/                 # Business logic services
+│   │   └── session-service.ts    # Session database operations
+│   ├── types/                    # TypeScript types
+│   │   └── data.ts
+│   └── utils/                    # Utility functions
+│       ├── error-handling.ts     # Error handling utilities (NEW)
+│       └── ... (other utils)
+├── docs/                          # Documentation
+│   ├── workflow.md               # Workflow documentation
 │   ├── data-mesh-component.md
 │   └── class-diagram.puml
-├── public/                # Static assets
-│   └── examples/          # Sample CSV files
-└── Project-Spec.md        # Project specification
+├── public/                        # Static assets
+│   └── examples/                 # Sample CSV files
+└── Project-Spec.md               # Project specification
 ```
 
 ## Architecture
@@ -577,6 +596,69 @@ Revellio ist aktuell ein Side-Project mit Startup-Potenzial. Der Fokus liegt auf
 | **Workflow-Optimierung** | Verbesserung von Arbeitsabläufen durch Reduktion manueller Schritte, Zeitaufwand oder Komplexität. |
 | **Blackbox** | System, dessen interne Entscheidungsprozesse für den User nicht nachvollziehbar sind. |
 | **Transparenzprinzip** | Grundsatz, nach dem Annahmen, Entscheidungen und Methodiken offen kommuniziert und erklärbar gemacht werden. |
+
+## For New Developers
+
+### Where to Start Reading Code
+
+**Entry Points:**
+1. **`app/page.tsx`** - Main application page (orchestrates UI and hooks)
+2. **`app/hooks/use-session.ts`** - Session state management logic
+3. **`lib/services/session-service.ts`** - Database operations for sessions
+
+**Core Modules:**
+1. **Data Processing**: `lib/data/csv-parser.ts` - Parses CSV files
+2. **AI Integration**: `lib/ai/ai-service.ts` - OpenAI API client
+3. **Visualization**: `components/visualizer.tsx` - Renders AI-generated visualizations
+
+**Key Flows:**
+1. **File Upload → Parse → Extract Metadata**:
+   - `components/features/file-upload-section.tsx` → `lib/data/csv-parser.ts` → `lib/analysis/metadata-extractor.ts`
+
+2. **Data Mesh Analysis**:
+   - `app/hooks/use-data-mesh.ts` → `app/api/ai/data-mesh/route.ts` → `lib/ai/ai-service.ts`
+
+3. **Visualization Generation**:
+   - `app/hooks/use-visualization.ts` → `app/api/ai/analyze/route.ts` → `lib/ai/ai-service.ts` → `components/visualizer.tsx`
+
+### Code Organization Principles
+
+- **Hooks** (`app/hooks/`) - Business logic and state management
+- **Components** (`components/`) - UI presentation only
+- **Services** (`lib/services/`) - Database and external API operations
+- **Utils** (`lib/utils/`) - Reusable utility functions
+- **Types** (`lib/types/`) - TypeScript type definitions
+
+### Naming Conventions
+
+- **Files**: kebab-case (e.g., `use-session.ts`, `file-drop.tsx`)
+- **Components**: PascalCase (e.g., `FileDrop`, `DataMeshVisualization`)
+- **Hooks**: camelCase with `use` prefix (e.g., `useSession`, `useDataMesh`)
+- **Functions**: camelCase (e.g., `createSession`, `handleFileUpload`)
+- **Types/Interfaces**: PascalCase (e.g., `SessionState`, `CSVData`)
+
+### Error Handling
+
+All errors are handled consistently using utilities from `lib/utils/error-handling.ts`:
+- `getErrorMessage()` - Extract error message from any error type
+- `extractApiError()` - Extract error from API responses
+- All errors are typed and logged appropriately
+
+### Testing & Building
+
+```bash
+# Run type checking
+pnpm exec tsc --noEmit
+
+# Run linter
+pnpm run lint
+
+# Build for production
+pnpm run build
+
+# Start development server
+pnpm dev
+```
 
 ## Learn More
 

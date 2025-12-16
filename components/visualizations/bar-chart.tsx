@@ -3,7 +3,7 @@
 import { ResponsiveBar } from "@nivo/bar";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme, getColorFromString } from "./theme";
-import { applyAggregation, validateColumns, getErrorMessage, extractDataFromSchema, getDataForFileColumn } from "./utils";
+import { applyAggregation, validateColumns, getErrorMessage, extractDataFromSchema } from "./utils";
 
 interface BarChartVisualizationProps {
   instruction: VisualizationInstruction;

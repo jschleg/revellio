@@ -190,7 +190,7 @@ export function getDataForFileColumn(
   file: string,
   column: string,
   csvData: CSVData[]
-): { values: (string | number | boolean | null)[]; rows: CSVData["rows"] } {
+): { values: (string | number | boolean | string[] | null)[]; rows: CSVData["rows"] } {
   const fileData = csvData.find((data) => data.fileName === file);
   if (!fileData || !fileData.columns.includes(column)) {
     return { values: [], rows: [] };

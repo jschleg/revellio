@@ -94,7 +94,29 @@ export type VisualizationType =
   | "table"
   | "scatter-plot"
   | "relational-view"
-  | "aggregated-overview";
+  | "aggregated-overview"
+  | "treemap"
+  | "sankey"
+  | "heatmap"
+  | "radar"
+  | "stream"
+  | "sunburst"
+  | "bump"
+  | "parallel-coordinates"
+  | "network"
+  | "calendar"
+  | "chord"
+  | "circle-packing"
+  | "funnel"
+  | "marimekko"
+  | "swarmplot"
+  | "boxplot"
+  | "bullet"
+  | "icicle"
+  | "radial-bar"
+  | "tree"
+  | "waffle"
+  | "geo";
 
 export interface VisualizationSuggestion {
   type: VisualizationType;

@@ -8,6 +8,27 @@ import { ScatterPlotVisualization } from "./scatter-plot";
 import { DataTableVisualization } from "./data-table";
 import { RelationalViewVisualization } from "./relational-view";
 import { AggregatedOverviewVisualization } from "./aggregated-overview";
+import { TreemapVisualization } from "./treemap";
+import { SankeyVisualization } from "./sankey";
+import { HeatmapVisualization } from "./heatmap";
+import { RadarVisualization } from "./radar";
+import { StreamVisualization } from "./stream";
+import { SunburstVisualization } from "./sunburst";
+import { BumpVisualization } from "./bump";
+import { ParallelCoordinatesVisualization } from "./parallel-coordinates";
+import { NetworkVisualization } from "./network";
+import { CalendarVisualization } from "./calendar";
+import { ChordVisualization } from "./chord";
+import { CirclePackingVisualization } from "./circle-packing";
+import { FunnelVisualization } from "./funnel";
+import { MarimekkoVisualization } from "./marimekko";
+import { SwarmPlotVisualization } from "./swarmplot";
+import { BoxPlotVisualization } from "./boxplot";
+import { BulletVisualization } from "./bullet";
+import { IcicleVisualization } from "./icicle";
+import { RadialBarVisualization } from "./radial-bar";
+import { TreeVisualization } from "./tree";
+import { WaffleVisualization } from "./waffle";
 
 interface DynamicVisualizationProps {
   instruction: VisualizationInstruction;
@@ -74,6 +95,69 @@ export function DynamicVisualization({
     
     case "aggregated-overview":
       return <AggregatedOverviewVisualization instruction={instruction} data={data} />;
+    
+    case "treemap":
+      return <TreemapVisualization instruction={instruction} data={data} />;
+    
+    case "sankey":
+      return <SankeyVisualization instruction={instruction} data={data} />;
+    
+    case "heatmap":
+      return <HeatmapVisualization instruction={instruction} data={data} />;
+    
+    case "radar":
+      return <RadarVisualization instruction={instruction} data={data} />;
+    
+    case "stream":
+      return <StreamVisualization instruction={instruction} data={data} />;
+    
+    case "sunburst":
+      return <SunburstVisualization instruction={instruction} data={data} />;
+    
+    case "bump":
+      return <BumpVisualization instruction={instruction} data={data} />;
+    
+    case "parallel-coordinates":
+      return <ParallelCoordinatesVisualization instruction={instruction} data={data} />;
+    
+    case "network":
+      return <NetworkVisualization instruction={instruction} data={data} />;
+    
+    case "calendar":
+      return <CalendarVisualization instruction={instruction} data={data} />;
+    
+    case "chord":
+      return <ChordVisualization instruction={instruction} data={data} />;
+    
+    case "circle-packing":
+      return <CirclePackingVisualization instruction={instruction} data={data} />;
+    
+    case "funnel":
+      return <FunnelVisualization instruction={instruction} data={data} />;
+    
+    case "marimekko":
+      return <MarimekkoVisualization instruction={instruction} data={data} />;
+    
+    case "swarmplot":
+      return <SwarmPlotVisualization instruction={instruction} data={data} />;
+    
+    case "boxplot":
+      return <BoxPlotVisualization instruction={instruction} data={data} />;
+    
+    case "bullet":
+      return <BulletVisualization instruction={instruction} data={data} />;
+    
+    case "icicle":
+      return <IcicleVisualization instruction={instruction} data={data} />;
+    
+    case "radial-bar":
+      return <RadialBarVisualization instruction={instruction} data={data} />;
+    
+    case "tree":
+      return <TreeVisualization instruction={instruction} data={data} />;
+    
+    case "waffle":
+      return <WaffleVisualization instruction={instruction} data={data} />;
     
     default:
       return (

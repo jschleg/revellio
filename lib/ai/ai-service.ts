@@ -375,6 +375,7 @@ Good 4+ element relation:
 - Explanation: "Aggregated revenue metrics from multiple advertising platforms, representing total marketing spend"
 
 IMPORTANT:
+- Consider the User Provided Prompt. Adapt context accordingly.
 - Identify ALL meaningful relationships and connections
 - Be strategic about relation size - use multi-point relations when they reveal important patterns
 - Quality over quantity: better to have fewer, well-defined relations than many weak ones

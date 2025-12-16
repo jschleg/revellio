@@ -22,28 +22,6 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-purple-600 dark:hover:text-purple-400",
-              pathname === "/"
-                ? "text-purple-600 dark:text-purple-400"
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-          >
-            Home
-          </Link>
-          <Link
-            href="/playground"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-purple-600 dark:hover:text-purple-400",
-              pathname === "/playground"
-                ? "text-purple-600 dark:text-purple-400"
-                : "text-zinc-600 dark:text-zinc-400"
-            )}
-          >
-            Playground
-          </Link>
           <ThemeToggle />
         </div>
       </div>

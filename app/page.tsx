@@ -48,7 +48,6 @@ export default function Home() {
 
 
   const startDataMesh = async () => {
-    console.log("🚀 [DEBUG] startDataMesh called");
     setError(null);
     setIsDataMeshProcessing(true);
     setDataMeshStep("");
@@ -56,87 +55,54 @@ export default function Home() {
     setInputPayload(null);
 
     try {
-      console.log("📊 [DEBUG] CSV data count:", csvData.length);
       const metadataExtractor = new MetadataExtractor();
-      // Extract metadata
       setDataMeshStep("Extracting metadata...");
-      console.log("🔍 [DEBUG] Extracting metadata...");
       const metadataArray = metadataExtractor.extractAll(csvData);
-      console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
       setMetadataInput(metadataArray);
 
-      // Use 20 data points from each file for mesh analysis (only for determining relations)
       setDataMeshStep("Preparing data samples (20 rows per file)...");
-      console.log("🔍 [DEBUG] Preparing data slices (20 rows per file)...");
       const dataSlices: CSVData[] = csvData.map((data) => {
         const slicedRows = data.rows.slice(0, 20);
         return {
           ...data,
-          rows: slicedRows, // Take first 20 rows
-          rawContent: "", // Don't send full rawContent to reduce payload size
+          rows: slicedRows,
+          rawContent: "",
           metadata: {
             ...data.metadata,
-            rowCount: Math.min(20, data.metadata.rowCount), // Update row count to match slice
+            rowCount: Math.min(20, data.metadata.rowCount),
             sample: {
-              rows: slicedRows, // Update sample rows
-              totalRows: slicedRows.length, // Update total rows in sample
+              rows: slicedRows,
+              totalRows: slicedRows.length,
             },
           },
         };
       });
-      console.log("✅ [DEBUG] Data slices prepared:", dataSlices.length, "files");
-      console.log("✅ [DEBUG] Total rows in slices:", dataSlices.reduce((sum, data) => sum + data.rows.length, 0));
 
-      // Store input payload (for data mesh, we send 20 rows per file)
       const payload = {
         metadataArray,
-        dataSlices, // Send 20 rows per file, not all data
-        userPrompt: dataMeshPrompt || "", // Include custom prompt if provided
+        dataSlices,
+        userPrompt: dataMeshPrompt || "",
       };
       setInputPayload(payload);
 
-      // Data Mesh Analysis
       setDataMeshStep("Analyzing data mesh network...");
-      console.log("🔍 [DEBUG] Starting data mesh analysis");
-      console.log("📦 [DEBUG] Request payload:", {
-        metadataCount: metadataArray.length,
-        dataSlicesCount: dataSlices.length,
-        totalRowsInSlices: dataSlices.reduce((sum, data) => sum + data.rows.length, 0),
-        userPrompt: dataMeshPrompt || "(empty)",
-      });
-
       const dataMeshResponse = await fetch("/api/ai/data-mesh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      console.log("📡 [DEBUG] Fetch response received, status:", dataMeshResponse.status);
-
       if (!dataMeshResponse.ok) {
         const errorText = await dataMeshResponse.text();
-        console.error("❌ [DEBUG] Data mesh analysis failed:", dataMeshResponse.status, errorText);
         throw new Error(`Data mesh analysis failed: ${errorText}`);
       }
 
-      console.log("📥 [DEBUG] Parsing response JSON...");
       const dataMesh: DataMeshOutput = await dataMeshResponse.json();
-      console.log("✅ [DEBUG] Data mesh output received:", {
-        relations: dataMesh.relations?.length || 0,
-      });
-      console.log("✅ [DEBUG] Full data mesh output:", dataMesh);
       setDataMeshOutput(dataMesh);
-      setCurrentRelations(dataMesh.relations); // Store relations for use in analysis
-
+      setCurrentRelations(dataMesh.relations);
     } catch (err) {
-      console.error("💥 [DEBUG] Error in startDataMesh:", err);
-      console.error("💥 [DEBUG] Error details:", {
-        message: err instanceof Error ? err.message : "Unknown error",
-        stack: err instanceof Error ? err.stack : undefined,
-      });
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
-      console.log("🏁 [DEBUG] startDataMesh finished");
       setIsDataMeshProcessing(false);
       setDataMeshStep("");
     }
@@ -149,7 +115,6 @@ export default function Home() {
       return;
     }
 
-    console.log("🚀 [DEBUG] startProcessing called");
     setError(null);
     setIsAnalyzing(true);
     setAnalyzingStep("");
@@ -157,84 +122,48 @@ export default function Home() {
     setInputPayload(null);
 
     try {
-      console.log("📊 [DEBUG] CSV data count:", csvData.length);
       const metadataExtractor = new MetadataExtractor();
-      // Extract metadata
       setAnalyzingStep("Extracting metadata...");
-      console.log("🔍 [DEBUG] Extracting metadata...");
       const metadataArray = metadataExtractor.extractAll(csvData);
-      console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
       setMetadataInput(metadataArray);
 
-      // Prepare data slices (5 elements from each CSV)
       setAnalyzingStep("Preparing data samples...");
-      console.log("🔍 [DEBUG] Preparing data slices...");
       const dataSlices: CSVData[] = csvData.map((data) => ({
         ...data,
-        rows: data.rows.slice(0, 5), // Take first 5 rows
+        rows: data.rows.slice(0, 5),
       }));
-      console.log("✅ [DEBUG] Data slices prepared:", dataSlices.length);
 
-      // Store input payload with relations from Data Mesh
       const payload = {
         metadataArray,
         dataSlices,
         userPrompt: userPrompt || "",
-        relations: currentRelations, // Pass Data Mesh relations to analysis
+        relations: currentRelations,
       };
       setInputPayload(payload);
 
-      // Unified AI Analysis
       setAnalyzingStep("AI is analyzing data and creating visualization strategy...");
-      console.log("🔍 [DEBUG] Starting unified AI analysis");
-      console.log("📝 [DEBUG] User prompt:", userPrompt);
-      console.log("📦 [DEBUG] Request payload:", {
-        metadataCount: metadataArray.length,
-        dataSlicesCount: dataSlices.length,
-        relationsCount: currentRelations.length,
-        userPrompt: userPrompt || "(empty)",
-      });
-
       const analyzeResponse = await fetch("/api/ai/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      console.log("📡 [DEBUG] Fetch response received, status:", analyzeResponse.status);
-
       if (!analyzeResponse.ok) {
         const errorText = await analyzeResponse.text();
-        console.error("❌ [DEBUG] AI analysis failed:", analyzeResponse.status, errorText);
         throw new Error(`AI analysis failed: ${errorText}`);
       }
 
-      console.log("📥 [DEBUG] Parsing response JSON...");
       const unifiedOutput: UnifiedAIOutput = await analyzeResponse.json();
-      console.log("✅ [DEBUG] Unified AI output received:", {
-        visualizations: unifiedOutput.visualizations?.length || 0,
-        relations: unifiedOutput.relations?.length || 0,
-        insights: unifiedOutput.metadata?.insights?.length || 0,
-      });
-      console.log("✅ [DEBUG] Full unified AI output:", unifiedOutput);
       setAiOutput(unifiedOutput);
-
     } catch (err) {
-      console.error("💥 [DEBUG] Error in startProcessing:", err);
-      console.error("💥 [DEBUG] Error details:", {
-        message: err instanceof Error ? err.message : "Unknown error",
-        stack: err instanceof Error ? err.stack : undefined,
-      });
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
-      console.log("🏁 [DEBUG] startProcessing finished");
       setIsAnalyzing(false);
       setAnalyzingStep("");
     }
   }
 
   const handleFilesSelected = async (selectedFiles: File[]) => {
-    console.log("📁 [DEBUG] handleFilesSelected called with", selectedFiles.length, "files");
     setError(null);
     setAiOutput(null);
     setDataMeshOutput(null);
@@ -244,32 +173,22 @@ export default function Home() {
       const parser = new CSVParser();
       const parsedData: CSVData[] = [];
 
-      // Step 1: Parse files
-      console.log("🔍 [DEBUG] Parsing", selectedFiles.length, "files...");
       for (const file of selectedFiles) {
         try {
-          console.log("📄 [DEBUG] Parsing file:", file.name);
           const content = await file.text();
           if (!parser.validate(content)) {
-            console.warn("⚠️ [DEBUG] File validation failed:", file.name);
             continue;
           }
           const data = await parser.parse(file);
           parsedData.push(data);
-          console.log("✅ [DEBUG] File parsed successfully:", file.name);
         } catch (err) {
-          console.error(`❌ [DEBUG] Error parsing ${file.name}:`, err);
+          // Silently skip invalid files
         }
       }
 
-      console.log("✅ [DEBUG] All files parsed. Total:", parsedData.length);
       setCsvData(parsedData);
-
     } catch (err) {
-      console.error("💥 [DEBUG] Error in handleFilesSelected:", err);
       setError(err instanceof Error ? err.message : "Unknown error occurred");
-    } finally {
-      console.log("🏁 [DEBUG] handleFilesSelected finished");
     }
   };
 

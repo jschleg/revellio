@@ -390,14 +390,14 @@ Each relation should contain:
    */
   async dataMesh(
     metadataArray: Metadata[],
-    allData: CSVData[]
+    dataSlices: CSVData[]
   ): Promise<DataMeshOutput> {
     if (!this.isAvailable()) {
       return this.getFallbackDataMeshOutput();
     }
 
     try {
-      const prompt = this.buildDataMeshPrompt(metadataArray, allData);
+      const prompt = this.buildDataMeshPrompt(metadataArray, dataSlices);
       const response = await this.client!.chat.completions.create({
         model: this.model,
         messages: [
@@ -569,7 +569,7 @@ IMPORTANT:
    */
   private buildDataMeshPrompt(
     metadataArray: Metadata[],
-    allData: CSVData[]
+    dataSlices: CSVData[]
   ): string {
     const metadataSummary = metadataArray.map((meta, idx) => {
       return `
@@ -580,28 +580,25 @@ File ${idx + 1}: ${meta.fileName}
 `;
     }).join("\n");
 
-    // Include ALL data, not just samples
-    const allDataSummary = allData.map((data, idx) => {
-      // For very large datasets, we might need to limit, but try to include all
-      const rowsToInclude = data.rows.length > 1000
-        ? data.rows.slice(0, 1000) // Limit to 1000 rows if too large
-        : data.rows;
-
+    // Include 20 data points from each file (sliced for relation determination)
+    const dataSlicesSummary = dataSlices.map((data, idx) => {
       return `
 File ${idx + 1}: ${data.fileName}
-Total rows: ${data.rows.length}
-All data (${rowsToInclude.length} rows shown):
-${JSON.stringify(rowsToInclude, null, 2)}
+Total rows in file: ${data.metadata?.rowCount || data.rows.length}
+Sample data (20 rows used for relation analysis):
+${JSON.stringify(data.rows, null, 2)}
 `;
     }).join("\n");
 
-    return `Perform a comprehensive data mesh network analysis on the following CSV data:
+    return `Perform a comprehensive data mesh network analysis on the following CSV data.
+
+NOTE: Only 20 data points (rows) from each file are provided for relation determination. This is a sample to identify relationships and connections between data elements.
 
 METADATA:
 ${metadataSummary}
 
-ALL DATA:
-${allDataSummary}
+SAMPLE DATA (20 rows per file):
+${dataSlicesSummary}
 
 Create a JSON response with the following structure:
 {

@@ -412,6 +412,13 @@ export function DataMeshVisualization({
 
   return (
     <div className="w-full space-y-4">
+      {/* Info Banner */}
+      <div className="rounded-lg border border-blue-200/50 bg-blue-50/50 p-3 dark:border-blue-800/50 dark:bg-blue-950/30">
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          <strong>Note:</strong> This analysis uses 20 data points (rows) from each file to determine relations. This sample is sufficient for identifying relationships and connections between data elements.
+        </p>
+      </div>
+
       {/* Summary */}
       <div className="rounded-lg border border-purple-200/50 bg-white/50 p-4 dark:border-purple-800/50 dark:bg-zinc-900/50">
         <h3 className="mb-2 text-sm font-semibold text-purple-700 dark:text-purple-300">

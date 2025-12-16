@@ -5,7 +5,7 @@ import type { Metadata, CSVData } from "@/lib/types/data";
 export async function POST(request: NextRequest) {
   try {
     console.log("📥 [API] /api/ai/data-mesh - Data mesh request received");
-    const { metadataArray, allData } = await request.json();
+    const { metadataArray, dataSlices } = await request.json();
 
     if (!metadataArray || !Array.isArray(metadataArray)) {
       console.error("❌ [API] Invalid metadata array");
@@ -15,23 +15,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!allData || !Array.isArray(allData)) {
-      console.error("❌ [API] Invalid allData array");
+    if (!dataSlices || !Array.isArray(dataSlices)) {
+      console.error("❌ [API] Invalid dataSlices array");
       return NextResponse.json(
-        { error: "Invalid allData array" },
+        { error: "Invalid dataSlices array" },
         { status: 400 }
       );
     }
 
-    const totalRows = allData.reduce((sum: number, data: CSVData) => sum + data.rows.length, 0);
+    const totalRows = dataSlices.reduce((sum: number, data: CSVData) => sum + data.rows.length, 0);
     console.log(`📊 [API] Processing ${metadataArray.length} files for data mesh`);
-    console.log(`📊 [API] Total rows: ${totalRows}`);
+    console.log(`📊 [API] Total rows in slices (20 per file): ${totalRows}`);
     console.log("🔑 [API] OpenAI API Key exists:", !!process.env.OPENAI_API_KEY);
 
     const aiService = new AIService();
     const dataMesh = await aiService.dataMesh(
       metadataArray as Metadata[],
-      allData as CSVData[]
+      dataSlices as CSVData[]
     );
 
     console.log("✅ [API] Data mesh complete:", {

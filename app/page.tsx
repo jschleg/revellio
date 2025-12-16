@@ -33,7 +33,6 @@ export default function Home() {
   const [inputPayload, setInputPayload] = useState<{
     metadataArray: Metadata[];
     dataSlices?: CSVData[];
-    allData?: CSVData[];
     userPrompt?: string;
   } | null>(null);
 
@@ -57,16 +56,20 @@ export default function Home() {
       console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
       setMetadataInput(metadataArray);
 
-      // Use ALL data for mesh analysis (not just samples)
-      setProcessingStep("Preparing all data for mesh analysis...");
-      console.log("🔍 [DEBUG] Preparing all data...");
-      console.log("✅ [DEBUG] Total data prepared:", csvData.length, "files");
-      console.log("✅ [DEBUG] Total rows across all files:", csvData.reduce((sum, data) => sum + data.rows.length, 0));
+      // Use 20 data points from each file for mesh analysis (only for determining relations)
+      setProcessingStep("Preparing data samples (20 rows per file) for mesh analysis...");
+      console.log("🔍 [DEBUG] Preparing data slices (20 rows per file)...");
+      const dataSlices: CSVData[] = csvData.map((data) => ({
+        ...data,
+        rows: data.rows.slice(0, 20), // Take first 20 rows
+      }));
+      console.log("✅ [DEBUG] Data slices prepared:", dataSlices.length, "files");
+      console.log("✅ [DEBUG] Total rows in slices:", dataSlices.reduce((sum, data) => sum + data.rows.length, 0));
 
-      // Store input payload (for data mesh, we send all data)
+      // Store input payload (for data mesh, we send 20 rows per file)
       const payload = {
         metadataArray,
-        allData: csvData, // Send all data, not just slices
+        dataSlices, // Send 20 rows per file, not all data
       };
       setInputPayload(payload);
 
@@ -75,8 +78,8 @@ export default function Home() {
       console.log("🔍 [DEBUG] Starting data mesh analysis");
       console.log("📦 [DEBUG] Request payload:", {
         metadataCount: metadataArray.length,
-        allDataCount: csvData.length,
-        totalRows: csvData.reduce((sum, data) => sum + data.rows.length, 0),
+        dataSlicesCount: dataSlices.length,
+        totalRowsInSlices: dataSlices.reduce((sum, data) => sum + data.rows.length, 0),
       });
 
       const dataMeshResponse = await fetch("/api/ai/data-mesh", {

@@ -3,13 +3,26 @@
 package "UI Layer" {
   class FileDrop {
     +onFilesSelected(files: File[])
-    +accept: string
-    +maxFiles?: number
   }
   
-  class VisualizationBlock {
-    +render(data: ProcessedData)
-    +explain(): string
+  class DataMeshVisualization {
+    +dataMeshOutput: DataMeshOutput
+    +csvData: CSVData[]
+    +onUpdateRelations(relations: DataMeshRelation[])
+    +render()
+    +handleRelationEdit()
+  }
+  
+  class Visualizer {
+    +aiOutput: UnifiedAIOutput
+    +csvData: CSVData[]
+    +render()
+  }
+  
+  class DynamicVisualization {
+    +instruction: VisualizationInstruction
+    +csvData: CSVData[]
+    +render()
   }
 }
 
@@ -19,83 +32,120 @@ package "Data Processing Layer" {
     +validate(data: string): boolean
   }
   
-  class DataProcessor {
-    +process(csvData: CSVData[]): ProcessedData
-    +aggregate(data: ProcessedData): AggregatedData
-  }
-  
-  class DataValidator {
-    +validate(data: CSVData): ValidationResult
-    +checkQuality(data: CSVData): QualityReport
-  }
-}
-
-package "Analysis Layer" {
   class MetadataExtractor {
-    +extract(csvData: CSVData): Metadata
-    +getColumnTypes(data: CSVData): ColumnType[]
-    +getSample(data: CSVData, count: number): SampleData
-  }
-  
-  class StructureAnalyzer {
-    +analyze(metadata: Metadata[]): Structure
-    +findRelations(metadata: Metadata[]): Relation[]
-    +detectSemanticOverlap(metadata: Metadata[]): Overlap[]
+    +extractAll(csvData: CSVData[]): Metadata[]
   }
 }
 
 package "AI Layer" {
   class AIService {
-    +analyzeMetadata(metadata: Metadata[]): AIAnalysis
-    +suggestVisualizations(structure: Structure): VisualizationSuggestion[]
-    +explainDecision(decision: Decision): Explanation
-    +identifyRelations(metadata: Metadata[]): Relation[]
+    +dataMesh(metadata: Metadata[], dataSlices: CSVData[], userPrompt: string): DataMeshOutput
+    +unifiedAnalysis(metadata: Metadata[], dataSlices: CSVData[], userPrompt: string, relations: DataMeshRelation[]): UnifiedAIOutput
+    -buildDataMeshPrompt()
+    -buildUnifiedAnalysisPrompt()
+  }
+}
+
+package "API Layer" {
+  class DataMeshRoute {
+    +POST(request: NextRequest): NextResponse<DataMeshOutput>
+    -validateRequest()
+  }
+  
+  class AnalyzeRoute {
+    +POST(request: NextRequest): NextResponse<UnifiedAIOutput>
+    -validateRequest()
   }
 }
 
 package "Types" {
   class CSVData {
+    +fileName: string
     +columns: string[]
     +rows: Row[]
     +metadata: Metadata
+    +rawContent: string
   }
   
   class Metadata {
-    +columnNames: string[]
+    +fileName: string
+    +columns: Column[]
     +columnTypes: ColumnType[]
     +sample: SampleData
+    +rowCount: number
+    +hasHeader: boolean
   }
   
-  class ProcessedData {
-    +raw: CSVData[]
-    +merged?: MergedData
-    +structure: Structure
+  class DataMeshRelation {
+    +element1: string
+    +element1Source: ElementSource
+    +element2: string
+    +element2Source: ElementSource
+    +relationExplanation: string
   }
   
-  class VisualizationSuggestion {
+  class DataMeshOutput {
+    +relations: DataMeshRelation[]
+    +summary: string
+  }
+  
+  class VisualizationInstruction {
     +type: VisualizationType
-    +data: ProcessedData
-    +explanation: string
+    +module: string
+    +config: VisualizationConfig
+    +reasoning: string
+  }
+  
+  class UnifiedAIOutput {
+    +visualizations: VisualizationInstruction[]
+    +relations: Relation[]
+    +reasoning: string
+    +metadata: OutputMetadata
   }
 }
 
 ' Relationships
 FileDrop --> CSVParser : uses
-FileDrop --> DataProcessor : uses
-
 CSVParser --> CSVData : creates
-DataProcessor --> ProcessedData : creates
-DataValidator --> CSVData : validates
-
 MetadataExtractor --> CSVData : extracts from
 MetadataExtractor --> Metadata : creates
-StructureAnalyzer --> Metadata : analyzes
 
-AIService --> Metadata : analyzes
-AIService --> StructureAnalyzer : uses
-AIService --> VisualizationSuggestion : creates
+DataMeshRoute --> AIService : calls
+DataMeshRoute --> DataMeshOutput : returns
+AnalyzeRoute --> AIService : calls
+AnalyzeRoute --> UnifiedAIOutput : returns
 
-VisualizationBlock --> ProcessedData : displays
-VisualizationBlock --> VisualizationSuggestion : uses
+AIService --> Metadata : uses
+AIService --> CSVData : uses
+AIService --> DataMeshOutput : creates
+AIService --> UnifiedAIOutput : creates
+AIService --> DataMeshRelation : uses
+
+DataMeshVisualization --> DataMeshOutput : displays
+DataMeshVisualization --> DataMeshRelation : edits
+DataMeshVisualization --> CSVData : uses
+
+Visualizer --> UnifiedAIOutput : displays
+Visualizer --> DynamicVisualization : uses
+Visualizer --> CSVData : uses
+
+DynamicVisualization --> VisualizationInstruction : uses
+DynamicVisualization --> CSVData : uses
+
+note right of AIService
+  Two-step AI process:
+  1. dataMesh() - Detects relations
+  2. unifiedAnalysis() - Creates visualizations
+  based on edited relations
+end note
+
+note right of DataMeshVisualization
+  User can:
+  - View all relations
+  - Edit explanations
+  - Remove relations
+  - Modify connections
+end note
 
 @enduml
+

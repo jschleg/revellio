@@ -181,13 +181,23 @@ Walenstadt, Samstag, 13. Dezember 2025
 
 ### Aufgaben der KI
 
-Die KI übernimmt die inhaltliche Analyse und strategische Entscheidungsfindung:
+Die KI übernimmt die inhaltliche Analyse und strategische Entscheidungsfindung in zwei Schritten:
 
-- Analyse von Metadaten und Stichproben
+**Schritt 1: Data Mesh Analyse**
+- Analyse von Metadaten und Stichproben (20 Datenpunkte pro Datei)
 - Erkennen semantischer Überschneidungen
-- Identifikation möglicher Relationen
+- Identifikation möglicher Relationen zwischen:
+  - Dateien
+  - Spalten (innerhalb und zwischen Dateien)
+  - Datenwerten
+  - Konzeptionellen Verbindungen
+
+**Schritt 2: Visualisierungsanalyse**
+- Verwendung der vom User bearbeiteten Relationen
+- Bestimmung geeigneter Visualisierungsmethoden
 - Ableitung sinnvoller Datenstrukturen
 - Auswahl geeigneter Visualisierungsformen
+- Erklärung, wie Visualisierungen die definierten Relationen nutzen
 
 Abgrenzung zur klassischen Logik
 
@@ -262,9 +272,17 @@ Jede Darstellung wird begleitet von:
 
 ### Interaktion im MVP
 
-- geführter Einstieg
-- minimale Konfigurationsmöglichkeiten
+- Geführter Einstieg mit klarem Workflow
+- **Zwei-Schritt-Prozess:**
+  1. Data Mesh Analyse (automatisch)
+  2. Relationen-Bearbeitung (User-Interaktion)
+  3. Visualisierungsanalyse (automatisch, basierend auf bearbeiteten Relationen)
+- **Interaktive Relationen-Bearbeitung:**
+  - Erklärungen anpassen
+  - Verbindungspunkte ändern
+  - Ungewollte Relationen entfernen
 - Fokus auf Verstehen statt Einstellen
+- Optionale Kontext-Prompts für beide KI-Schritte
 
 
 Walenstadt, Samstag, 13. Dezember 2025
@@ -292,11 +310,14 @@ Walenstadt, Samstag, 13. Dezember 2025
 ### Enthalten im MVP
 
 - CSV-Import
-- KI-Analyse von Metadaten
-- automatische Visualisierung
-- erklärende Texte
+- **Zwei-Schritt KI-Workflow:**
+  1. Data Mesh Analyse (Relationen erkennen)
+  2. Visualisierungsanalyse (basierend auf bearbeiteten Relationen)
+- **Interaktive Relationen-Bearbeitung**
+- Automatische Visualisierung
+- Erklärende Texte
 - Speicherung des Analysezustands
-- visuelle Exporte
+- Visuelle Exporte
 
 ### Nicht enthalten im MVP
 

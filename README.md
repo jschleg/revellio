@@ -2,6 +2,15 @@
 
 Revellio ist ein KI-gestütztes Analyse- und Visualisierungstool mit Fokus auf Erkenntnisgewinn. Der User liefert Daten, das System übernimmt Analyse, Strukturierung und Darstellung.
 
+## Workflow
+
+Revellio verwendet einen zweistufigen KI-Workflow:
+
+1. **Data Mesh Analyse**: KI erkennt Relationen zwischen Daten (20 Datenpunkte pro Datei)
+2. **User-Bearbeitung**: User kann Relationen überprüfen und bearbeiten
+3. **Visualisierungsanalyse**: KI erstellt Visualisierungsstrategie basierend auf bearbeiteten Relationen
+4. **Visualisierungen**: Dynamische Visualisierungen werden angezeigt
+
 A modern Next.js application built with TypeScript, Tailwind CSS, and shadcn/ui.
 
 ## Prerequisites
@@ -31,9 +40,11 @@ pnpm install
 
 4. Set up environment variables:
 ```bash
-cp .env.example .env.local
-# Edit .env.local with your configuration
+# Create .env.local file
+echo "OPENAI_API_KEY=your-api-key-here" > .env.local
 ```
+
+**Important**: You must set the `OPENAI_API_KEY` environment variable for the AI features to work. In production (Vercel), add this in your project settings under Environment Variables.
 
 5. Run the development server:
 ```bash
@@ -55,6 +66,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS v4
 - **UI Components:** [shadcn/ui](https://ui.shadcn.com)
+- **AI:** OpenAI GPT-4o
+- **Logging:** Pino
 - **Package Manager:** pnpm
 
 ## Project Structure
@@ -62,27 +75,49 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ```
 revellio/
 ├── app/                    # Next.js app directory
-├── components/             # React UI components (shadcn/ui)
-│   └── file-drop.tsx      # File upload component
+│   ├── api/               # API routes
+│   │   └── ai/            # AI endpoints
+│   │       ├── data-mesh/ # Data mesh analysis
+│   │       └── analyze/   # Visualization analysis
+│   └── page.tsx           # Main application page
+├── components/             # React UI components
+│   ├── data-mesh-visualization/  # Data mesh visualization
+│   ├── visualizations/     # Dynamic visualization components
+│   ├── file-drop.tsx      # File upload component
+│   ├── file-display.tsx   # File data display
+│   └── visualizer.tsx    # Main visualizer component
 ├── lib/                   # Core functionality
+│   ├── logger.ts          # Logging utility (Pino)
 │   ├── utils.ts           # General utilities
 │   ├── data/              # Data processing
-│   │   ├── csv-parser.ts
-│   │   ├── data-processor.ts
-│   │   └── data-validator.ts
+│   │   └── csv-parser.ts
 │   ├── analysis/          # Analysis logic (deterministic)
-│   │   ├── metadata-extractor.ts
-│   │   └── structure-analyzer.ts
+│   │   └── metadata-extractor.ts
 │   ├── ai/                # AI integration
-│   │   └── ai-service.ts
+│   │   └── ai-service.ts  # AI service (dataMesh, unifiedAnalysis)
 │   └── types/             # TypeScript types
 │       └── data.ts
+├── docs/                  # Documentation
+│   ├── workflow.md        # Workflow documentation
+│   ├── data-mesh-component.md
+│   └── class-diagram.puml
 ├── public/                # Static assets
 │   └── examples/          # Sample CSV files
 └── Project-Spec.md        # Project specification
 ```
 
 ## Architecture
+
+### Workflow Overview
+
+Revellio follows a two-step AI-driven workflow:
+
+1. **Data Mesh Analysis**: AI detects relationships between data elements (using 20 data points per file)
+2. **User Review**: User can view, edit, and refine detected relations
+3. **Visualization Analysis**: AI creates visualization strategy based on edited relations
+4. **Visualization Display**: Dynamic visualizations are rendered based on AI recommendations
+
+See [Workflow Documentation](./docs/workflow.md) for detailed information.
 
 ### Class Diagram
 
@@ -92,13 +127,17 @@ revellio/
 package "UI Layer" {
   class FileDrop {
     +onFilesSelected(files: File[])
-    +accept: string
-    +maxFiles?: number
   }
   
-  class VisualizationBlock {
-    +render(data: ProcessedData)
-    +explain(): string
+  class DataMeshVisualization {
+    +dataMeshOutput: DataMeshOutput
+    +csvData: CSVData[]
+    +onUpdateRelations(relations: DataMeshRelation[])
+  }
+  
+  class Visualizer {
+    +aiOutput: UnifiedAIOutput
+    +csvData: CSVData[]
   }
 }
 
@@ -108,84 +147,86 @@ package "Data Processing Layer" {
     +validate(data: string): boolean
   }
   
-  class DataProcessor {
-    +process(csvData: CSVData[]): ProcessedData
-    +aggregate(data: ProcessedData): AggregatedData
-  }
-  
-  class DataValidator {
-    +validate(data: CSVData): ValidationResult
-    +checkQuality(data: CSVData): QualityReport
-  }
-}
-
-package "Analysis Layer" {
   class MetadataExtractor {
-    +extract(csvData: CSVData): Metadata
-    +getColumnTypes(data: CSVData): ColumnType[]
-    +getSample(data: CSVData, count: number): SampleData
-  }
-  
-  class StructureAnalyzer {
-    +analyze(metadata: Metadata[]): Structure
-    +findRelations(metadata: Metadata[]): Relation[]
-    +detectSemanticOverlap(metadata: Metadata[]): Overlap[]
+    +extractAll(csvData: CSVData[]): Metadata[]
   }
 }
 
 package "AI Layer" {
   class AIService {
-    +analyzeMetadata(metadata: Metadata[]): AIAnalysis
-    +suggestVisualizations(structure: Structure): VisualizationSuggestion[]
-    +explainDecision(decision: Decision): Explanation
-    +identifyRelations(metadata: Metadata[]): Relation[]
+    +dataMesh(metadata: Metadata[], dataSlices: CSVData[], userPrompt: string): DataMeshOutput
+    +unifiedAnalysis(metadata: Metadata[], dataSlices: CSVData[], userPrompt: string, relations: DataMeshRelation[]): UnifiedAIOutput
+  }
+}
+
+package "API Layer" {
+  class DataMeshRoute {
+    +POST(request: NextRequest): NextResponse
+  }
+  
+  class AnalyzeRoute {
+    +POST(request: NextRequest): NextResponse
   }
 }
 
 package "Types" {
   class CSVData {
+    +fileName: string
     +columns: string[]
     +rows: Row[]
     +metadata: Metadata
   }
   
   class Metadata {
-    +columnNames: string[]
-    +columnTypes: ColumnType[]
-    +sample: SampleData
+    +fileName: string
+    +columns: Column[]
+    +rowCount: number
   }
   
-  class ProcessedData {
-    +raw: CSVData[]
-    +merged?: MergedData
-    +structure: Structure
+  class DataMeshRelation {
+    +element1: string
+    +element1Source: ElementSource
+    +element2: string
+    +element2Source: ElementSource
+    +relationExplanation: string
   }
   
-  class VisualizationSuggestion {
-    +type: VisualizationType
-    +data: ProcessedData
-    +explanation: string
+  class DataMeshOutput {
+    +relations: DataMeshRelation[]
+    +summary: string
+  }
+  
+  class UnifiedAIOutput {
+    +visualizations: VisualizationInstruction[]
+    +relations: Relation[]
+    +reasoning: string
+    +metadata: OutputMetadata
   }
 }
 
 ' Relationships
 FileDrop --> CSVParser : uses
-FileDrop --> DataProcessor : uses
-
 CSVParser --> CSVData : creates
-DataProcessor --> ProcessedData : creates
-DataValidator --> CSVData : validates
-
 MetadataExtractor --> CSVData : extracts from
 MetadataExtractor --> Metadata : creates
-StructureAnalyzer --> Metadata : analyzes
 
-AIService --> Metadata : analyzes
-AIService --> StructureAnalyzer : uses
-AIService --> VisualizationSuggestion : creates
+DataMeshRoute --> AIService : calls
+DataMeshRoute --> DataMeshOutput : returns
+AnalyzeRoute --> AIService : calls
+AnalyzeRoute --> UnifiedAIOutput : returns
 
-VisualizationBlock --> ProcessedData : displays
-VisualizationBlock --> VisualizationSuggestion : uses
+AIService --> Metadata : uses
+AIService --> CSVData : uses
+AIService --> DataMeshOutput : creates
+AIService --> UnifiedAIOutput : creates
+AIService --> DataMeshRelation : uses
+
+DataMeshVisualization --> DataMeshOutput : displays
+DataMeshVisualization --> DataMeshRelation : edits
+DataMeshVisualization --> CSVData : uses
+
+Visualizer --> UnifiedAIOutput : displays
+Visualizer --> CSVData : uses
 
 @enduml
 ```
@@ -194,13 +235,54 @@ VisualizationBlock --> VisualizationSuggestion : uses
 
 Die Architektur folgt dem Prinzip der klaren Trennung zwischen KI und deterministischer Logik:
 
-- **UI Layer** (`/components/`): Präsentationslogik, keine Datenverarbeitung
-- **Data Processing Layer** (`/lib/data/`): CSV-Parsing, Validierung, Aggregation
-- **Analysis Layer** (`/lib/analysis/`): Deterministische Analyse (Metadaten, Strukturen)
-- **AI Layer** (`/lib/ai/`): KI-gestützte Analyse und Entscheidungsfindung
+- **UI Layer** (`/components/`): Präsentationslogik, interaktive Komponenten
+- **Data Processing Layer** (`/lib/data/`): CSV-Parsing, Validierung
+- **Analysis Layer** (`/lib/analysis/`): Deterministische Analyse (Metadaten-Extraktion)
+- **AI Layer** (`/lib/ai/`): KI-gestützte Analyse (Data Mesh & Visualisierungen)
+- **API Layer** (`/app/api/`): REST API Endpoints für AI-Services
 - **Types** (`/lib/types/`): TypeScript-Typdefinitionen
 
-Die KI übernimmt strategische Entscheidungen (Visualisierungen, Relationen), während die deterministische Logik die eigentliche Datenverarbeitung und das Rendering übernimmt.
+Die KI übernimmt strategische Entscheidungen (Relationen, Visualisierungen), während die deterministische Logik die eigentliche Datenverarbeitung und das Rendering übernimmt.
+
+## MVP Workflow
+
+Revellio follows a two-step AI-driven workflow that ensures users have control over relationship detection before visualization generation.
+
+### Step-by-Step Process
+
+```
+1. User Uploads Data
+   ↓
+2. Data Mesh Analysis (AI Step 1)
+   - AI analyzes 20 data points per file
+   - Detects relationships and connections
+   - Returns Data Mesh with relations
+   ↓
+3. User Reviews & Edits Relations
+   - User can view all detected relations
+   - User can edit relation explanations
+   - User can remove unwanted relations
+   - User can modify connection points
+   ↓
+4. Visualization Analysis (AI Step 2)
+   - Edited relations passed to second AI run
+   - AI determines best visualization methods
+   - AI creates visualization strategy based on relations
+   ↓
+5. Visualizations Displayed
+   - Dynamic visualizations rendered
+   - Based on AI recommendations
+   - Leveraging the defined relations
+```
+
+### Why Two Steps?
+
+1. **User Control**: Users can review and refine relations before visualization
+2. **Better Results**: Visualizations are based on verified relations
+3. **Transparency**: Users understand what relationships drive visualizations
+4. **Efficiency**: Relations are determined once, then reused
+
+For detailed workflow documentation, see [docs/workflow.md](./docs/workflow.md).
 
 ## Projekt-Spezifikation
 

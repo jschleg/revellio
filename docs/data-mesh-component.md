@@ -2,7 +2,7 @@
 
 ## Überblick
 
-Die Data Mesh Komponente ist eine interaktive Visualisierungskomponente, die alle erkannten Relationen zwischen Daten auf drei hierarchischen Ebenen darstellt: **Files**, **Rows** und **Columns**.
+Die Data Mesh Komponente ist eine interaktive Visualisierungskomponente, die alle erkannten Relationen zwischen Daten auf drei hierarchischen Ebenen darstellt: **Files**, **Columns** und **Rows**. Sie ist ein zentraler Bestandteil des Revellio Workflows, da sie es dem User ermöglicht, Relationen zu überprüfen und zu bearbeiten, bevor diese für die Visualisierungsgenerierung verwendet werden.
 
 ## Konzept
 
@@ -11,19 +11,32 @@ Die Data Mesh Komponente ist eine interaktive Visualisierungskomponente, die all
 Die Komponente ermöglicht es dem User:
 - Alle erkannten Relationen zwischen Daten zu sehen
 - Die hierarchische Struktur der Daten zu verstehen (File → Columns → Rows)
-- Interaktiv zu definieren, welche Relationen sinnvoll sind
+- **Relationen zu bearbeiten** (Erklärungen ändern, Verbindungen anpassen)
+- **Ungewollte Relationen zu entfernen**
 - Die Erklärungen (Explanations) zu jeder Relation zu sehen
+- **Bearbeitete Relationen werden an die Visualisierungsanalyse weitergegeben**
 
-### Funktionalität (MVP)
+### Rolle im Workflow
 
-#### Phase 1: Basis-Visualisierung
+Die Data Mesh Komponente ist **Schritt 1** im Revellio Workflow:
+1. User lädt Daten hoch
+2. **Data Mesh Analyse** → Relationen werden erkannt
+3. **User bearbeitet Relationen** (diese Komponente)
+4. Visualisierungsanalyse verwendet bearbeitete Relationen
+5. Visualisierungen werden angezeigt
+
+### Funktionalität (Implementiert)
+
 - **Hierarchische Darstellung**: Alle 3 Ebenen (File, Columns, Rows) verschachtelt darstellen
-- **Relationen visualisieren**: Betroffene Elemente mit Linien verbinden
-- **Explanations anzeigen**: Jede Relation zeigt ihre Explanation als Note/Label
-
-#### Phase 2: Interaktivität (später)
-- **Relationen filtern**: User kann Relationen als "sinnvoll" oder "nicht sinnvoll" markieren
-- **Reroll-Funktion**: Neue Relationen generieren lassen (noch nicht implementiert)
+- **Relationen visualisieren**: Betroffene Elemente mit SVG-Linien verbinden
+- **Interaktive Bearbeitung**: 
+  - Relationen anklicken zum Bearbeiten
+  - Erklärungen ändern
+  - Verbindungspunkte (Element1/Element2) ändern
+  - Relationen entfernen
+- **Hover-Tooltips**: Details zu Relationen beim Hovern
+- **Zoom & Pan**: Für große Datenmengen
+- **Vollbild-Modus**: Für bessere Übersicht
 
 ## Datenstruktur
 
@@ -116,28 +129,33 @@ DataMeshVisualization/
 2. **Relationen-Linien**: SVG-Overlay über der Struktur
 3. **Notes**: Tooltips oder Popover bei Hover/Klick auf Relationen
 
-## Implementierungsplan
+## Implementierungsstatus
 
-### Schritt 1: Basis-Struktur
-- [x] Dokumentation erstellen
-- [ ] Komponente-Grundgerüst erstellen
-- [ ] Hierarchische Darstellung (File → Columns → Rows)
-- [ ] Basis-Styling
+### ✅ Implementiert
 
-### Schritt 2: Relationen-Visualisierung
-- [ ] SVG-Linien zwischen Elementen
-- [ ] Positionierung der Elemente für Linien
-- [ ] Notes/Labels für Explanations
+- [x] Komponente-Grundgerüst
+- [x] Hierarchische Darstellung (File → Columns → Rows)
+- [x] SVG-Linien zwischen Elementen
+- [x] Positionierung der Elemente für Linien
+- [x] Hover-Tooltips mit Relation-Details
+- [x] Interaktive Bearbeitung:
+  - [x] Relationen anklicken zum Bearbeiten
+  - [x] Erklärungen ändern
+  - [x] Verbindungspunkte ändern
+  - [x] Relationen entfernen
+- [x] Zoom & Pan Funktionalität
+- [x] Vollbild-Modus
+- [x] Integration in `page.tsx`
+- [x] `onUpdateRelations` Callback für State-Management
+- [x] Relations-Liste mit Auswahl
+- [x] Canvas Controls (Zoom, Reset, Fullscreen)
 
-### Schritt 3: Interaktivität
-- [ ] Checkboxen für Relationen
-- [ ] State-Management für ausgewählte Relationen
-- [ ] Hover-Effekte
+### 🔄 Geplant
 
-### Schritt 4: Integration
-- [ ] Integration in `page.tsx`
-- [ ] Daten-Props übergeben
-- [ ] Styling anpassen
+- [ ] Filter nach Relation-Typ
+- [ ] Gruppierung ähnlicher Relationen
+- [ ] Export als Bild
+- [ ] Reroll-Funktion (neue Relationen generieren)
 
 ## Offene Fragen
 

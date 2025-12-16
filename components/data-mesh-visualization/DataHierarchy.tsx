@@ -6,7 +6,7 @@ import type { CSVData } from "@/lib/types/data";
 interface DataHierarchyProps {
   files: string[];
   csvData: CSVData[];
-  editingConnectionPoint: "element1" | "element2" | null;
+  editingConnectionPoint: number | null;
   onElementClick: (file: string, column?: string, rowIndex?: number, e?: React.MouseEvent) => void;
   getElementId: (file: string, column?: string, rowIndex?: number) => string;
   getColumnsForFile: (fileName: string) => string[];

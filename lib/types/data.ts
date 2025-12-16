@@ -148,20 +148,18 @@ export interface UnifiedAIOutput {
   };
 }
 
+export interface DataMeshElement {
+  name: string; // Element name (e.g., column name, file name, or data point)
+  source: {
+    file: string; // Source file name
+    column?: string; // Column name if applicable
+    rowIndex?: number; // Row index if applicable (0-based)
+  };
+}
+
 export interface DataMeshRelation {
-  element1: string; // First element (e.g., column name, file name, or data point)
-  element1Source: {
-    file: string; // Source file name
-    column?: string; // Column name if applicable
-    rowIndex?: number; // Row index if applicable (0-based)
-  };
-  element2: string; // Second element (e.g., column name, file name, or data point)
-  element2Source: {
-    file: string; // Source file name
-    column?: string; // Column name if applicable
-    rowIndex?: number; // Row index if applicable (0-based)
-  };
-  relationExplanation: string; // Detailed explanation of the relationship/connection
+  elements: DataMeshElement[]; // Array of elements connected by this relation (minimum 2)
+  relationExplanation: string; // Detailed explanation of the relationship/connection between all elements
 }
 
 export interface DataMeshOutput {

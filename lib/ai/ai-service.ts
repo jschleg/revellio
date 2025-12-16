@@ -197,8 +197,7 @@ ${JSON.stringify(sampleRows, null, 2)}
 DATA MESH RELATIONS (pre-defined relationships between data elements):
 ${dataMeshRelations.map((rel, idx) => `
 Relation ${idx + 1}:
-- Element 1: ${rel.element1} (from ${rel.element1Source.file}${rel.element1Source.column ? ` / ${rel.element1Source.column}` : ""}${rel.element1Source.rowIndex !== undefined ? ` / Row ${rel.element1Source.rowIndex + 1}` : ""})
-- Element 2: ${rel.element2} (from ${rel.element2Source.file}${rel.element2Source.column ? ` / ${rel.element2Source.column}` : ""}${rel.element2Source.rowIndex !== undefined ? ` / Row ${rel.element2Source.rowIndex + 1}` : ""})
+${rel.elements.map((element, elIdx) => `- Element ${elIdx + 1}: ${element.name} (from ${element.source.file}${element.source.column ? ` / ${element.source.column}` : ""}${element.source.rowIndex !== undefined ? ` / Row ${element.source.rowIndex + 1}` : ""})`).join("\n")}
 - Explanation: ${rel.relationExplanation}
 `).join("\n")}
 
@@ -303,28 +302,82 @@ Create a JSON response with the following structure:
 {
   "relations": [
     {
-      "element1": "First element (can be a column name, file name, data value, or conceptual element)",
-      "element1Source": {
-        "file": "Source file name (e.g., 'orders.csv')",
-        "column": "Column name if element1 is a column or data value from a column (optional)",
-        "rowIndex": number
-      },
-      "element2": "Second element (can be a column name, file name, data value, or conceptual element)",
-      "element2Source": {
-        "file": "Source file name (e.g., 'customers.csv')",
-        "column": "Column name if element2 is a column or data value from a column (optional)",
-        "rowIndex": number
-      },
-      "relationExplanation": "Detailed explanation of how these two elements are connected, related, or interact."
+      "elements": [
+        {
+          "name": "Element name (can be a column name, file name, specific data value, or conceptual element)",
+          "source": {
+            "file": "Source file name (e.g., 'orders.csv')",
+            "column": "Column name if element is a column or data value from a column (optional, omit if not applicable)",
+            "rowIndex": number // Row index if element is a specific data value (optional, omit if not applicable, 0-based)
+          }
+        }
+        // ... add more elements (minimum 2, but can be 3, 4, 5, or more as needed)
+      ],
+      "relationExplanation": "Detailed explanation of how ALL elements in this relation are connected, related, or interact together as a group."
     }
   ],
-  "summary": "Overall summary of the data mesh network."
+  "summary": "Overall summary of the data mesh network, including the number of relations and key patterns identified."
 }
 
+CRITICAL GUIDELINES FOR CREATING RELATIONS:
+
+1. RELATION SIZE DECISION:
+   - Create relations with 2 elements when there's a direct, pairwise connection (e.g., foreign key relationships, direct dependencies)
+   - Create relations with 3+ elements when multiple elements form a logical group or network:
+     * Hierarchical relationships (parent-child-grandchild)
+     * Transaction chains (order → payment → shipment)
+     * Category hierarchies (product → category → department)
+     * Time-based sequences (start → process → end)
+     * Multi-file aggregations (same metric across different sources)
+     * Conceptual groupings (all columns measuring the same business concept)
+
+2. QUALITY CRITERIA:
+   - Each relation must represent a MEANINGFUL connection - avoid arbitrary groupings
+   - All elements in a relation should share a clear logical relationship
+   - Prefer fewer, well-defined relations over many weak connections
+   - Relations should tell a story or reveal a pattern in the data
+
+3. ELEMENT TYPES:
+   - Column-level: When entire columns relate (e.g., "customer_id" in orders.csv relates to "id" in customers.csv)
+   - Row-level: When specific data values relate (include rowIndex)
+   - File-level: When entire files relate conceptually
+   - Mixed: Combine different granularities when it makes sense
+
+4. RELATION EXPLANATION:
+   - Must explain how ALL elements connect, not just pairs
+   - Describe the type of relationship (hierarchical, transactional, categorical, temporal, etc.)
+   - Include business context when possible
+   - Be specific about the nature of the connection
+
+5. NETWORK STRUCTURE:
+   - Aim for a balanced network: not too sparse (few relations) or too dense (everything connected)
+   - Identify key hub elements (elements that appear in multiple relations)
+   - Create relations that reveal data quality issues or inconsistencies
+   - Consider both explicit connections (same values) and implicit connections (semantic relationships)
+
+6. SOURCE INFORMATION:
+   - ALWAYS include accurate source information (file, column, rowIndex) for traceability
+   - Use rowIndex only when referring to specific data values, not entire columns
+   - Omit optional fields (column, rowIndex) when not applicable
+
+EXAMPLES:
+
+Good 2-element relation:
+- "customer_id" column in orders.csv ↔ "id" column in customers.csv
+- Explanation: "Foreign key relationship linking orders to their customers"
+
+Good 3-element relation:
+- "order_id" in orders.csv, "order_id" in payments.csv, "order_id" in shipments.csv
+- Explanation: "Transaction chain connecting an order to its payment and shipment records"
+
+Good 4+ element relation:
+- All "revenue" columns across different ad platform files (google_ads, meta_ads, etc.)
+- Explanation: "Aggregated revenue metrics from multiple advertising platforms, representing total marketing spend"
+
 IMPORTANT:
-- Identify ALL possible relationships and connections between data elements
-- ALWAYS include source information (file, column, rowIndex) for traceability
-- Be comprehensive - find as many connections as possible
-- Explain each relationship clearly and in detail`;
+- Identify ALL meaningful relationships and connections
+- Be strategic about relation size - use multi-point relations when they reveal important patterns
+- Quality over quantity: better to have fewer, well-defined relations than many weak ones
+- The AI should decide the optimal number of points per relation based on the logical grouping`;
   }
 }

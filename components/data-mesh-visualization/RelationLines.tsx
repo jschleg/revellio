@@ -2,6 +2,14 @@
 
 import type { DataMeshRelation } from "@/lib/types/data";
 
+interface ElementPosition {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface RelationLinesProps {
   relations: DataMeshRelation[];
   selectedRelations: Set<number>;
@@ -9,7 +17,7 @@ interface RelationLinesProps {
   onRelationHover: (index: number | null) => void;
   onRelationClick: (index: number) => void;
   onTooltipPositionUpdate: (position: { x: number; y: number }) => void;
-  getRelationPath: (relation: DataMeshRelation) => string | null;
+  getRelationPaths: (relation: DataMeshRelation) => string[];
   getRelationColor: (index: number, isSelected: boolean, isHovered: boolean) => string;
   canvasRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -21,7 +29,7 @@ export function RelationLines({
   onRelationHover,
   onRelationClick,
   onTooltipPositionUpdate,
-  getRelationPath,
+  getRelationPaths,
   getRelationColor,
   canvasRef,
 }: RelationLinesProps) {
@@ -57,50 +65,55 @@ export function RelationLines({
       }}
     >
       {relations.map((relation, index) => {
-        const path = getRelationPath(relation);
-        if (!path) return null;
+        const paths = getRelationPaths(relation);
+        if (paths.length === 0) return null;
 
         const isSelected = selectedRelations.has(index);
         const isHovered = hoveredRelation === index;
+        // All lines in the same relation get the same color
         const strokeColor = getRelationColor(index, isSelected, isHovered);
 
         return (
           <g key={index} className="pointer-events-auto">
-            {/* Background path for better visibility */}
-            <path
-              d={path}
-              fill="none"
-              stroke="rgba(0, 0, 0, 0.15)"
-              strokeWidth={isSelected ? 8 : isHovered ? 7 : 6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={0.4}
-            />
-            {/* Main path */}
-            <path
-              d={path}
-              fill="none"
-              stroke={strokeColor}
-              strokeWidth={isSelected ? 5 : isHovered ? 4.5 : 4}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={isSelected ? 1 : isHovered ? 0.95 : 0.85}
-              onMouseEnter={(e) => handleMouseEnter(index, e)}
-              onMouseMove={(e) => handleMouseMove(index, e)}
-              onMouseLeave={() => onRelationHover(null)}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRelationClick(index);
-              }}
-              className="cursor-pointer transition-all"
-              style={{
-                filter: isSelected
-                  ? "drop-shadow(0 0 6px rgba(147, 51, 234, 0.6))"
-                  : isHovered
-                  ? "drop-shadow(0 0 4px rgba(0, 0, 0, 0.3))"
-                  : undefined,
-              }}
-            />
+            {paths.map((path, pathIndex) => (
+              <g key={pathIndex}>
+                {/* Background path for better visibility */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke="rgba(0, 0, 0, 0.15)"
+                  strokeWidth={isSelected ? 8 : isHovered ? 7 : 6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={0.4}
+                />
+                {/* Main path */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={strokeColor}
+                  strokeWidth={isSelected ? 5 : isHovered ? 4.5 : 4}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={isSelected ? 1 : isHovered ? 0.95 : 0.85}
+                  onMouseEnter={(e) => handleMouseEnter(index, e)}
+                  onMouseMove={(e) => handleMouseMove(index, e)}
+                  onMouseLeave={() => onRelationHover(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRelationClick(index);
+                  }}
+                  className="cursor-pointer transition-all"
+                  style={{
+                    filter: isSelected
+                      ? "drop-shadow(0 0 6px rgba(147, 51, 234, 0.6))"
+                      : isHovered
+                      ? "drop-shadow(0 0 4px rgba(0, 0, 0, 0.3))"
+                      : undefined,
+                  }}
+                />
+              </g>
+            ))}
           </g>
         );
       })}

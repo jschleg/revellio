@@ -33,7 +33,7 @@ export function DataMeshVisualization({
   const [hoveredRelation, setHoveredRelation] = useState<number | null>(null);
   const [editingRelation, setEditingRelation] = useState<number | null>(null);
   const [editedExplanation, setEditedExplanation] = useState<string>("");
-  const [editingConnectionPoint, setEditingConnectionPoint] = useState<"element1" | "element2" | null>(null);
+  const [editingConnectionPoint, setEditingConnectionPoint] = useState<number | null>(null);
   const [localRelations, setLocalRelations] = useState<DataMeshRelation[]>(dataMeshOutput.relations);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -67,8 +67,9 @@ export function DataMeshVisualization({
   const getFiles = useMemo((): string[] => {
     const fileSet = new Set<string>();
     localRelations.forEach((rel) => {
-      fileSet.add(rel.element1Source.file);
-      fileSet.add(rel.element2Source.file);
+      rel.elements.forEach((element) => {
+        fileSet.add(element.source.file);
+      });
     });
     csvData.forEach((data) => fileSet.add(data.fileName));
     return Array.from(fileSet);
@@ -167,6 +168,7 @@ export function DataMeshVisualization({
     }
     
     const updatedRelations = [...localRelations];
+    const relation = updatedRelations[editingRelation];
     const newSource = {
       file,
       ...(column && { column }),
@@ -177,19 +179,17 @@ export function DataMeshVisualization({
       ? (rowIndex !== undefined ? `${file}::${column}::row${rowIndex + 1}` : `${file}::${column}`)
       : file;
     
-    if (editingConnectionPoint === "element1") {
-      updatedRelations[editingRelation] = {
-        ...updatedRelations[editingRelation],
-        element1Source: newSource,
-        element1: newElementName,
-      };
-    } else {
-      updatedRelations[editingRelation] = {
-        ...updatedRelations[editingRelation],
-        element2Source: newSource,
-        element2: newElementName,
-      };
-    }
+    // Update the element at the specified index
+    const updatedElements = [...relation.elements];
+    updatedElements[editingConnectionPoint] = {
+      name: newElementName,
+      source: newSource,
+    };
+    
+    updatedRelations[editingRelation] = {
+      ...relation,
+      elements: updatedElements,
+    };
     
     setLocalRelations(updatedRelations);
     setEditingConnectionPoint(null);
@@ -257,30 +257,41 @@ export function DataMeshVisualization({
     return elementPositionsRef.current.get(id) || null;
   }, [getElementId]);
 
-  const getRelationPath = useCallback((relation: DataMeshRelation): string | null => {
-    const pos1 = getElementPosition(
-      relation.element1Source.file,
-      relation.element1Source.column,
-      relation.element1Source.rowIndex
-    );
-    const pos2 = getElementPosition(
-      relation.element2Source.file,
-      relation.element2Source.column,
-      relation.element2Source.rowIndex
-    );
-
-    if (!pos1 || !pos2) return null;
-
-    const x1 = pos1.x + pos1.width / 2;
-    const y1 = pos1.y + pos1.height / 2;
-    const x2 = pos2.x + pos2.width / 2;
-    const y2 = pos2.y + pos2.height / 2;
-
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const controlOffset = Math.min(Math.abs(dx) * 0.5, 100);
+  const getRelationPaths = useCallback((relation: DataMeshRelation): string[] => {
+    const paths: string[] = [];
     
-    return `M ${x1} ${y1} C ${x1 + controlOffset} ${y1} ${x2 - controlOffset} ${y2} ${x2} ${y2}`;
+    // Get positions for all elements in the relation
+    const positions = relation.elements.map(element => 
+      getElementPosition(
+        element.source.file,
+        element.source.column,
+        element.source.rowIndex
+      )
+    ).filter((pos): pos is ElementPosition => pos !== null);
+    
+    // If we don't have at least 2 valid positions, return empty array
+    if (positions.length < 2) return [];
+    
+    // Create paths between all pairs of elements in the relation
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        const pos1 = positions[i];
+        const pos2 = positions[j];
+        
+        const x1 = pos1.x + pos1.width / 2;
+        const y1 = pos1.y + pos1.height / 2;
+        const x2 = pos2.x + pos2.width / 2;
+        const y2 = pos2.y + pos2.height / 2;
+        
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const controlOffset = Math.min(Math.abs(dx) * 0.5, 100);
+        
+        paths.push(`M ${x1} ${y1} C ${x1 + controlOffset} ${y1} ${x2 - controlOffset} ${y2} ${x2} ${y2}`);
+      }
+    }
+    
+    return paths;
   }, [getElementPosition]);
 
   const getRelationColor = useCallback((index: number, isSelected: boolean, isHovered: boolean): string => {
@@ -308,19 +319,14 @@ export function DataMeshVisualization({
     const usedElementIds = new Set<string>();
     
     localRelations.forEach((relation) => {
-      const id1 = relation.element1Source.rowIndex !== undefined && relation.element1Source.column
-        ? getElementId(relation.element1Source.file, relation.element1Source.column, relation.element1Source.rowIndex)
-        : relation.element1Source.column
-        ? getElementId(relation.element1Source.file, relation.element1Source.column)
-        : getElementId(relation.element1Source.file);
-      usedElementIds.add(id1);
-
-      const id2 = relation.element2Source.rowIndex !== undefined && relation.element2Source.column
-        ? getElementId(relation.element2Source.file, relation.element2Source.column, relation.element2Source.rowIndex)
-        : relation.element2Source.column
-        ? getElementId(relation.element2Source.file, relation.element2Source.column)
-        : getElementId(relation.element2Source.file);
-      usedElementIds.add(id2);
+      relation.elements.forEach((element) => {
+        const id = element.source.rowIndex !== undefined && element.source.column
+          ? getElementId(element.source.file, element.source.column, element.source.rowIndex)
+          : element.source.column
+          ? getElementId(element.source.file, element.source.column)
+          : getElementId(element.source.file);
+        usedElementIds.add(id);
+      });
     });
 
     const allElements = containerRef.current.querySelectorAll('[data-element-id]');
@@ -486,7 +492,7 @@ export function DataMeshVisualization({
                 onRelationHover={setHoveredRelation}
                 onRelationClick={openEditWindow}
                 onTooltipPositionUpdate={setTooltipPosition}
-                getRelationPath={getRelationPath}
+                getRelationPaths={getRelationPaths}
                 getRelationColor={getRelationColor}
                 canvasRef={canvasRef}
               />

@@ -61,31 +61,23 @@ export function RelationsList({
                 </button>
                 <div className="flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                        {relation.element1}
-                      </span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        ({relation.element1Source.file}
-                        {relation.element1Source.column && ` / ${relation.element1Source.column}`}
-                        {relation.element1Source.rowIndex !== undefined &&
-                          ` / Row ${relation.element1Source.rowIndex + 1}`}
-                        )
-                      </span>
-                    </div>
-                    <span className="text-purple-600 dark:text-purple-400">↔</span>
-                    <div className="flex items-center gap-1">
-                      <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                        {relation.element2}
-                      </span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        ({relation.element2Source.file}
-                        {relation.element2Source.column && ` / ${relation.element2Source.column}`}
-                        {relation.element2Source.rowIndex !== undefined &&
-                          ` / Row ${relation.element2Source.rowIndex + 1}`}
-                        )
-                      </span>
-                    </div>
+                    {relation.elements.map((element, idx) => (
+                      <div key={idx} className="flex items-center gap-1">
+                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
+                          {element.name}
+                        </span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          ({element.source.file}
+                          {element.source.column && ` / ${element.source.column}`}
+                          {element.source.rowIndex !== undefined &&
+                            ` / Row ${element.source.rowIndex + 1}`}
+                          )
+                        </span>
+                        {idx < relation.elements.length - 1 && (
+                          <span className="mx-1 text-purple-600 dark:text-purple-400">↔</span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">
                     {relation.relationExplanation}

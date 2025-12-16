@@ -31,7 +31,12 @@ export function RelationTooltip({ relation, position, color }: RelationTooltipPr
             style={{ backgroundColor: color }}
           ></div>
           <p className="font-bold text-purple-900 dark:text-purple-200">
-            {relation.element1} ↔ {relation.element2}
+            {relation.elements.map((el, idx) => (
+              <span key={idx}>
+                {el.name}
+                {idx < relation.elements.length - 1 && " ↔ "}
+              </span>
+            ))}
           </p>
         </div>
         <p className="text-zinc-700 dark:text-zinc-300">

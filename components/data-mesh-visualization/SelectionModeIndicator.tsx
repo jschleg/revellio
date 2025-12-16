@@ -1,7 +1,7 @@
 "use client";
 
 interface SelectionModeIndicatorProps {
-  connectionPoint: "element1" | "element2";
+  connectionPoint: string;
   onCancel: () => void;
 }
 
@@ -11,8 +11,7 @@ export function SelectionModeIndicator({ connectionPoint, onCancel }: SelectionM
       <div className="flex items-center gap-3">
         <div className="h-2 w-2 animate-pulse rounded-full bg-white"></div>
         <span>
-          Selection Mode: Click on any element to set the{" "}
-          {connectionPoint === "element1" ? "source" : "target"} connection point
+          Selection Mode: Click on any element to set the {connectionPoint} connection point
         </span>
         <button
           onClick={onCancel}

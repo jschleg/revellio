@@ -58,10 +58,10 @@ export default function Home() {
         
         // File-to-file relation
         relations.push({
-          element1: file1.fileName,
-          element1Source: { file: file1.fileName },
-          element2: file2.fileName,
-          element2Source: { file: file2.fileName },
+          elements: [
+            { name: file1.fileName, source: { file: file1.fileName } },
+            { name: file2.fileName, source: { file: file2.fileName } },
+          ],
           relationExplanation: `These files are related and can be analyzed together. Both contain structured data that may share common patterns or themes.`,
         });
 
@@ -78,10 +78,10 @@ export default function Home() {
                 col1Lower.includes('date') && col2Lower.includes('date') ||
                 col1Lower.includes('id') && col2Lower.includes('id')) {
               relations.push({
-                element1: col1,
-                element1Source: { file: file1.fileName, column: col1 },
-                element2: col2,
-                element2Source: { file: file2.fileName, column: col2 },
+                elements: [
+                  { name: col1, source: { file: file1.fileName, column: col1 } },
+                  { name: col2, source: { file: file2.fileName, column: col2 } },
+                ],
                 relationExplanation: `Columns "${col1}" and "${col2}" appear to be related, possibly representing the same or similar data across different files.`,
               });
             }
@@ -100,10 +100,10 @@ export default function Home() {
             
             // Add relation between columns in same file
             relations.push({
-              element1: col1,
-              element1Source: { file: file.fileName, column: col1 },
-              element2: col2,
-              element2Source: { file: file.fileName, column: col2 },
+              elements: [
+                { name: col1, source: { file: file.fileName, column: col1 } },
+                { name: col2, source: { file: file.fileName, column: col2 } },
+              ],
               relationExplanation: `Columns "${col1}" and "${col2}" are part of the same dataset and may have contextual relationships.`,
             });
           }

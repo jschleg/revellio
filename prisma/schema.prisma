@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Session {
+  id                String   @id @default(cuid())
+  name              String   @default("Untitled Session")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // User prompts
+  dataMeshPrompt    String?
+  userPrompt        String?
+  
+  // CSV Files
+  csvFiles          CSVFile[]
+  
+  // Data Mesh Output
+  dataMeshSummary   String?
+  dataMeshRelations DataMeshRelation[]
+  
+  // AI Analysis Output
+  aiOutputReasoning String?
+  aiOutputMetadata  String? // JSON string for metadata object
+  aiVisualizations  VisualizationInstruction[]
+  aiRelations       Relation[]
+  
+  @@index([createdAt])
+  @@index([updatedAt])
+}
+
+model CSVFile {
+  id            String   @id @default(cuid())
+  sessionId     String
+  session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  fileName      String
+  rawContent    String   @default("")
+  hasHeader     Boolean  @default(true)
+  rowCount      Int
+  
+  // Columns stored as JSON array of strings
+  columns       String   // JSON array
+  
+  // Metadata stored as JSON
+  metadata      String   // JSON string of Metadata object
+  
+  // Rows stored separately for better querying
+  rows          CSVRow[]
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([sessionId])
+}
+
+model CSVRow {
+  id        String   @id @default(cuid())
+  csvFileId String
+  csvFile   CSVFile  @relation(fields: [csvFileId], references: [id], onDelete: Cascade)
+  
+  // Row data stored as JSON
+  rowData   String   // JSON string of Row object
+  rowIndex  Int      // Index of row in original file
+  
+  @@index([csvFileId])
+  @@index([csvFileId, rowIndex])
+}
+
+model DataMeshRelation {
+  id                  String   @id @default(cuid())
+  sessionId           String
+  session             Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  title               String
+  relationExplanation String
+  
+  // Elements stored as JSON array
+  elements            String   // JSON array of DataMeshElement[]
+  
+  orderIndex          Int      @default(0) // For maintaining order
+  
+  @@index([sessionId])
+}
+
+model VisualizationInstruction {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  type        String   // VisualizationType
+  module      String
+  reasoning   String
+  
+  // Config and schema stored as JSON
+  config      String   // JSON string
+  schema      String?  // JSON string (optional)
+  
+  orderIndex  Int      @default(0) // For maintaining order
+  
+  @@index([sessionId])
+}
+
+model Relation {
+  id            String   @id @default(cuid())
+  sessionId     String
+  session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  type          String   // "key" | "time" | "category" | "semantic"
+  sourceColumn  String
+  targetColumn  String
+  confidence    Float
+  description   String
+  
+  @@index([sessionId])
+}

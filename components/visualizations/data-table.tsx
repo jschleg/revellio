@@ -1,16 +1,31 @@
 "use client";
 
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
+import { extractDataFromSchema } from "./utils";
 
 interface DataTableVisualizationProps {
   instruction: VisualizationInstruction;
   data: CSVData;
+  csvData: CSVData[];
 }
 
-export function DataTableVisualization({ instruction, data }: DataTableVisualizationProps) {
-  const { columns = [] } = instruction.config;
-  const displayColumns = columns.length > 0 ? columns : data.columns;
-  const displayRows = data.rows.slice(0, 100); // Limit to 100 rows for performance
+export function DataTableVisualization({ instruction, data, csvData }: DataTableVisualizationProps) {
+  // Use schema if available, otherwise fall back to config (backward compatibility)
+  const schema = instruction.schema;
+  let displayColumns: string[];
+  let displayRows: CSVData["rows"];
+
+  if (schema && schema.dataPoints.length > 0) {
+    // Use schema to get exact data points from original files
+    const extracted = extractDataFromSchema(schema, csvData);
+    displayColumns = extracted.columns.length > 0 ? extracted.columns : data.columns;
+    displayRows = extracted.rows.slice(0, 100); // Limit to 100 rows for performance
+  } else {
+    // Fallback to config (backward compatibility)
+    const { columns = [] } = instruction.config;
+    displayColumns = columns.length > 0 ? columns : data.columns;
+    displayRows = data.rows.slice(0, 100); // Limit to 100 rows for performance
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -42,9 +57,9 @@ export function DataTableVisualization({ instruction, data }: DataTableVisualiza
           ))}
         </tbody>
       </table>
-      {data.rows.length > 100 && (
+      {displayRows.length >= 100 && (
         <p className="mt-2 text-xs text-zinc-500">
-          Zeige 100 von {data.rows.length} Zeilen
+          Zeige 100 von {displayRows.length} Zeilen
         </p>
       )}
     </div>

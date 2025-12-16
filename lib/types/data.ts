@@ -91,32 +91,8 @@ export type VisualizationType =
   | "bar-chart"
   | "line-chart"
   | "pie-chart"
-  | "table"
   | "scatter-plot"
-  | "relational-view"
-  | "aggregated-overview"
-  | "treemap"
-  | "sankey"
-  | "heatmap"
-  | "radar"
-  | "stream"
-  | "sunburst"
-  | "bump"
-  | "parallel-coordinates"
-  | "network"
-  | "calendar"
-  | "chord"
-  | "circle-packing"
-  | "funnel"
-  | "marimekko"
-  | "swarmplot"
-  | "boxplot"
-  | "bullet"
-  | "icicle"
-  | "radial-bar"
-  | "tree"
-  | "waffle"
-  | "geo";
+  | "table";
 
 export interface VisualizationSuggestion {
   type: VisualizationType;

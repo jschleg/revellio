@@ -3,30 +3,51 @@
 import { ResponsivePie } from "@nivo/pie";
 import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { nivoTheme, getColorFromString } from "./theme";
-import { validateColumns, getErrorMessage, applyAggregation } from "./utils";
+import { validateColumns, getErrorMessage, extractDataFromSchema, getDataForFileColumn } from "./utils";
 
 interface PieChartVisualizationProps {
   instruction: VisualizationInstruction;
   data: CSVData;
+  csvData: CSVData[];
 }
 
-export function PieChartVisualization({ instruction, data }: PieChartVisualizationProps) {
-  const { columns = [] } = instruction.config;
+export function PieChartVisualization({ instruction, data, csvData }: PieChartVisualizationProps) {
+  // Use schema if available, otherwise fall back to config (backward compatibility)
+  const schema = instruction.schema;
+  let labelCol: string;
+  let valueCol: string;
+  let rows: CSVData["rows"];
 
-  // Validation
-  if (columns.length < 2) {
-    return getErrorMessage("Pie chart requires at least 2 columns");
+  if (schema && schema.structure.groupBy && schema.structure.aggregate) {
+    // Use schema to get exact data points from original files
+    const groupBy = schema.structure.groupBy;
+    const aggregate = schema.structure.aggregate;
+    
+    labelCol = groupBy.column;
+    valueCol = aggregate.column;
+
+    // Extract data from schema - get all rows from identified files
+    const extracted = extractDataFromSchema(schema, csvData);
+    rows = extracted.rows;
+  } else {
+    // Fallback to config (backward compatibility)
+    const { columns = [] } = instruction.config;
+
+    if (columns.length < 2) {
+      return getErrorMessage("Pie chart requires at least 2 columns");
+    }
+
+    const validation = validateColumns(data, columns);
+    if (!validation.valid) {
+      return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
+    }
+
+    [labelCol, valueCol] = columns;
+    rows = data.rows;
   }
-
-  const validation = validateColumns(data, columns);
-  if (!validation.valid) {
-    return getErrorMessage(`Missing columns: ${validation.missing.join(", ")}`);
-  }
-
-  const [labelCol, valueCol] = columns;
 
   // Aggregate data
-  const aggregated = data.rows.reduce<Record<string, number>>((acc, row) => {
+  const aggregated = rows.reduce<Record<string, number>>((acc, row) => {
     const label = String(row[labelCol] ?? "Unknown");
     const value = Number(row[valueCol]) || 0;
     acc[label] = (acc[label] || 0) + value;

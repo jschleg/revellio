@@ -243,17 +243,13 @@ For EACH relation below, determine the best way to visualize it:
    - What is the relationship pattern? (comparison, flow, hierarchy, correlation, etc.)
 
 2. CHOOSE VISUALIZATION TYPE:
-   Available types: bar-chart, line-chart, pie-chart, scatter-plot, table, aggregated-overview, relational-view, treemap, sankey, heatmap, radar, stream, sunburst, bump, parallel-coordinates, network, calendar, chord, circle-packing, funnel, marimekko, swarmplot, boxplot, bullet, icicle, radial-bar, tree, waffle, geo
+   Available types: bar-chart, line-chart, pie-chart, scatter-plot, table
    
    Selection criteria:
-   - Categorical + Numerical → bar-chart, pie-chart, treemap
-   - Temporal + Numerical → line-chart, stream, calendar
+   - Categorical + Numerical → bar-chart, pie-chart
+   - Temporal + Numerical → line-chart
    - 2 Numerical → scatter-plot
-   - Flow/Process → sankey, funnel
-   - Network/Connections → network, chord
-   - Hierarchy → treemap, sunburst, tree, icicle
-   - Matrix/Grid → heatmap
-   - Multiple metrics → radar, parallel-coordinates
+   - Detailed inspection → table
 
 3. SELECT COLUMNS:
    - Use columns from the files referenced in the relation elements
@@ -396,8 +392,8 @@ Before creating ANY visualizations, perform comprehensive data analysis:
 2. DATA CHARACTERISTICS:
    - Cardinality: Count unique values per column
      * Low cardinality (< 10): Good for pie charts, small bar charts
-     * Medium cardinality (10-50): Bar charts, treemaps work well
-     * High cardinality (> 50): Requires aggregation or different visualization
+     * Medium cardinality (10-50): Bar charts work well
+     * High cardinality (> 50): Requires aggregation or use table for detailed view
    - Distribution: Identify patterns (normal, skewed, uniform, sparse)
    - Missing values: Check for null/empty values that need handling
    - Outliers: Detect extreme values that might need special handling
@@ -473,217 +469,9 @@ VISUALIZATION TYPE SELECTION CRITERIA:
    - EXAMPLES: Transaction details, comparison tables, raw data display
    - AVOID: For large datasets without aggregation
 
-6. AGGREGATED-OVERVIEW:
-   - USE FOR: Summary statistics, KPIs, data quality metrics, high-level insights
-   - REQUIREMENTS:
-     * Multiple numerical columns for statistics
-     * Should provide key metrics (sum, avg, min, max, count)
-   - AGGREGATION: Multiple aggregations (sum, avg, count, etc.)
-   - EXAMPLES: Dashboard summary, data quality report, key metrics overview
-   - USE WHEN: User needs quick insights before detailed analysis
-
-7. RELATIONAL-VIEW:
-   - USE FOR: Showing relationships between multiple datasets/files, data mesh visualization
-   - REQUIREMENTS:
-     * Multiple CSV files with identified relationships
-     * Pre-defined relations from data mesh analysis
-   - EXAMPLES: Foreign key relationships, cross-file connections, data lineage
-   - USE WHEN: Data mesh relations are available and relationships are the focus
-
-8. TREEMAP:
-   - USE FOR: Hierarchical data, part-to-whole relationships, showing proportions with size
-   - REQUIREMENTS:
-     * At least 1 categorical column (categories) + 1 numerical column (values)
-     * Numerical values should be positive (negative values will be filtered)
-     * Best for 5-30 categories
-   - AGGREGATION: Usually "sum" to aggregate values per category
-   - EXAMPLES: Market share by product, budget allocation, file size distribution, category breakdown
-   - ADVANTAGES: Shows both hierarchy and relative sizes simultaneously
-   - USE WHEN: You want to show proportions AND hierarchy in one view
-
-9. SANKEY:
-   - USE FOR: Flow diagrams, showing movement/transitions between states, process flows
-   - REQUIREMENTS:
-     * At least 3 columns: source (categorical), target (categorical), value (numerical)
-     * Shows flows from source nodes to target nodes
-   - AGGREGATION: Usually "sum" to aggregate flows between same source-target pairs
-   - EXAMPLES: Customer journey, energy flows, migration patterns, conversion funnels, data pipeline flows
-   - ADVANTAGES: Visualizes complex multi-step processes and relationships
-   - USE WHEN: Data represents flows, transitions, or movements between categories
-
-10. HEATMAP:
-    - USE FOR: Matrix data, correlation analysis, showing intensity/values in a grid
-    - REQUIREMENTS:
-      * At least 3 columns: row (categorical), column (categorical), value (numerical)
-      * Creates a matrix showing values at row-column intersections
-    - AGGREGATION: Usually "sum" or "avg" when multiple values exist for same row-column pair
-    - EXAMPLES: Correlation matrix, time-series heatmap (time × category), performance matrix, activity heatmap
-    - ADVANTAGES: Shows patterns and intensity across two categorical dimensions
-    - USE WHEN: You need to visualize relationships between two categorical variables with intensity
-
-11. RADAR:
-    - USE FOR: Multi-dimensional comparison, showing multiple metrics for different categories
-    - REQUIREMENTS:
-      * 1 categorical column (categories) + 2+ numerical columns (metrics)
-      * Each category gets a radar shape with metrics as axes
-    - AGGREGATION: Usually "sum" or "avg" when grouping
-    - EXAMPLES: Performance comparison across dimensions, skill assessments, multi-metric analysis
-    - USE WHEN: Comparing multiple metrics across categories in one view
-
-12. STREAM:
-    - USE FOR: Stacked area chart showing composition over time, part-to-whole over time
-    - REQUIREMENTS:
-      * 1 time/sequence column + 2+ numerical columns (series)
-      * Shows how composition changes over time
-    - AGGREGATION: Usually "sum" when grouping by time
-    - EXAMPLES: Market share over time, category composition trends, stacked time series
-    - USE WHEN: Showing how proportions of different categories change over time
-
-13. SUNBURST:
-    - USE FOR: Hierarchical data with circular layout, multi-level proportions
-    - REQUIREMENTS:
-      * 1 hierarchical column (with separators like /, -, _) + 1 numerical column
-      * Creates nested rings showing hierarchy levels
-    - AGGREGATION: Usually "sum" when grouping by hierarchy
-    - EXAMPLES: File system structure, organizational hierarchy, nested categories
-    - USE WHEN: Data has clear hierarchy and you want circular, nested visualization
-
-14. BUMP:
-    - USE FOR: Ranking changes over time, position evolution
-    - REQUIREMENTS:
-      * 3 columns: x (time/sequence), series (categories), value (ranking metric)
-      * Shows how rankings change across time periods
-    - AGGREGATION: Usually "sum" or "avg" when grouping
-    - EXAMPLES: Top 10 rankings over time, competitive positions, leaderboard evolution
-    - USE WHEN: Tracking how rankings or positions change over time
-
-15. PARALLEL-COORDINATES:
-    - USE FOR: Multi-dimensional data analysis, pattern detection across many variables
-    - REQUIREMENTS:
-      * 2+ numerical columns (all should be numeric)
-      * Shows relationships between multiple dimensions simultaneously
-    - AGGREGATION: Usually null (show raw data)
-    - EXAMPLES: Multi-variate analysis, pattern detection, outlier identification
-    - USE WHEN: Analyzing relationships across many numerical dimensions
-
-16. NETWORK:
-    - USE FOR: Node-link diagrams, showing connections between entities
-    - REQUIREMENTS:
-      * 2 columns: source (categorical), target (categorical)
-      * Shows nodes connected by links
-    - AGGREGATION: Usually "count" when multiple connections exist
-    - EXAMPLES: Social networks, dependency graphs, relationship networks
-    - USE WHEN: Visualizing connections and relationships between entities
-
-17. CALENDAR:
-    - USE FOR: Time-based data in calendar format, activity patterns by date
-    - REQUIREMENTS:
-      * 1 date column + 1 numerical column (value)
-      * Shows values as colored squares in calendar grid
-    - AGGREGATION: Usually "sum" when multiple values per date
-    - EXAMPLES: Activity calendar, daily metrics, GitHub-style contribution graph
-    - USE WHEN: Showing temporal patterns in calendar format
-
-18. CHORD:
-    - USE FOR: Circular flow diagrams, showing relationships in circular layout
-    - REQUIREMENTS:
-      * 3 columns: source (categorical), target (categorical), value (numerical)
-      * Creates circular diagram with chords connecting nodes
-    - AGGREGATION: Usually "sum" when multiple flows exist
-    - EXAMPLES: Migration flows, trade relationships, circular dependencies
-    - USE WHEN: Showing bidirectional or circular relationships
-
-19. CIRCLE-PACKING:
-    - USE FOR: Hierarchical data with nested circles, showing hierarchy and size
-    - REQUIREMENTS:
-      * 1 categorical column + 1 numerical column (size)
-      * Creates nested circles where size represents value
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Hierarchical categories, nested groups, bubble hierarchy
-    - USE WHEN: Showing hierarchy with size-based encoding
-
-20. FUNNEL:
-    - USE FOR: Conversion funnels, process stages, sequential reduction
-    - REQUIREMENTS:
-      * 1 label column (stages) + 1 numerical column (values)
-      * Shows decreasing values through stages
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Sales funnel, conversion pipeline, process stages
-    - USE WHEN: Showing sequential reduction or conversion stages
-
-21. MARIMEKKO:
-    - USE FOR: Two-dimensional categorical analysis, showing composition across two dimensions
-    - REQUIREMENTS:
-      * 3 columns: id (categorical), dimension (categorical), value (numerical)
-      * Shows stacked bars with variable widths
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Market composition, two-dimensional breakdowns
-    - USE WHEN: Analyzing composition across two categorical dimensions
-
-22. SWARMPLOT:
-    - USE FOR: Distribution visualization, showing individual data points grouped
-    - REQUIREMENTS:
-      * 2 columns: group (categorical), value (numerical)
-      * Shows individual points arranged to show distribution
-    - AGGREGATION: Usually null (show raw data)
-    - EXAMPLES: Distribution by category, individual data points, density visualization
-    - USE WHEN: Showing individual data points and their distribution
-
-23. BOXPLOT:
-    - USE FOR: Statistical distribution, quartiles, outliers, median
-    - REQUIREMENTS:
-      * 2 columns: group (categorical), value (numerical)
-      * Shows quartiles, median, and outliers
-    - AGGREGATION: Calculated automatically (statistical)
-    - EXAMPLES: Statistical distributions, outlier detection, quartile analysis
-    - USE WHEN: Showing statistical properties and distributions
-
-24. BULLET:
-    - USE FOR: Performance metrics, KPIs with targets and ranges
-    - REQUIREMENTS:
-      * 1 label column + 1 value column
-      * Shows actual value against target ranges
-    - AGGREGATION: Usually "sum" or "avg"
-    - EXAMPLES: KPI dashboards, performance vs targets, goal tracking
-    - USE WHEN: Showing performance against targets or ranges
-
-25. ICICLE:
-    - USE FOR: Hierarchical data in rectangular layout, tree structure
-    - REQUIREMENTS:
-      * 1 hierarchical column + 1 numerical column
-      * Similar to treemap but with different layout
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Hierarchical breakdowns, tree structures
-    - USE WHEN: Showing hierarchy in rectangular icicle format
-
-26. RADIAL-BAR:
-    - USE FOR: Circular bar charts, showing values in radial layout
-    - REQUIREMENTS:
-      * 1 categorical column + 1 numerical column
-      * Bars arranged in circle
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Circular comparisons, radial metrics
-    - USE WHEN: Want circular layout for bar chart
-
-27. TREE:
-    - USE FOR: Hierarchical tree structure, node-link tree diagram
-    - REQUIREMENTS:
-      * 1 hierarchical column + 1 numerical column
-      * Shows tree structure with nodes and links
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Organizational charts, hierarchical trees, node structures
-    - USE WHEN: Showing explicit tree/hierarchical relationships
-
-28. WAFFLE:
-    - USE FOR: Part-to-whole visualization in grid format, proportions
-    - REQUIREMENTS:
-      * 1 categorical column + 1 numerical column
-      * Shows proportions as filled squares in grid
-    - AGGREGATION: Usually "sum" when grouping
-    - EXAMPLES: Market share grid, proportion visualization, percentage breakdown
-    - USE WHEN: Showing proportions in grid/square format
-
+═══════════════════════════════════════════════════════════════════
 DATA PROCESSING RULES:
+═══════════════════════════════════════════════════════════════════
 
 1. COLUMN SELECTION:
    - Always verify column names exist in the data
@@ -716,60 +504,34 @@ PHASE 2: VISUALIZATION STRATEGY (DECISION FRAMEWORK)
 
 DECISION TREE - Follow this logic to choose visualizations:
 
-STEP 1: START WITH OVERVIEW (ALWAYS FIRST)
-   → Create "aggregated-overview" as the FIRST visualization
-   → Provides context: total rows, key metrics, data quality
-   → Exception: Skip if user explicitly asks for specific visualization
-
-STEP 2: IDENTIFY PRIMARY ANALYSIS GOAL
+STEP 1: IDENTIFY PRIMARY ANALYSIS GOAL
    
    A) TIME-SERIES ANALYSIS (date/time column detected):
-      → Primary: "line-chart" (single metric over time)
-      → Alternative: "stream" (multiple metrics, showing composition)
-      → Alternative: "calendar" (daily patterns, activity heatmap)
-      → If ranking over time: "bump"
-      → Aggregation: Group by time period (daily → monthly, etc.)
+      → Use: "line-chart" (single or multiple metrics over time)
+      → Aggregation: Group by time period (daily → monthly, etc.) if needed
+      → Alternative: "table" for detailed time-based data inspection
    
    B) CATEGORICAL COMPARISON (categorical + numerical):
-      → Low cardinality (2-8): "pie-chart" (proportions)
+      → Low cardinality (2-8): "pie-chart" (proportions/percentages)
       → Medium cardinality (8-30): "bar-chart" (rankings, comparisons)
-      → High cardinality (>30): "treemap" (hierarchical grouping)
-      → If circular layout preferred: "radial-bar"
-      → If grid format: "waffle"
+      → High cardinality (>30): "bar-chart" with aggregation, or "table" for detailed view
    
-   C) HIERARCHICAL DATA (nested structure detected):
-      → Circular layout: "sunburst"
-      → Rectangular layout: "treemap" or "icicle"
-      → Node-link tree: "tree"
-      → Nested circles: "circle-packing"
+   C) CORRELATION/RELATIONSHIP ANALYSIS:
+      → 2 numerical variables: "scatter-plot" (correlation, outliers)
+      → Multiple numerical variables: "table" for detailed comparison
    
-   D) CORRELATION/RELATIONSHIP ANALYSIS:
-      → 2 numerical variables: "scatter-plot"
-      → 3+ numerical variables: "parallel-coordinates"
-      → Matrix (2 categorical + 1 numerical): "heatmap"
-      → Network relationships: "network" or "chord"
-   
-   E) FLOW/PROCESS ANALYSIS:
-      → Source → Target flows: "sankey"
-      → Bidirectional flows: "chord"
-      → Conversion stages: "funnel"
-   
-   F) DISTRIBUTION ANALYSIS:
-      → Statistical properties: "boxplot"
-      → Individual points: "swarmplot"
-      → Multi-metric comparison: "radar"
-   
-   G) PERFORMANCE/KPI DASHBOARD:
-      → KPI metrics: "bullet"
-      → Two-dimensional composition: "marimekko"
+   D) DETAILED DATA INSPECTION:
+      → Use: "table" for exact values, multi-column comparison
+      → Best for: Small datasets (< 100 rows) or aggregated summaries
+      → Use when: User needs to see precise values or compare multiple columns
 
-STEP 3: CREATE MULTI-PERSPECTIVE STORY (3-5 visualizations)
-   → Overview → Trend → Distribution → Relationship → Detail
+STEP 2: CREATE MULTI-PERSPECTIVE STORY (2-4 visualizations recommended)
    → Each visualization should answer a different question
-   → Build narrative: "What?" → "How?" → "Why?" → "What if?"
+   → Build narrative: "What?" → "How?" → "Why?"
    → Use complementary visualization types (not redundant)
+   → Consider: Overview chart → Detailed table, or Trend → Distribution
 
-STEP 4: VALIDATE CHOICES
+STEP 3: VALIDATE CHOICES
    ✓ Does the visualization answer the user's question?
    ✓ Is the data structure appropriate for this visualization type?
    ✓ Will this reveal insights or just show data?
@@ -777,7 +539,7 @@ STEP 4: VALIDATE CHOICES
 
 4. LEVERAGE RELATIONS:
    ${dataMeshRelations.length > 0 
-     ? `- The provided Data Mesh relations reveal important connections\n- Create visualizations that highlight these relationships\n- Consider cross-file visualizations when relations exist\n- Use relational-view to show the network structure`
+     ? `- The provided Data Mesh relations reveal important connections\n- Create visualizations that highlight these relationships\n- Consider cross-file visualizations when relations exist`
      : `- Identify implicit relationships between columns/files\n- Consider how data from different files might relate`}
 
 5. USER PROMPT INTEGRATION:

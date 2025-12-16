@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
-import { FileText, Columns, FileCheck, CheckCircle2, Circle } from "lucide-react";
+import { CanvasControls } from "./data-mesh-visualization/CanvasControls";
+import { RelationLines } from "./data-mesh-visualization/RelationLines";
+import { RelationTooltip } from "./data-mesh-visualization/RelationTooltip";
+import { DataHierarchy } from "./data-mesh-visualization/DataHierarchy";
+import { EditRelationModal } from "./data-mesh-visualization/EditRelationModal";
+import { RelationsList } from "./data-mesh-visualization/RelationsList";
 
 interface DataMeshVisualizationProps {
   dataMeshOutput: DataMeshOutput;
   csvData: CSVData[];
+  onUpdateRelations?: (relations: DataMeshRelation[]) => void;
 }
 
 interface ElementPosition {
@@ -17,22 +23,78 @@ interface ElementPosition {
   height: number;
 }
 
-interface SelectedRelation {
-  relationIndex: number;
-  isSelected: boolean;
-}
-
 export function DataMeshVisualization({
   dataMeshOutput,
   csvData,
+  onUpdateRelations,
 }: DataMeshVisualizationProps) {
+  // State
   const [selectedRelations, setSelectedRelations] = useState<Set<number>>(new Set());
   const [hoveredRelation, setHoveredRelation] = useState<number | null>(null);
+  const [editingRelation, setEditingRelation] = useState<number | null>(null);
+  const [editedExplanation, setEditedExplanation] = useState<string>("");
+  const [editingConnectionPoint, setEditingConnectionPoint] = useState<"element1" | "element2" | null>(null);
+  const [localRelations, setLocalRelations] = useState<DataMeshRelation[]>(dataMeshOutput.relations);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [positionsUpdateKey, setPositionsUpdateKey] = useState(0);
+
+  // Refs
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const elementPositionsRef = useRef<Map<string, ElementPosition>>(new Map());
 
-  // Toggle selection for a relation
-  const toggleRelation = (index: number) => {
+  // Sync local relations with prop changes
+  useEffect(() => {
+    setLocalRelations(dataMeshOutput.relations);
+  }, [dataMeshOutput.relations]);
+
+  // Helper functions
+  const getElementId = useCallback((file: string, column?: string, rowIndex?: number): string => {
+    if (rowIndex !== undefined && column) {
+      return `${file}::${column}::row${rowIndex}`;
+    }
+    if (column) {
+      return `${file}::${column}`;
+    }
+    return file;
+  }, []);
+
+  const getFiles = useMemo((): string[] => {
+    const fileSet = new Set<string>();
+    localRelations.forEach((rel) => {
+      fileSet.add(rel.element1Source.file);
+      fileSet.add(rel.element2Source.file);
+    });
+    csvData.forEach((data) => fileSet.add(data.fileName));
+    return Array.from(fileSet);
+  }, [localRelations, csvData]);
+
+  const getColumnsForFile = useCallback((fileName: string): string[] => {
+    const data = csvData.find((d) => d.fileName === fileName);
+    return data?.columns || [];
+  }, [csvData]);
+
+  const getRowsForFile = useCallback((fileName: string): number[] => {
+    const data = csvData.find((d) => d.fileName === fileName);
+    if (!data) return [];
+    return Array.from({ length: data.rows.length }, (_, i) => i);
+  }, [csvData]);
+
+  const getRowValue = useCallback((fileName: string, column: string, rowIndex: number): string => {
+    const data = csvData.find((d) => d.fileName === fileName);
+    if (!data || !data.rows[rowIndex]) return "";
+    const value = data.rows[rowIndex][column];
+    if (value === null || value === undefined) return "";
+    return String(value);
+  }, [csvData]);
+
+  // Relation management
+  const toggleRelation = useCallback((index: number) => {
     setSelectedRelations((prev) => {
       const next = new Set(prev);
       if (next.has(index)) {
@@ -42,146 +104,160 @@ export function DataMeshVisualization({
       }
       return next;
     });
-  };
+  }, []);
 
-  // Get unique files from relations and csvData
-  const getFiles = (): string[] => {
-    const fileSet = new Set<string>();
-    dataMeshOutput.relations.forEach((rel) => {
-      fileSet.add(rel.element1Source.file);
-      fileSet.add(rel.element2Source.file);
+  const openEditWindow = useCallback((index: number) => {
+    const relation = localRelations[index];
+    setEditingRelation(index);
+    setEditedExplanation(relation.relationExplanation);
+    setEditingConnectionPoint(null);
+  }, [localRelations]);
+
+  const closeEditWindow = useCallback(() => {
+    setEditingRelation(null);
+    setEditedExplanation("");
+    setEditingConnectionPoint(null);
+  }, []);
+
+  const saveEditedRelation = useCallback(() => {
+    if (editingRelation === null) return;
+    
+    const updatedRelations = [...localRelations];
+    updatedRelations[editingRelation] = {
+      ...updatedRelations[editingRelation],
+      relationExplanation: editedExplanation,
+    };
+    
+    setLocalRelations(updatedRelations);
+    if (onUpdateRelations) {
+      onUpdateRelations(updatedRelations);
+    }
+    closeEditWindow();
+  }, [editingRelation, localRelations, editedExplanation, onUpdateRelations, closeEditWindow]);
+
+  const removeRelation = useCallback(() => {
+    if (editingRelation === null) return;
+    
+    const updatedRelations = localRelations.filter((_, index) => index !== editingRelation);
+    setLocalRelations(updatedRelations);
+    
+    if (onUpdateRelations) {
+      onUpdateRelations(updatedRelations);
+    }
+    
+    setSelectedRelations((prev) => {
+      const next = new Set(prev);
+      next.delete(editingRelation);
+      return next;
     });
-    csvData.forEach((data) => fileSet.add(data.fileName));
-    return Array.from(fileSet);
-  };
+    closeEditWindow();
+  }, [editingRelation, localRelations, onUpdateRelations, closeEditWindow]);
 
-  const files = getFiles();
-
-  // Get columns for a specific file
-  const getColumnsForFile = (fileName: string): string[] => {
-    const data = csvData.find((d) => d.fileName === fileName);
-    return data?.columns || [];
-  };
-
-  // Get rows for a specific file (limited to first 10 for visualization)
-  const getRowsForFile = (fileName: string): number[] => {
-    const data = csvData.find((d) => d.fileName === fileName);
-    if (!data) return [];
-    const maxRows = Math.min(10, data.rows.length);
-    return Array.from({ length: maxRows }, (_, i) => i);
-  };
-
-  // Generate element ID
-  const getElementId = (
+  const handleElementClick = useCallback((
     file: string,
     column?: string,
-    rowIndex?: number
-  ): string => {
-    if (rowIndex !== undefined && column) {
-      return `${file}::${column}::row${rowIndex}`;
+    rowIndex?: number,
+    e?: React.MouseEvent
+  ) => {
+    if (editingRelation === null || editingConnectionPoint === null) return;
+    
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
     }
-    if (column) {
-      return `${file}::${column}`;
-    }
-    return file;
-  };
-
-  // Calculate positions for elements using refs after render
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const updatePositions = () => {
-      const positions = new Map<string, ElementPosition>();
-      const containerRect = containerRef.current?.getBoundingClientRect();
-      if (!containerRect) return;
-
-      // Find all elements by their data attributes
-      files.forEach((file) => {
-        const fileEl = containerRef.current?.querySelector(
-          `[data-element-id="${getElementId(file)}"]`
-        ) as HTMLElement;
-        if (fileEl) {
-          const rect = fileEl.getBoundingClientRect();
-          positions.set(getElementId(file), {
-            id: getElementId(file),
-            x: rect.left - containerRect.left,
-            y: rect.top - containerRect.top,
-            width: rect.width,
-            height: rect.height,
-          });
-        }
-
-        const columns = getColumnsForFile(file);
-        columns.forEach((column) => {
-          const colEl = containerRef.current?.querySelector(
-            `[data-element-id="${getElementId(file, column)}"]`
-          ) as HTMLElement;
-          if (colEl) {
-            const rect = colEl.getBoundingClientRect();
-            positions.set(getElementId(file, column), {
-              id: getElementId(file, column),
-              x: rect.left - containerRect.left,
-              y: rect.top - containerRect.top,
-              width: rect.width,
-              height: rect.height,
-            });
-          }
-
-          const rows = getRowsForFile(file).slice(0, 5);
-          rows.forEach((rowIndex) => {
-            const rowEl = containerRef.current?.querySelector(
-              `[data-element-id="${getElementId(file, column, rowIndex)}"]`
-            ) as HTMLElement;
-            if (rowEl) {
-              const rect = rowEl.getBoundingClientRect();
-              positions.set(getElementId(file, column, rowIndex), {
-                id: getElementId(file, column, rowIndex),
-                x: rect.left - containerRect.left,
-                y: rect.top - containerRect.top,
-                width: rect.width,
-                height: rect.height,
-              });
-            }
-          });
-        });
-      });
-
-      elementPositionsRef.current = positions;
+    
+    const updatedRelations = [...localRelations];
+    const newSource = {
+      file,
+      ...(column && { column }),
+      ...(rowIndex !== undefined && { rowIndex }),
     };
+    
+    const newElementName = column
+      ? (rowIndex !== undefined ? `${file}::${column}::row${rowIndex + 1}` : `${file}::${column}`)
+      : file;
+    
+    if (editingConnectionPoint === "element1") {
+      updatedRelations[editingRelation] = {
+        ...updatedRelations[editingRelation],
+        element1Source: newSource,
+        element1: newElementName,
+      };
+    } else {
+      updatedRelations[editingRelation] = {
+        ...updatedRelations[editingRelation],
+        element2Source: newSource,
+        element2: newElementName,
+      };
+    }
+    
+    setLocalRelations(updatedRelations);
+    setEditingConnectionPoint(null);
+  }, [editingRelation, editingConnectionPoint, localRelations]);
 
-    // Initial update
-    updatePositions();
+  // Canvas controls
+  const toggleFullscreen = useCallback(() => {
+    if (!isFullscreen) {
+      canvasRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }, [isFullscreen]);
 
-    // Update on resize
-    const resizeObserver = new ResizeObserver(() => {
-      updatePositions();
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel((prev) => Math.min(prev + 0.25, 3));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setZoomLevel(1);
+    if (canvasRef.current) {
+      canvasRef.current.scrollLeft = 0;
+      canvasRef.current.scrollTop = 0;
+    }
+  }, []);
+
+  // Canvas drag handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, svg, path, [data-element-id]')) return;
+    
+    setIsDragging(true);
+    if (!canvasRef.current) return;
+    setDragStart({
+      x: e.clientX + canvasRef.current.scrollLeft,
+      y: e.clientY + canvasRef.current.scrollTop,
     });
+    e.preventDefault();
+  }, []);
 
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging || !canvasRef.current) return;
+    const newX = dragStart.x - e.clientX;
+    const newY = dragStart.y - e.clientY;
+    canvasRef.current.scrollLeft = newX;
+    canvasRef.current.scrollTop = newY;
+  }, [isDragging, dragStart]);
 
-    // Also update after a short delay to ensure DOM is ready
-    const timeoutId = setTimeout(updatePositions, 100);
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
-    return () => {
-      resizeObserver.disconnect();
-      clearTimeout(timeoutId);
-    };
-  }, [files, csvData]);
-
-  // Get position for an element
-  const getElementPosition = (
+  // Position calculation
+  const getElementPosition = useCallback((
     file: string,
     column?: string,
     rowIndex?: number
   ): ElementPosition | null => {
     const id = getElementId(file, column, rowIndex);
     return elementPositionsRef.current.get(id) || null;
-  };
+  }, [getElementId]);
 
-  // Calculate line path for a relation
-  const getRelationPath = (relation: DataMeshRelation): string | null => {
+  const getRelationPath = useCallback((relation: DataMeshRelation): string | null => {
     const pos1 = getElementPosition(
       relation.element1Source.file,
       relation.element1Source.column,
@@ -200,10 +276,139 @@ export function DataMeshVisualization({
     const x2 = pos2.x + pos2.width / 2;
     const y2 = pos2.y + pos2.height / 2;
 
-    // Simple bezier curve
-    const midX = (x1 + x2) / 2;
-    return `M ${x1} ${y1} Q ${midX} ${y1} ${midX} ${(y1 + y2) / 2} T ${x2} ${y2}`;
-  };
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const controlOffset = Math.min(Math.abs(dx) * 0.5, 100);
+    
+    return `M ${x1} ${y1} C ${x1 + controlOffset} ${y1} ${x2 - controlOffset} ${y2} ${x2} ${y2}`;
+  }, [getElementPosition]);
+
+  const getRelationColor = useCallback((index: number, isSelected: boolean, isHovered: boolean): string => {
+    if (isSelected) return "rgb(147, 51, 234)";
+    if (isHovered) return "rgb(168, 85, 247)";
+    
+    const colors = [
+      "rgb(59, 130, 246)",   // blue-500
+      "rgb(34, 197, 94)",    // green-500
+      "rgb(239, 68, 68)",    // red-500
+      "rgb(251, 146, 60)",   // orange-500
+      "rgb(168, 85, 247)",   // purple-400
+      "rgb(236, 72, 153)",   // pink-500
+      "rgb(139, 92, 246)",   // violet-500
+      "rgb(20, 184, 166)",   // teal-500
+    ];
+    return colors[index % colors.length];
+  }, []);
+
+  // Calculate positions for elements
+  const updatePositions = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const positions = new Map<string, ElementPosition>();
+    const usedElementIds = new Set<string>();
+    
+    localRelations.forEach((relation) => {
+      const id1 = relation.element1Source.rowIndex !== undefined && relation.element1Source.column
+        ? getElementId(relation.element1Source.file, relation.element1Source.column, relation.element1Source.rowIndex)
+        : relation.element1Source.column
+        ? getElementId(relation.element1Source.file, relation.element1Source.column)
+        : getElementId(relation.element1Source.file);
+      usedElementIds.add(id1);
+
+      const id2 = relation.element2Source.rowIndex !== undefined && relation.element2Source.column
+        ? getElementId(relation.element2Source.file, relation.element2Source.column, relation.element2Source.rowIndex)
+        : relation.element2Source.column
+        ? getElementId(relation.element2Source.file, relation.element2Source.column)
+        : getElementId(relation.element2Source.file);
+      usedElementIds.add(id2);
+    });
+
+    const allElements = containerRef.current.querySelectorAll('[data-element-id]');
+    const containerRect = containerRef.current.getBoundingClientRect();
+    
+    Array.from(allElements).forEach((el) => {
+      const elementId = (el as HTMLElement).getAttribute('data-element-id');
+      if (elementId && usedElementIds.has(elementId)) {
+        const htmlEl = el as HTMLElement;
+        const elementRect = htmlEl.getBoundingClientRect();
+        const x = (elementRect.left - containerRect.left) / zoomLevel;
+        const y = (elementRect.top - containerRect.top) / zoomLevel;
+        
+        positions.set(elementId, {
+          id: elementId,
+          x,
+          y,
+          width: elementRect.width / zoomLevel,
+          height: elementRect.height / zoomLevel,
+        });
+      }
+    });
+
+    elementPositionsRef.current = positions;
+    // Force re-render of lines by updating key
+    setPositionsUpdateKey((prev) => prev + 1);
+  }, [zoomLevel, localRelations, getElementId]);
+
+  // Update positions when zoom or relations change
+  useEffect(() => {
+    updatePositions();
+  }, [updatePositions]);
+
+  // Update positions on resize (debounced)
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let resizeTimeout: NodeJS.Timeout;
+    const resizeObserver = new ResizeObserver(() => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updatePositions, 16);
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    // Also update after DOM is ready
+    const initTimeout1 = setTimeout(updatePositions, 50);
+    const initTimeout2 = setTimeout(updatePositions, 200);
+
+    return () => {
+      resizeObserver.disconnect();
+      clearTimeout(resizeTimeout);
+      clearTimeout(initTimeout1);
+      clearTimeout(initTimeout2);
+    };
+  }, [updatePositions]);
+
+  // Wheel zoom
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        setZoomLevel((prev) => Math.max(0.5, Math.min(3, prev + delta)));
+      }
+    };
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener("wheel", handleWheel, { passive: false });
+      return () => canvas.removeEventListener("wheel", handleWheel);
+    }
+  }, []);
+
+  // Fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const files = getFiles;
+  const currentRelation = editingRelation !== null ? localRelations[editingRelation] : null;
+  const relationStrokeColor = currentRelation
+    ? getRelationColor(editingRelation!, selectedRelations.has(editingRelation!), false)
+    : "";
 
   return (
     <div className="w-full space-y-4">
@@ -218,230 +423,108 @@ export function DataMeshVisualization({
       </div>
 
       {/* Visualization Container */}
-      <div
-        ref={containerRef}
-        className="relative w-full overflow-auto rounded-lg border border-purple-200/50 bg-gradient-to-br from-purple-50/30 to-purple-100/20 p-8 dark:border-purple-800/50 dark:from-purple-950/20 dark:to-purple-900/10"
-        style={{ minHeight: "600px" }}
-      >
-        {/* SVG Overlay for Relations */}
-        <svg
-          className="absolute inset-0 pointer-events-none"
-          style={{ width: "100%", height: "100%" }}
+      <div className="relative w-full">
+        <CanvasControls
+          zoomLevel={zoomLevel}
+          isFullscreen={isFullscreen}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onReset={handleReset}
+          onToggleFullscreen={toggleFullscreen}
+        />
+
+        {/* Draggable Scrollable Canvas */}
+        <div
+          ref={canvasRef}
+          className={`relative overflow-auto rounded-lg border-2 border-purple-300/50 bg-gradient-to-br from-purple-50/40 to-purple-100/30 shadow-lg dark:border-purple-700/50 dark:from-purple-950/30 dark:to-purple-900/20 ${
+            isFullscreen ? "fixed inset-4 z-50" : "h-[900px]"
+          } ${isDragging ? "cursor-grabbing" : editingConnectionPoint ? "cursor-crosshair" : "cursor-grab"}`}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          style={{ zIndex: editingConnectionPoint ? 101 : undefined }}
         >
-          {dataMeshOutput.relations.map((relation, index) => {
-            const path = getRelationPath(relation);
-            if (!path) return null;
+          {/* Tooltip */}
+          {hoveredRelation !== null && (
+            <RelationTooltip
+              relation={localRelations[hoveredRelation]}
+              position={tooltipPosition}
+              color={getRelationColor(
+                hoveredRelation,
+                selectedRelations.has(hoveredRelation),
+                true
+              )}
+            />
+          )}
 
-            const isSelected = selectedRelations.has(index);
-            const isHovered = hoveredRelation === index;
+          <div
+            ref={contentRef}
+            className="origin-top-left transition-transform duration-200"
+            style={{
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <div
+              ref={containerRef}
+              className="relative min-h-full min-w-full p-12"
+              style={{ width: "max-content", height: "max-content" }}
+            >
+              <RelationLines
+                key={positionsUpdateKey}
+                relations={localRelations}
+                selectedRelations={selectedRelations}
+                hoveredRelation={hoveredRelation}
+                onRelationHover={setHoveredRelation}
+                onRelationClick={openEditWindow}
+                onTooltipPositionUpdate={setTooltipPosition}
+                getRelationPath={getRelationPath}
+                getRelationColor={getRelationColor}
+                canvasRef={canvasRef}
+              />
 
-            return (
-              <g key={index} className="pointer-events-auto">
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={
-                    isSelected
-                      ? "rgb(147, 51, 234)" // purple-600
-                      : isHovered
-                      ? "rgb(168, 85, 247)" // purple-400
-                      : "rgb(192, 132, 252)" // purple-300
-                  }
-                  strokeWidth={isSelected ? 3 : isHovered ? 2.5 : 2}
-                  strokeDasharray={isSelected ? "0" : "5,5"}
-                  opacity={isSelected ? 1 : isHovered ? 0.8 : 0.5}
-                  onMouseEnter={() => setHoveredRelation(index)}
-                  onMouseLeave={() => setHoveredRelation(null)}
-                  onClick={() => toggleRelation(index)}
-                  className="cursor-pointer transition-all"
-                />
-                {/* Relation Note/Label */}
-                {isHovered && (() => {
-                  const pos1 = getElementPosition(
-                    relation.element1Source.file,
-                    relation.element1Source.column,
-                    relation.element1Source.rowIndex
-                  );
-                  const pos2 = getElementPosition(
-                    relation.element2Source.file,
-                    relation.element2Source.column,
-                    relation.element2Source.rowIndex
-                  );
-                  
-                  if (!pos1 || !pos2) return null;
-                  
-                  const x = (pos1.x + pos2.x) / 2;
-                  const y = Math.min(pos1.y, pos2.y) - 60;
-                  
-                  return (
-                    <foreignObject
-                      x={x}
-                      y={y}
-                      width="200"
-                      height="100"
-                    >
-                      <div className="rounded-lg border border-purple-300 bg-white p-2 text-xs shadow-lg dark:border-purple-700 dark:bg-zinc-800">
-                        <p className="font-medium text-purple-900 dark:text-purple-200">
-                          {relation.element1} ↔ {relation.element2}
-                        </p>
-                        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-                          {relation.relationExplanation}
-                        </p>
-                      </div>
-                    </foreignObject>
-                  );
-                })()}
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Hierarchical Structure */}
-        <div className="relative z-10 flex flex-wrap gap-8">
-          {files.map((file) => {
-            const columns = getColumnsForFile(file);
-
-            return (
-              <div
-                key={file}
-                className="min-w-[250px] flex-shrink-0"
-              >
-                {/* File Level */}
-                <div
-                  data-element-id={getElementId(file)}
-                  className="mb-4 flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 dark:border-blue-700 dark:bg-blue-900/30"
-                >
-                  <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="font-semibold text-blue-900 dark:text-blue-200">
-                    {file}
-                  </span>
-                </div>
-
-                {/* Columns Level */}
-                <div className="ml-4 space-y-3">
-                  {columns.map((column) => {
-                    const rows = getRowsForFile(file).slice(0, 5);
-
-                    return (
-                      <div key={column} className="mb-4">
-                        <div
-                          data-element-id={getElementId(file, column)}
-                          className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 dark:border-green-700 dark:bg-green-900/30"
-                        >
-                          <Columns className="h-3 w-3 text-green-600 dark:text-green-400" />
-                          <span className="text-sm font-medium text-green-900 dark:text-green-200">
-                            {column}
-                          </span>
-                        </div>
-
-                        {/* Rows Level */}
-                        {rows.length > 0 && (
-                          <div className="ml-4 mt-2 space-y-1">
-                            {rows.map((rowIndex) => {
-                              return (
-                                <div
-                                  key={rowIndex}
-                                  data-element-id={getElementId(file, column, rowIndex)}
-                                  className="flex items-center gap-2 rounded border border-zinc-300 bg-zinc-50 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800/50"
-                                >
-                                  <FileCheck className="h-3 w-3 text-zinc-500 dark:text-zinc-400" />
-                                  <span className="text-zinc-700 dark:text-zinc-300">
-                                    Row {rowIndex + 1}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+              <DataHierarchy
+                files={files}
+                csvData={csvData}
+                editingConnectionPoint={editingConnectionPoint}
+                onElementClick={handleElementClick}
+                getElementId={getElementId}
+                getColumnsForFile={getColumnsForFile}
+                getRowsForFile={getRowsForFile}
+                getRowValue={getRowValue}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Relations List with Checkboxes */}
-      <div className="rounded-lg border border-purple-200/50 bg-white/50 p-4 dark:border-purple-800/50 dark:bg-zinc-900/50">
-        <h3 className="mb-4 text-sm font-semibold text-purple-700 dark:text-purple-300">
-          Relations ({dataMeshOutput.relations.length})
-        </h3>
-        <div className="max-h-[400px] space-y-2 overflow-auto">
-          {dataMeshOutput.relations.map((relation, index) => {
-            const isSelected = selectedRelations.has(index);
-            const isHovered = hoveredRelation === index;
+      {/* Edit Relation Modal */}
+      {editingRelation !== null && currentRelation && (
+        <EditRelationModal
+          relation={currentRelation}
+          relationIndex={editingRelation}
+          editedExplanation={editedExplanation}
+          editingConnectionPoint={editingConnectionPoint}
+          strokeColor={relationStrokeColor}
+          onClose={closeEditWindow}
+          onSave={saveEditedRelation}
+          onRemove={removeRelation}
+          onExplanationChange={setEditedExplanation}
+          onConnectionPointEdit={setEditingConnectionPoint}
+          onCancelSelection={() => setEditingConnectionPoint(null)}
+        />
+      )}
 
-            return (
-              <div
-                key={index}
-                className={`cursor-pointer rounded-lg border p-3 transition-all ${
-                  isSelected
-                    ? "border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30"
-                    : isHovered
-                    ? "border-purple-300 bg-purple-50/50 dark:border-purple-700 dark:bg-purple-900/20"
-                    : "border-purple-200/50 bg-white/50 dark:border-purple-800/50 dark:bg-zinc-900/50"
-                }`}
-                onMouseEnter={() => setHoveredRelation(index)}
-                onMouseLeave={() => setHoveredRelation(null)}
-                onClick={() => toggleRelation(index)}
-              >
-                <div className="flex items-start gap-3">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleRelation(index);
-                    }}
-                    className="mt-0.5"
-                  >
-                    {isSelected ? (
-                      <CheckCircle2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                          {relation.element1}
-                        </span>
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                          ({relation.element1Source.file}
-                          {relation.element1Source.column &&
-                            ` / ${relation.element1Source.column}`}
-                          {relation.element1Source.rowIndex !== undefined &&
-                            ` / Row ${relation.element1Source.rowIndex + 1}`}
-                          )
-                        </span>
-                      </div>
-                      <span className="text-purple-600 dark:text-purple-400">↔</span>
-                      <div className="flex items-center gap-1">
-                        <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                          {relation.element2}
-                        </span>
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                          ({relation.element2Source.file}
-                          {relation.element2Source.column &&
-                            ` / ${relation.element2Source.column}`}
-                          {relation.element2Source.rowIndex !== undefined &&
-                            ` / Row ${relation.element2Source.rowIndex + 1}`}
-                          )
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                      {relation.relationExplanation}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Relations List */}
+      <RelationsList
+        relations={localRelations}
+        selectedRelations={selectedRelations}
+        hoveredRelation={hoveredRelation}
+        onRelationHover={setHoveredRelation}
+        onRelationClick={openEditWindow}
+        onToggleSelection={toggleRelation}
+      />
     </div>
   );
 }
-

@@ -27,21 +27,19 @@ export function RelationLines({
 }: RelationLinesProps) {
   const handleMouseEnter = (index: number, e: React.MouseEvent) => {
     onRelationHover(index);
-    if (canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      onTooltipPositionUpdate({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-    }
+    // Use viewport coordinates for fixed positioning
+    onTooltipPositionUpdate({
+      x: e.clientX,
+      y: e.clientY,
+    });
   };
 
   const handleMouseMove = (index: number, e: React.MouseEvent) => {
-    if (hoveredRelation === index && canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
+    if (hoveredRelation === index) {
+      // Use viewport coordinates for fixed positioning
       onTooltipPositionUpdate({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: e.clientX,
+        y: e.clientY,
       });
     }
   };

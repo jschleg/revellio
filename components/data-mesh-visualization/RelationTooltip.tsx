@@ -11,10 +11,11 @@ interface RelationTooltipProps {
 export function RelationTooltip({ relation, position, color }: RelationTooltipProps) {
   return (
     <div
-      className="pointer-events-none absolute z-50"
+      className="pointer-events-none fixed z-50"
       style={{
-        left: `${position.x + 15}px`,
-        top: `${position.y + 15}px`,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'translate(10px, 10px)', // Small offset from cursor
       }}
     >
       <div

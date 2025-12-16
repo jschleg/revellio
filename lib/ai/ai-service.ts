@@ -440,14 +440,15 @@ Each relation should contain:
   async unifiedAnalysis(
     metadataArray: Metadata[],
     dataSlices: CSVData[],
-    userPrompt: string
+    userPrompt: string,
+    dataMeshRelations: DataMeshRelation[] = []
   ): Promise<UnifiedAIOutput> {
     if (!this.isAvailable()) {
       return this.getFallbackUnifiedOutput(metadataArray);
     }
 
     try {
-      const prompt = this.buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt);
+      const prompt = this.buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, dataMeshRelations);
       const response = await this.client!.chat.completions.create({
         model: this.model,
         messages: [
@@ -495,7 +496,8 @@ Each relation should contain:
   private buildUnifiedAnalysisPrompt(
     metadataArray: Metadata[],
     dataSlices: CSVData[],
-    userPrompt: string
+    userPrompt: string,
+    dataMeshRelations: DataMeshRelation[] = []
   ): string {
     const metadataSummary = metadataArray.map((meta, idx) => {
       return `
@@ -515,6 +517,21 @@ ${JSON.stringify(sampleRows, null, 2)}
 `;
     }).join("\n");
 
+    // Format Data Mesh relations if provided
+    const relationsSection = dataMeshRelations.length > 0
+      ? `
+DATA MESH RELATIONS (pre-defined relationships between data elements):
+${dataMeshRelations.map((rel, idx) => `
+Relation ${idx + 1}:
+- Element 1: ${rel.element1} (from ${rel.element1Source.file}${rel.element1Source.column ? ` / ${rel.element1Source.column}` : ""}${rel.element1Source.rowIndex !== undefined ? ` / Row ${rel.element1Source.rowIndex + 1}` : ""})
+- Element 2: ${rel.element2} (from ${rel.element2Source.file}${rel.element2Source.column ? ` / ${rel.element2Source.column}` : ""}${rel.element2Source.rowIndex !== undefined ? ` / Row ${rel.element2Source.rowIndex + 1}` : ""})
+- Explanation: ${rel.relationExplanation}
+`).join("\n")}
+
+IMPORTANT: Use these pre-defined relations when determining which visualization methods work best. Consider these relationships when selecting visualizations and explaining your reasoning.
+`
+      : "";
+
     return `Analyze the following CSV data and create a complete visualization strategy:
 
 METADATA:
@@ -522,7 +539,7 @@ ${metadataSummary}
 
 DATA SAMPLES (5 elements per file):
 ${dataSlicesSummary}
-
+${relationsSection}
 USER PROMPT (additional context):
 ${userPrompt || "No additional context provided"}
 
@@ -558,8 +575,10 @@ Create a JSON response with the following structure:
 }
 
 IMPORTANT:
-- Identify all relevant relations between files
-- Choose appropriate visualizations based on the data and user prompt
+${dataMeshRelations.length > 0 
+  ? "- Use the pre-defined Data Mesh relations provided above when determining visualization methods\n- The relations have been carefully analyzed and should guide your visualization choices\n- Explain how each visualization leverages or represents the defined relations"
+  : "- Identify all relevant relations between files"}
+- Choose appropriate visualizations based on the data, relations, and user prompt
 - Explain each decision clearly
 - Consider the user prompt when selecting visualizations`;
   }

@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Eye,
   Zap,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { MetadataExtractor } from "@/lib/analysis/metadata-extractor";
 import type {
@@ -18,51 +20,69 @@ import type {
   Metadata,
   UnifiedAIOutput,
   DataMeshOutput,
+  DataMeshRelation,
 } from "@/lib/types/data";
 import { JsonTreeView } from "@/components/json-tree-view";
 
 export default function Home() {
   const [csvData, setCsvData] = useState<CSVData[]>([]);
   const [metadataInput, setMetadataInput] = useState<Metadata[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStep, setProcessingStep] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isDataMeshProcessing, setIsDataMeshProcessing] = useState(false);
+  const [analyzingStep, setAnalyzingStep] = useState<string>("");
+  const [dataMeshStep, setDataMeshStep] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [aiOutput, setAiOutput] = useState<UnifiedAIOutput | null>(null);
   const [dataMeshOutput, setDataMeshOutput] = useState<DataMeshOutput | null>(null);
+  const [currentRelations, setCurrentRelations] = useState<DataMeshRelation[]>([]);
   const [userPrompt, setUserPrompt] = useState<string>("");
+  const [showMetadata, setShowMetadata] = useState<boolean>(false);
+  const [showFileDisplay, setShowFileDisplay] = useState<boolean>(false);
   const [inputPayload, setInputPayload] = useState<{
     metadataArray: Metadata[];
     dataSlices?: CSVData[];
     userPrompt?: string;
+    relations?: DataMeshRelation[];
   } | null>(null);
 
 
   const startDataMesh = async () => {
     console.log("🚀 [DEBUG] startDataMesh called");
     setError(null);
-    setIsProcessing(true);
-    setAiOutput(null);
+    setIsDataMeshProcessing(true);
+    setDataMeshStep("");
     setDataMeshOutput(null);
-    setMetadataInput([]);
     setInputPayload(null);
 
     try {
       console.log("📊 [DEBUG] CSV data count:", csvData.length);
       const metadataExtractor = new MetadataExtractor();
       // Extract metadata
-      setProcessingStep("Extracting metadata...");
+      setDataMeshStep("Extracting metadata...");
       console.log("🔍 [DEBUG] Extracting metadata...");
       const metadataArray = metadataExtractor.extractAll(csvData);
       console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
       setMetadataInput(metadataArray);
 
       // Use 20 data points from each file for mesh analysis (only for determining relations)
-      setProcessingStep("Preparing data samples (20 rows per file) for mesh analysis...");
+      setDataMeshStep("Preparing data samples (20 rows per file)...");
       console.log("🔍 [DEBUG] Preparing data slices (20 rows per file)...");
-      const dataSlices: CSVData[] = csvData.map((data) => ({
-        ...data,
-        rows: data.rows.slice(0, 20), // Take first 20 rows
-      }));
+      const dataSlices: CSVData[] = csvData.map((data) => {
+        const slicedRows = data.rows.slice(0, 20);
+        return {
+          ...data,
+          rows: slicedRows, // Take first 20 rows
+          rawContent: "", // Don't send full rawContent to reduce payload size
+          metadata: {
+            ...data.metadata,
+            rowCount: Math.min(20, data.metadata.rowCount), // Update row count to match slice
+            sample: {
+              rows: slicedRows, // Update sample rows
+              totalRows: slicedRows.length, // Update total rows in sample
+            },
+          },
+        };
+      });
       console.log("✅ [DEBUG] Data slices prepared:", dataSlices.length, "files");
       console.log("✅ [DEBUG] Total rows in slices:", dataSlices.reduce((sum, data) => sum + data.rows.length, 0));
 
@@ -74,7 +94,7 @@ export default function Home() {
       setInputPayload(payload);
 
       // Data Mesh Analysis
-      setProcessingStep("Analyzing data mesh network...");
+      setDataMeshStep("Analyzing data mesh network...");
       console.log("🔍 [DEBUG] Starting data mesh analysis");
       console.log("📦 [DEBUG] Request payload:", {
         metadataCount: metadataArray.length,
@@ -103,6 +123,7 @@ export default function Home() {
       });
       console.log("✅ [DEBUG] Full data mesh output:", dataMesh);
       setDataMeshOutput(dataMesh);
+      setCurrentRelations(dataMesh.relations); // Store relations for use in analysis
 
     } catch (err) {
       console.error("💥 [DEBUG] Error in startDataMesh:", err);
@@ -113,32 +134,37 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
       console.log("🏁 [DEBUG] startDataMesh finished");
-      setIsProcessing(false);
-      setProcessingStep("");
+      setIsDataMeshProcessing(false);
+      setDataMeshStep("");
     }
   }
 
 
   const startProcessing = async () => {
+    if (!dataMeshOutput || currentRelations.length === 0) {
+      setError("Please complete Data Mesh analysis first to define relations.");
+      return;
+    }
+
     console.log("🚀 [DEBUG] startProcessing called");
     setError(null);
-    setIsProcessing(true);
+    setIsAnalyzing(true);
+    setAnalyzingStep("");
     setAiOutput(null);
-    setMetadataInput([]);
     setInputPayload(null);
 
     try {
       console.log("📊 [DEBUG] CSV data count:", csvData.length);
       const metadataExtractor = new MetadataExtractor();
       // Extract metadata
-      setProcessingStep("Extracting metadata...");
+      setAnalyzingStep("Extracting metadata...");
       console.log("🔍 [DEBUG] Extracting metadata...");
       const metadataArray = metadataExtractor.extractAll(csvData);
       console.log("✅ [DEBUG] Metadata extracted:", metadataArray.length, "files");
       setMetadataInput(metadataArray);
 
       // Prepare data slices (5 elements from each CSV)
-      setProcessingStep("Preparing data samples...");
+      setAnalyzingStep("Preparing data samples...");
       console.log("🔍 [DEBUG] Preparing data slices...");
       const dataSlices: CSVData[] = csvData.map((data) => ({
         ...data,
@@ -146,21 +172,23 @@ export default function Home() {
       }));
       console.log("✅ [DEBUG] Data slices prepared:", dataSlices.length);
 
-      // Store input payload
+      // Store input payload with relations from Data Mesh
       const payload = {
         metadataArray,
         dataSlices,
         userPrompt: userPrompt || "",
+        relations: currentRelations, // Pass Data Mesh relations to analysis
       };
       setInputPayload(payload);
 
       // Unified AI Analysis
-      setProcessingStep("AI is analyzing data and creating visualization strategy...");
+      setAnalyzingStep("AI is analyzing data and creating visualization strategy...");
       console.log("🔍 [DEBUG] Starting unified AI analysis");
       console.log("📝 [DEBUG] User prompt:", userPrompt);
       console.log("📦 [DEBUG] Request payload:", {
         metadataCount: metadataArray.length,
         dataSlicesCount: dataSlices.length,
+        relationsCount: currentRelations.length,
         userPrompt: userPrompt || "(empty)",
       });
 
@@ -197,25 +225,23 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
       console.log("🏁 [DEBUG] startProcessing finished");
-      setIsProcessing(false);
-      setProcessingStep("");
+      setIsAnalyzing(false);
+      setAnalyzingStep("");
     }
   }
 
   const handleFilesSelected = async (selectedFiles: File[]) => {
     console.log("📁 [DEBUG] handleFilesSelected called with", selectedFiles.length, "files");
     setError(null);
-    setIsProcessing(true);
     setAiOutput(null);
+    setDataMeshOutput(null);
     setMetadataInput([]);
 
     try {
       const parser = new CSVParser();
       const parsedData: CSVData[] = [];
-      const metadataExtractor = new MetadataExtractor();
 
       // Step 1: Parse files
-      setProcessingStep("Parsing files...");
       console.log("🔍 [DEBUG] Parsing", selectedFiles.length, "files...");
       for (const file of selectedFiles) {
         try {
@@ -241,8 +267,6 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
       console.log("🏁 [DEBUG] handleFilesSelected finished");
-      setIsProcessing(false);
-      setProcessingStep("");
     }
   };
 
@@ -271,60 +295,107 @@ export default function Home() {
           />
         </div>
 
-        {/* User Prompt Section */}
-        <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">
-            Additional Context (optional)
-          </h2>
-          <textarea
-            value={userPrompt}
-            onChange={(e) => setUserPrompt(e.target.value)}
-            placeholder="Describe what you want to learn from the data or what questions you have..."
-            className="w-full rounded-lg border border-zinc-300/50 bg-background px-4 py-3 text-sm text-foreground placeholder:text-zinc-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700/50 dark:placeholder:text-zinc-400"
-            rows={3}
-          />
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            This context helps the AI create more appropriate visualizations.
-          </p>
-        </div>
-
-        {/* Analyze Button */}
+        {/* Step 1: Data Mesh Analysis */}
         {csvData.length > 0 && (
-          <div className="mb-8 flex justify-center">
-            <button
-              onClick={startProcessing}
-              disabled={isProcessing}
-              className="rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 px-8 py-3 font-semibold text-white shadow-lg transition-all hover:from-purple-700 hover:to-purple-900 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 dark:from-purple-500 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:to-purple-800"
-            >
-              {isProcessing ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Analyzing...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Start Analysis
-                </span>
-              )}
-            </button>
-             <button
-               onClick={startDataMesh}
-               disabled={isProcessing}
-               className="rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 px-8 py-3 font-semibold text-white shadow-lg transition-all hover:from-purple-700 hover:to-purple-900 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 dark:from-purple-500 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:to-purple-800"
-             >
-               {isProcessing ? (
-                 <span className="flex items-center gap-2">
-                   <Loader2 className="h-5 w-5 animate-spin" />
-                   Analyzing...
-                 </span>
-               ) : (
-                 <span className="flex items-center gap-2">
-                   <Zap className="h-5 w-5" />
-                   Data Mesh
-                 </span>
-               )}
-             </button>
+          <div className="mb-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white dark:bg-indigo-500">
+                1
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Step 1: Data Mesh Analysis</h2>
+            </div>
+            <p className="ml-11 text-sm text-zinc-600 dark:text-zinc-400">
+              Analyze relationships between your data files. Edit and refine relations before proceeding to visualization analysis.
+            </p>
+            
+            {/* Data Mesh Button */}
+            <div className="ml-11">
+              <button
+                onClick={startDataMesh}
+                disabled={isAnalyzing || isDataMeshProcessing}
+                className="group relative rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:from-indigo-700 hover:via-indigo-800 hover:to-indigo-900 hover:shadow-xl hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:from-indigo-500 dark:via-indigo-600 dark:to-indigo-700 dark:hover:from-indigo-600 dark:hover:via-indigo-700 dark:hover:to-indigo-800"
+              >
+                {isDataMeshProcessing ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Processing Data Mesh...</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-3">
+                    <Zap className="h-5 w-5 transition-transform group-hover:scale-110" />
+                    <span>Analyze Data Mesh</span>
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Data Mesh Output */}
+        {dataMeshOutput && (
+          <div className="mb-8 rounded-lg border border-indigo-200/50 bg-gradient-to-br from-indigo-50/50 to-indigo-100/30 p-6 dark:border-indigo-800/50 dark:from-indigo-950/30 dark:to-indigo-900/20">
+            <div className="mb-4 flex items-center gap-2">
+              <Zap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-xl font-semibold text-foreground">Data Mesh Network</h2>
+            </div>
+            <DataMeshVisualization
+              dataMeshOutput={dataMeshOutput}
+              csvData={csvData}
+              onUpdateRelations={setCurrentRelations}
+            />
+          </div>
+        )}
+
+        {/* Step 2: Visualization Analysis */}
+        {csvData.length > 0 && dataMeshOutput && currentRelations.length > 0 && (
+          <div className="mb-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-sm font-bold text-white dark:bg-purple-500">
+                2
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Step 2: Visualization Analysis</h2>
+            </div>
+            <p className="ml-11 text-sm text-zinc-600 dark:text-zinc-400">
+              Based on the defined relations, AI will determine the best visualization methods for your data.
+            </p>
+
+            {/* User Prompt Section */}
+            <div className="ml-11 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
+              <h3 className="mb-4 text-lg font-semibold text-foreground">
+                Additional Context (optional)
+              </h3>
+              <textarea
+                value={userPrompt}
+                onChange={(e) => setUserPrompt(e.target.value)}
+                placeholder="Describe what you want to learn from the data or what questions you have..."
+                className="w-full rounded-lg border border-zinc-300/50 bg-background px-4 py-3 text-sm text-foreground placeholder:text-zinc-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700/50 dark:placeholder:text-zinc-400"
+                rows={3}
+              />
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                This context helps the AI create more appropriate visualizations.
+              </p>
+            </div>
+
+            {/* Analysis Button */}
+            <div className="ml-11">
+              <button
+                onClick={startProcessing}
+                disabled={isAnalyzing || isDataMeshProcessing || !dataMeshOutput || currentRelations.length === 0}
+                className="group relative rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 hover:shadow-xl hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:from-purple-500 dark:via-purple-600 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:via-purple-700 dark:hover:to-purple-800"
+              >
+                {isAnalyzing ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Analyzing...</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-3">
+                    <Zap className="h-5 w-5 transition-transform group-hover:scale-110" />
+                    <span>Start Visualization Analysis</span>
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         )}
 
@@ -339,16 +410,35 @@ export default function Home() {
           </div>
         )}
 
-        {/* Processing Indicator with Step */}
-        {isProcessing && (
-          <div className="mb-6 rounded-lg border border-zinc-200/50 bg-card p-4 dark:border-zinc-800/50">
-            <div className="flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-purple-600 dark:text-purple-400" />
-              <div>
-                <p className="font-medium text-foreground">Processing...</p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">{processingStep}</p>
+        {/* Processing Indicators */}
+        {(isAnalyzing || isDataMeshProcessing) && (
+          <div className="mb-6 space-y-3">
+            {isAnalyzing && (
+              <div className="rounded-lg border border-purple-200/50 bg-gradient-to-r from-purple-50/50 to-purple-100/30 p-4 dark:border-purple-800/50 dark:from-purple-950/30 dark:to-purple-900/20">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-purple-600 dark:text-purple-400" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-purple-900 dark:text-purple-200">AI Analysis in Progress</p>
+                    {analyzingStep && (
+                      <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">{analyzingStep}</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+            {isDataMeshProcessing && (
+              <div className="rounded-lg border border-indigo-200/50 bg-gradient-to-r from-indigo-50/50 to-indigo-100/30 p-4 dark:border-indigo-800/50 dark:from-indigo-950/30 dark:to-indigo-900/20">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-indigo-600 dark:text-indigo-400" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-indigo-900 dark:text-indigo-200">Data Mesh Analysis in Progress</p>
+                    {dataMeshStep && (
+                      <p className="mt-1 text-sm text-indigo-700 dark:text-indigo-300">{dataMeshStep}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -388,19 +478,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Data Mesh Output */}
-        {dataMeshOutput && (
-          <div className="mb-8 rounded-lg border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-purple-100/30 p-6 dark:border-purple-800/50 dark:from-purple-950/30 dark:to-purple-900/20">
-            <div className="mb-4 flex items-center gap-2">
-              <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-xl font-semibold text-foreground">Data Mesh Network</h2>
-            </div>
-            <DataMeshVisualization
-              dataMeshOutput={dataMeshOutput}
-              csvData={csvData}
-            />
-          </div>
-        )}
 
         {/* Input/Output JSON Tree View */}
         {inputPayload && aiOutput && (
@@ -433,44 +510,82 @@ export default function Home() {
           </div>
         )}
 
-        {/* Input: Metadata Display - Compact */}
+        {/* Input: Metadata Display - Collapsible */}
         {metadataInput.length > 0 && (
-          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
-            <div className="mb-4 flex items-center gap-2">
-              <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-xl font-semibold text-foreground">Input: Metadata</h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {metadataInput.map((meta, index) => (
-                <div
-                  key={index}
-                  className="rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50"
-                >
-                  <h3 className="mb-2 font-medium text-foreground">{meta.fileName}</h3>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded bg-blue-100 px-2 py-1 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                      {meta.rowCount} Rows
-                    </span>
-                    <span className="rounded bg-green-100 px-2 py-1 text-green-700 dark:bg-green-900/50 dark:text-green-300">
-                      {meta.columns.length} Columns
-                    </span>
-                    <span className="rounded bg-purple-100 px-2 py-1 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
-                      {Array.from(new Set(meta.columnTypes)).join(", ")}
-                    </span>
-                  </div>
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card dark:border-zinc-800/50">
+            <button
+              onClick={() => setShowMetadata(!showMetadata)}
+              className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+            >
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <h2 className="text-xl font-semibold text-foreground">Input: Metadata</h2>
+                <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  ({metadataInput.length} files)
+                </span>
+              </div>
+              {showMetadata ? (
+                <ChevronUp className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+              )}
+            </button>
+            {showMetadata && (
+              <div className="border-t border-zinc-200/50 p-6 dark:border-zinc-800/50">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {metadataInput.map((meta, index) => (
+                    <div
+                      key={index}
+                      className="rounded-lg border border-zinc-200/50 bg-muted/30 p-4 dark:border-zinc-800/50"
+                    >
+                      <h3 className="mb-2 font-medium text-foreground">{meta.fileName}</h3>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="rounded bg-blue-100 px-2 py-1 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                          {meta.rowCount} Rows
+                        </span>
+                        <span className="rounded bg-green-100 px-2 py-1 text-green-700 dark:bg-green-900/50 dark:text-green-300">
+                          {meta.columns.length} Columns
+                        </span>
+                        <span className="rounded bg-purple-100 px-2 py-1 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                          {Array.from(new Set(meta.columnTypes)).join(", ")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* AI Output - Visualizer Component */}
         {aiOutput && <Visualizer aiOutput={aiOutput} csvData={csvData} />}
 
-        {/* File Display with Tables */}
+        {/* File Display with Tables - Collapsible */}
         {csvData.length > 0 && (
-          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
-            <FileDisplay csvData={csvData} />
+          <div className="mb-8 rounded-lg border border-zinc-200/50 bg-card dark:border-zinc-800/50">
+            <button
+              onClick={() => setShowFileDisplay(!showFileDisplay)}
+              className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+            >
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <h2 className="text-xl font-semibold text-foreground">File Data Tables</h2>
+                <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  ({csvData.length} file{csvData.length !== 1 ? "s" : ""})
+                </span>
+              </div>
+              {showFileDisplay ? (
+                <ChevronUp className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+              )}
+            </button>
+            {showFileDisplay && (
+              <div className="border-t border-zinc-200/50 p-6 dark:border-zinc-800/50">
+                <FileDisplay csvData={csvData} />
+              </div>
+            )}
           </div>
         )}
       </div>

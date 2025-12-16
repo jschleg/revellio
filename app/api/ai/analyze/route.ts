@@ -5,7 +5,7 @@ import type { Metadata, CSVData } from "@/lib/types/data";
 export async function POST(request: NextRequest) {
   try {
     console.log("📥 [API] /api/ai/analyze - Unified analysis request received");
-    const { metadataArray, dataSlices, userPrompt } = await request.json();
+    const { metadataArray, dataSlices, userPrompt, relations } = await request.json();
 
     if (!metadataArray || !Array.isArray(metadataArray)) {
       console.error("❌ [API] Invalid metadata array");
@@ -25,13 +25,15 @@ export async function POST(request: NextRequest) {
 
     console.log(`📊 [API] Processing ${metadataArray.length} files`);
     console.log(`📝 [API] User prompt: ${userPrompt || "None"}`);
+    console.log(`🔗 [API] Relations provided: ${relations?.length || 0}`);
     console.log("🔑 [API] OpenAI API Key exists:", !!process.env.OPENAI_API_KEY);
 
     const aiService = new AIService();
     const analysis = await aiService.unifiedAnalysis(
       metadataArray as Metadata[],
       dataSlices as CSVData[],
-      userPrompt || ""
+      userPrompt || "",
+      relations || []
     );
 
     console.log("✅ [API] Unified analysis complete:", {

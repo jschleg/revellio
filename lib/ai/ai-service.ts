@@ -27,6 +27,7 @@ export class AIService {
       this.client = new OpenAI({
         apiKey: apiKey,
       });
+      console.log("✅ [AI Service] OpenAI client initialized with provided API key");
     } else if (typeof window === "undefined") {
       // Server-side: try to get from environment
       const envKey = process.env.OPENAI_API_KEY;
@@ -34,6 +35,9 @@ export class AIService {
         this.client = new OpenAI({
           apiKey: envKey,
         });
+        console.log("✅ [AI Service] OpenAI client initialized with environment variable");
+      } else {
+        console.error("❌ [AI Service] OPENAI_API_KEY environment variable is not set");
       }
     }
   }
@@ -393,11 +397,15 @@ Each relation should contain:
     dataSlices: CSVData[]
   ): Promise<DataMeshOutput> {
     if (!this.isAvailable()) {
-      return this.getFallbackDataMeshOutput();
+      const errorMsg = "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.";
+      console.error("❌ [AI Service] " + errorMsg);
+      throw new Error(errorMsg);
     }
 
     try {
       const prompt = this.buildDataMeshPrompt(metadataArray, dataSlices);
+      console.log("🤖 [AI Service] Sending data mesh request to OpenAI...");
+      
       const response = await this.client!.chat.completions.create({
         model: this.model,
         messages: [
@@ -419,18 +427,27 @@ Each relation should contain:
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        throw new Error("No response from AI");
+        throw new Error("No response content from OpenAI");
       }
 
+      console.log("✅ [AI Service] Received response from OpenAI");
       const result = JSON.parse(content) as Partial<DataMeshOutput>;
+
+      if (!result.relations || result.relations.length === 0) {
+        console.warn("⚠️ [AI Service] No relations found in AI response");
+      }
 
       return {
         relations: result.relations || [],
         summary: result.summary || "No summary available",
       };
     } catch (error) {
-      console.error("Error in data mesh analysis:", error);
-      return this.getFallbackDataMeshOutput();
+      console.error("❌ [AI Service] Error in data mesh analysis:", error);
+      if (error instanceof Error) {
+        // Re-throw with more context
+        throw new Error(`Data mesh analysis failed: ${error.message}`);
+      }
+      throw error;
     }
   }
 
@@ -444,11 +461,16 @@ Each relation should contain:
     dataMeshRelations: DataMeshRelation[] = []
   ): Promise<UnifiedAIOutput> {
     if (!this.isAvailable()) {
-      return this.getFallbackUnifiedOutput(metadataArray);
+      const errorMsg = "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.";
+      console.error("❌ [AI Service] " + errorMsg);
+      throw new Error(errorMsg);
     }
 
     try {
       const prompt = this.buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, dataMeshRelations);
+      console.log("🤖 [AI Service] Sending unified analysis request to OpenAI...");
+      console.log(`📊 [AI Service] Data mesh relations included: ${dataMeshRelations.length}`);
+      
       const response = await this.client!.chat.completions.create({
         model: this.model,
         messages: [
@@ -470,10 +492,15 @@ Each relation should contain:
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
-        throw new Error("No response from AI");
+        throw new Error("No response content from OpenAI");
       }
 
+      console.log("✅ [AI Service] Received response from OpenAI");
       const result = JSON.parse(content) as Partial<UnifiedAIOutput>;
+
+      if (!result.visualizations || result.visualizations.length === 0) {
+        console.warn("⚠️ [AI Service] No visualizations found in AI response");
+      }
 
       return {
         visualizations: result.visualizations || [],
@@ -485,8 +512,12 @@ Each relation should contain:
         },
       };
     } catch (error) {
-      console.error("Error in unified AI analysis:", error);
-      return this.getFallbackUnifiedOutput(metadataArray);
+      console.error("❌ [AI Service] Error in unified AI analysis:", error);
+      if (error instanceof Error) {
+        // Re-throw with more context
+        throw new Error(`Unified analysis failed: ${error.message}`);
+      }
+      throw error;
     }
   }
 

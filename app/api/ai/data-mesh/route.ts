@@ -26,19 +26,36 @@ export async function POST(request: NextRequest) {
     const totalRows = dataSlices.reduce((sum: number, data: CSVData) => sum + data.rows.length, 0);
     console.log(`📊 [API] Processing ${metadataArray.length} files for data mesh`);
     console.log(`📊 [API] Total rows in slices (20 per file): ${totalRows}`);
-    console.log("🔑 [API] OpenAI API Key exists:", !!process.env.OPENAI_API_KEY);
+    
+    const hasApiKey = !!process.env.OPENAI_API_KEY;
+    console.log("🔑 [API] OpenAI API Key exists:", hasApiKey);
+    
+    if (!hasApiKey) {
+      console.error("❌ [API] OPENAI_API_KEY environment variable is not set");
+      return NextResponse.json(
+        { error: "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable in Vercel." },
+        { status: 500 }
+      );
+    }
 
     const aiService = new AIService();
-    const dataMesh = await aiService.dataMesh(
-      metadataArray as Metadata[],
-      dataSlices as CSVData[]
-    );
+    
+    try {
+      const dataMesh = await aiService.dataMesh(
+        metadataArray as Metadata[],
+        dataSlices as CSVData[]
+      );
 
-    console.log("✅ [API] Data mesh complete:", {
-      relations: dataMesh.relations.length,
-    });
+      console.log("✅ [API] Data mesh complete:", {
+        relations: dataMesh.relations.length,
+      });
 
-    return NextResponse.json(dataMesh);
+      return NextResponse.json(dataMesh);
+    } catch (error) {
+      console.error("❌ [API] Error in dataMesh service:", error);
+      // Re-throw to be caught by outer try-catch
+      throw error;
+    }
   } catch (error) {
     console.error("❌ [API] Error in data mesh:", error);
     return NextResponse.json(

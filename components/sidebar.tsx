@@ -29,6 +29,7 @@ interface SidebarProps {
   onSessionDelete: (sessionId: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  refreshTrigger?: number; // Trigger to refresh the sessions list
 }
 
 export function Sidebar({
@@ -38,6 +39,7 @@ export function Sidebar({
   onSessionDelete,
   isCollapsed,
   onToggleCollapse,
+  refreshTrigger,
 }: SidebarProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +62,7 @@ export function Sidebar({
 
   useEffect(() => {
     loadSessions();
-  }, []);
+  }, [refreshTrigger]); // Reload when refreshTrigger changes
 
   const handleDelete = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,10 +77,13 @@ export function Sidebar({
       });
 
       if (response.ok) {
-        setSessions(sessions.filter((s) => s.id !== sessionId));
-        if (currentSessionId === sessionId) {
-          onNewSession();
-        }
+        // Reload sessions to get updated list
+        await loadSessions();
+        // Call the delete handler from parent
+        onSessionDelete(sessionId);
+      } else {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        alert(`Fehler beim Löschen: ${errorData.error || "Unbekannter Fehler"}`);
       }
     } catch (error) {
       console.error("Error deleting session:", error);

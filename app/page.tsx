@@ -34,6 +34,7 @@ export default function Home() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Application state
@@ -58,9 +59,57 @@ export default function Home() {
     relations?: DataMeshRelation[];
   } | null>(null);
 
+  // Create new session
+  const handleNewSession = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Untitled Session",
+          csvData: [],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorMessage = errorData.details || errorData.error || "Failed to create session";
+        throw new Error(errorMessage);
+      }
+
+      const session = await response.json();
+      setCurrentSessionId(session.id);
+      setSessionName(session.name);
+      // Reset all state
+      setCsvData([]);
+      setMetadataInput([]);
+      setAiOutput(null);
+      setDataMeshOutput(null);
+      setCurrentRelations([]);
+      setUserPrompt("");
+      setDataMeshPrompt("");
+      setInputPayload(null);
+      setError(null);
+      
+      // Trigger sidebar refresh
+      setSidebarRefreshTrigger(prev => prev + 1);
+    } catch (err) {
+      console.error("Error creating session:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to create new session";
+      setError(errorMessage);
+      // Don't set session ID if creation failed
+      setCurrentSessionId(null);
+    }
+  }, []);
+
   // Auto-save function
   const saveSession = useCallback(async (sessionId: string | null) => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      // If no session exists, create a new one
+      await handleNewSession();
+      return;
+    }
     
     // Don't save during processing states
     if (isAnalyzing || isDataMeshProcessing) {
@@ -83,15 +132,33 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save session");
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorMessage = errorData.details || errorData.error || "Failed to save session";
+        
+        // If session not found, create a new one
+        if (response.status === 404 || errorMessage.includes("not found")) {
+          console.warn("Session not found, creating new session");
+          setCurrentSessionId(null);
+          await handleNewSession();
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
+      
+      // Trigger sidebar refresh after successful save
+      setSidebarRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error("Error saving session:", err);
-      setError(err instanceof Error ? err.message : "Failed to save session");
+      // If it's a not found error, try to create a new session
+      if (err instanceof Error && err.message.includes("not found")) {
+        setCurrentSessionId(null);
+        await handleNewSession();
+      }
     } finally {
       setIsSaving(false);
     }
-  }, [sessionName, csvData, dataMeshOutput, aiOutput, dataMeshPrompt, userPrompt, isAnalyzing, isDataMeshProcessing]);
+  }, [sessionName, csvData, dataMeshOutput, aiOutput, dataMeshPrompt, userPrompt, isAnalyzing, isDataMeshProcessing, handleNewSession]);
 
   // Auto-save with debounce
   const triggerAutoSave = useCallback(() => {
@@ -110,92 +177,125 @@ export default function Home() {
     }, 2000); // Auto-save after 2 seconds of inactivity
   }, [currentSessionId, saveSession, isAnalyzing, isDataMeshProcessing]);
 
-  // Create new session
-  const handleNewSession = useCallback(async () => {
-    try {
-      const response = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Untitled Session",
-          csvData: [],
-        }),
-      });
-
-      if (response.ok) {
-        const session = await response.json();
-        setCurrentSessionId(session.id);
-        setSessionName(session.name);
-        // Reset all state
-        setCsvData([]);
-        setMetadataInput([]);
-        setAiOutput(null);
-        setDataMeshOutput(null);
-        setCurrentRelations([]);
-        setUserPrompt("");
-        setDataMeshPrompt("");
-        setInputPayload(null);
-        setError(null);
-      } else {
-        const errorText = await response.text();
-        console.error("Failed to create session:", errorText);
-        setError(`Failed to create new session: ${errorText}`);
-      }
-    } catch (err) {
-      console.error("Error creating session:", err);
-      setError(err instanceof Error ? err.message : "Failed to create new session");
-    }
-  }, []);
-
   // Load session
   const handleLoadSession = useCallback(async (sessionId: string) => {
     setIsLoadingSession(true);
     setError(null);
     try {
       const response = await fetch(`/api/sessions/${sessionId}`);
-      if (response.ok) {
-        const session = await response.json();
-        setCurrentSessionId(session.id);
-        setSessionName(session.name);
-        setCsvData(session.csvData || []);
-        setDataMeshOutput(session.dataMeshOutput || null);
-        setAiOutput(session.aiOutput || null);
-        setCurrentRelations(session.dataMeshOutput?.relations || []);
-        setUserPrompt(session.userPrompt || "");
-        setDataMeshPrompt(session.dataMeshPrompt || "");
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorMessage = errorData.error || "Failed to load session";
+        throw new Error(errorMessage);
+      }
 
-        // Extract metadata if CSV data exists
-        if (session.csvData && session.csvData.length > 0) {
-          const metadataExtractor = new MetadataExtractor();
-          const metadataArray = metadataExtractor.extractAll(session.csvData);
-          setMetadataInput(metadataArray);
-        }
+      const session = await response.json();
+      setCurrentSessionId(session.id);
+      setSessionName(session.name);
+      setCsvData(session.csvData || []);
+      setDataMeshOutput(session.dataMeshOutput || null);
+      setAiOutput(session.aiOutput || null);
+      setCurrentRelations(session.dataMeshOutput?.relations || []);
+      setUserPrompt(session.userPrompt || "");
+      setDataMeshPrompt(session.dataMeshPrompt || "");
+
+      // Extract metadata if CSV data exists
+      if (session.csvData && session.csvData.length > 0) {
+        const metadataExtractor = new MetadataExtractor();
+        const metadataArray = metadataExtractor.extractAll(session.csvData);
+        setMetadataInput(metadataArray);
+        // Automatically show file display when CSV data is loaded
+        setShowFileDisplay(true);
       } else {
-        setError("Failed to load session");
+        setMetadataInput([]);
+        setShowFileDisplay(false);
       }
     } catch (err) {
       console.error("Error loading session:", err);
-      setError("Failed to load session");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load session";
+      setError(errorMessage);
+      // Don't update state if loading failed
     } finally {
       setIsLoadingSession(false);
     }
   }, []);
 
   // Delete session
-  const handleDeleteSession = useCallback((sessionId: string) => {
-    if (currentSessionId === sessionId) {
-      handleNewSession();
+  const handleDeleteSession = useCallback(async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // If we deleted the current session, create a new one
+        if (currentSessionId === sessionId) {
+          setCurrentSessionId(null);
+          setSessionName("Untitled Session");
+          setCsvData([]);
+          setMetadataInput([]);
+          setAiOutput(null);
+          setDataMeshOutput(null);
+          setCurrentRelations([]);
+          setUserPrompt("");
+          setDataMeshPrompt("");
+          setInputPayload(null);
+          await handleNewSession();
+        }
+        // Trigger sidebar refresh
+        setSidebarRefreshTrigger(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error("Error deleting session:", err);
+      setError("Fehler beim Löschen der Session");
     }
   }, [currentSessionId, handleNewSession]);
 
-  // Initialize with new session on mount
+  // Initialize session on mount - load most recent session or create new one
   useEffect(() => {
-    handleNewSession();
-  }, []);
+    let isMounted = true;
+    
+    const initializeSession = async () => {
+      try {
+        // Try to load the most recent session
+        const response = await fetch("/api/sessions");
+        if (response.ok && isMounted) {
+          const sessions = await response.json();
+          if (sessions && Array.isArray(sessions) && sessions.length > 0) {
+            // Load the most recent session (first one, as they're sorted by updatedAt desc)
+            const mostRecentSession = sessions[0];
+            if (mostRecentSession && mostRecentSession.id) {
+              await handleLoadSession(mostRecentSession.id);
+              return;
+            }
+          }
+        }
+        // If no sessions exist, create a new one
+        if (isMounted) {
+          await handleNewSession();
+        }
+      } catch (err) {
+        console.error("Error initializing session:", err);
+        // Fallback: try to create a new session
+        if (isMounted) {
+          await handleNewSession();
+        }
+      }
+    };
+    
+    initializeSession();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
   // Auto-save when data changes
   useEffect(() => {
-    if (currentSessionId && (csvData.length > 0 || dataMeshOutput || aiOutput)) {
+    // Only auto-save if we have a valid session ID and some data
+    if (currentSessionId && (csvData.length > 0 || dataMeshOutput || aiOutput || sessionName !== "Untitled Session")) {
       triggerAutoSave();
     }
     return () => {
@@ -203,7 +303,7 @@ export default function Home() {
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [currentSessionId, csvData, dataMeshOutput, aiOutput, currentRelations, userPrompt, dataMeshPrompt, triggerAutoSave]);
+  }, [currentSessionId, csvData, dataMeshOutput, aiOutput, currentRelations, userPrompt, dataMeshPrompt, sessionName, triggerAutoSave]);
 
   const generateSampleDataMesh = (): DataMeshOutput => {
     const relations: DataMeshRelation[] = [];
@@ -453,6 +553,10 @@ export default function Home() {
       }
 
       setCsvData(parsedData);
+      // Automatically show file display when files are uploaded
+      if (parsedData.length > 0) {
+        setShowFileDisplay(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error occurred");
     }
@@ -488,6 +592,7 @@ export default function Home() {
         onSessionDelete={handleDeleteSession}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        refreshTrigger={sidebarRefreshTrigger}
       />
 
       {/* Main Content */}

@@ -37,18 +37,6 @@ export interface CSVData {
   metadata: Metadata;
 }
 
-export interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-}
-
-export interface QualityReport {
-  completeness: number; // 0-1
-  consistency: number; // 0-1
-  issues: string[];
-}
-
 export interface Relation {
   type: "key" | "time" | "category" | "semantic";
   sourceColumn: string;
@@ -57,69 +45,12 @@ export interface Relation {
   description: string;
 }
 
-export interface SemanticOverlap {
-  columns: string[];
-  similarity: number; // 0-1
-  description: string;
-}
-
-export interface Structure {
-  tables: Metadata[];
-  relations: Relation[];
-  overlaps: SemanticOverlap[];
-  suggestedMerge?: {
-    tables: string[];
-    strategy: "homogeneous" | "heterogeneous";
-    assumptions: string[];
-  };
-}
-
-export interface ProcessedData {
-  raw: CSVData[];
-  merged?: MergedData;
-  structure: Structure;
-}
-
-export interface MergedData {
-  columns: Column[];
-  rows: Row[];
-  sourceFiles: string[];
-  mergeStrategy: string;
-}
-
 export type VisualizationType = 
   | "bar-chart"
   | "line-chart"
   | "pie-chart"
   | "scatter-plot"
   | "table";
-
-export interface VisualizationSuggestion {
-  type: VisualizationType;
-  data: ProcessedData;
-  explanation: string;
-  reasoning: string;
-}
-
-export interface AIAnalysis {
-  structure: Structure;
-  visualizations: VisualizationSuggestion[];
-  insights: string[];
-  assumptions: string[];
-}
-
-export interface Decision {
-  type: "visualization" | "merge" | "relation";
-  data: unknown;
-  reasoning: string;
-}
-
-export interface Explanation {
-  decision: Decision;
-  rationale: string;
-  alternatives?: string[];
-  confidence: number;
-}
 
 /**
  * Data point identifier - exactly identifies a data point in the original file

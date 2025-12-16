@@ -2,7 +2,6 @@
 
 import { X, Trash2, Save, Pencil } from "lucide-react";
 import type { DataMeshRelation } from "@/lib/types/data";
-import { SelectionModeIndicator } from "./SelectionModeIndicator";
 
 interface EditRelationModalProps {
   relation: DataMeshRelation;
@@ -39,10 +38,20 @@ export function EditRelationModal({
     <>
       {/* Selection Mode Indicator */}
       {editingConnectionPoint !== null && (
-        <SelectionModeIndicator
-          connectionPoint={`element${editingConnectionPoint + 1}`}
-          onCancel={onCancelSelection}
-        />
+        <div className="fixed top-4 left-1/2 z-[102] -translate-x-1/2 rounded-lg border-2 border-purple-500 bg-purple-600 px-6 py-3 text-sm font-medium text-white shadow-2xl dark:bg-purple-500">
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-white"></div>
+            <span>
+              Selection Mode: Click on any element to set the element{editingConnectionPoint + 1} connection point
+            </span>
+            <button
+              onClick={onCancelSelection}
+              className="ml-2 rounded px-2 py-1 text-xs hover:bg-purple-700 dark:hover:bg-purple-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Edit Panel - hidden during selection mode */}

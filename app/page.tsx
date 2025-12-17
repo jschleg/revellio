@@ -25,7 +25,6 @@ export default function Home() {
     saveSession,
     loadSession,
     deleteSession,
-    triggerAutoSave,
   } = useSession();
 
   const {
@@ -208,11 +207,6 @@ export default function Home() {
           <SessionHeader
             sessionName={session.name}
             onSessionNameChange={(name) => setSession((prev) => ({ ...prev, name }))}
-            onSessionNameBlur={() => {
-              if (session.id) {
-                triggerAutoSave(isProcessing);
-              }
-            }}
             isSaving={isSaving}
             onManualSave={handleManualSave}
             isSidebarCollapsed={isSidebarCollapsed}

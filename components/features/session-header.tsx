@@ -5,7 +5,6 @@ import { Loader2, Save, Menu } from "lucide-react";
 interface SessionHeaderProps {
   sessionName: string;
   onSessionNameChange: (name: string) => void;
-  onSessionNameBlur: () => void;
   isSaving: boolean;
   onManualSave: () => Promise<void>;
   isSidebarCollapsed: boolean;
@@ -16,7 +15,6 @@ interface SessionHeaderProps {
 export function SessionHeader({
   sessionName,
   onSessionNameChange,
-  onSessionNameBlur,
   isSaving,
   onManualSave,
   isSidebarCollapsed,
@@ -46,7 +44,6 @@ export function SessionHeader({
               type="text"
               value={sessionName}
               onChange={(e) => onSessionNameChange(e.target.value)}
-              onBlur={onSessionNameBlur}
               className="mt-2 rounded-lg border border-zinc-200/80 bg-white/80 px-3 py-1.5 text-sm font-medium text-zinc-900 shadow-sm transition-all focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-zinc-700/80 dark:bg-zinc-800/60 dark:text-zinc-100"
               placeholder="Session Name"
             />

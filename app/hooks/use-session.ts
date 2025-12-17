@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { MetadataExtractor } from "@/lib/analysis/metadata-extractor";
 import { getErrorMessage, extractApiError } from "@/lib/utils/error-handling";
 import type {
@@ -51,7 +51,6 @@ export function useSession() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const createNewSession = useCallback(async () => {
     try {
@@ -136,24 +135,6 @@ export function useSession() {
       }
     },
     [session, createNewSession]
-  );
-
-  const triggerAutoSave = useCallback(
-    (isProcessing: boolean = false) => {
-      if (isProcessing) {
-        return;
-      }
-
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-      autoSaveTimeoutRef.current = setTimeout(() => {
-        if (session.id) {
-          saveSession(session.id, isProcessing);
-        }
-      }, 2000);
-    },
-    [session.id, saveSession]
   );
 
   const loadSession = useCallback(async (sessionId: string) => {
@@ -243,23 +224,6 @@ export function useSession() {
     initializeSession();
   }, [initializeSession]);
 
-  useEffect(() => {
-    if (
-      session.id &&
-      (session.csvData.length > 0 ||
-        session.meshOutput ||
-        session.aiOutput ||
-        session.name !== "Untitled Session")
-    ) {
-      triggerAutoSave();
-    }
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, [session, triggerAutoSave]);
-
   return {
     session,
     setSession,
@@ -270,7 +234,6 @@ export function useSession() {
     saveSession,
     loadSession,
     deleteSession,
-    triggerAutoSave,
   };
 }
 

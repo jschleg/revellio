@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSVData, VisualizationInstruction, Relation } from "@/lib/types/data";
+import type { CSVData, VisualizationInstruction } from "@/lib/types/data";
 import { BarChartVisualization } from "./bar-chart";
 import { LineChartVisualization } from "./line-chart";
 import { PieChartVisualization } from "./pie-chart";
@@ -10,7 +10,6 @@ import { DataTableVisualization } from "./data-table";
 interface DynamicVisualizationProps {
   instruction: VisualizationInstruction;
   csvData: CSVData[];
-  relations?: Relation[];
 }
 
 /**

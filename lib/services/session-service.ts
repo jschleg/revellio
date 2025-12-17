@@ -148,23 +148,6 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
       });
     }
 
-    // Save AI Relations
-    if (
-      data.aiOutput?.relations &&
-      Array.isArray(data.aiOutput.relations) &&
-      data.aiOutput.relations.length > 0
-    ) {
-      await tx.relation.createMany({
-        data: data.aiOutput.relations.map((rel: Relation) => ({
-          sessionId: session.id,
-          type: rel.type,
-          sourceColumn: rel.sourceColumn,
-          targetColumn: rel.targetColumn,
-          confidence: rel.confidence,
-          description: rel.description,
-        })),
-      });
-    }
 
     return session;
   });
@@ -234,13 +217,6 @@ export async function getSessionById(
           reasoning: viz.reasoning,
           config: JSON.parse(viz.config),
           schema: viz.schema ? JSON.parse(viz.schema) : undefined,
-        })),
-        relations: session.aiRelations.map((rel) => ({
-          type: rel.type as Relation["type"],
-          sourceColumn: rel.sourceColumn,
-          targetColumn: rel.targetColumn,
-          confidence: rel.confidence,
-          description: rel.description,
         })),
         reasoning: session.aiOutputReasoning,
         metadata: session.aiOutputMetadata
@@ -417,26 +393,6 @@ export async function updateSession(
       }
     }
 
-    // Update AI Relations if provided
-    if (data.aiOutput?.relations !== undefined) {
-      await tx.relation.deleteMany({ where: { sessionId } });
-
-      if (
-        Array.isArray(data.aiOutput.relations) &&
-        data.aiOutput.relations.length > 0
-      ) {
-        await tx.relation.createMany({
-          data: data.aiOutput.relations.map((rel: Relation) => ({
-            sessionId,
-            type: rel.type,
-            sourceColumn: rel.sourceColumn,
-            targetColumn: rel.targetColumn,
-            confidence: rel.confidence,
-            description: rel.description,
-          })),
-        });
-      }
-    }
   });
 
   // Fetch and return the updated session

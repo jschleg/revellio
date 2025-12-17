@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AIService } from "@/lib/ai/ai-service";
+import { AIService, type VisualizationConfig } from "@/lib/ai/ai-service";
 import { log } from "@/lib/logger";
-import type { Metadata, CSVData } from "@/lib/types/data";
+import type { Metadata, Row } from "@/lib/types/data";
 
 export async function POST(request: NextRequest) {
   try {
     log.info("Unified analysis request received");
-    const { metadataArray, dataSlices, userPrompt, relations } = await request.json();
+    const { metadataArray, dataSlices, userPrompt, config } = await request.json();
 
     if (!metadataArray || !Array.isArray(metadataArray)) {
       log.error("Invalid metadata array");
@@ -26,32 +26,22 @@ export async function POST(request: NextRequest) {
 
     log.info("Processing unified analysis", {
       files: metadataArray.length,
-      relations: relations?.length || 0,
-      hasPrompt: !!userPrompt
+      hasPrompt: !!userPrompt,
+      config: config || {}
     });
-    
-    const hasApiKey = !!process.env.OPENAI_API_KEY;
-    if (!hasApiKey) {
-      log.error("OPENAI_API_KEY environment variable is not set");
-      return NextResponse.json(
-        { error: "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable in Vercel." },
-        { status: 500 }
-      );
-    }
 
     const aiService = new AIService();
     
     try {
       const analysis = await aiService.unifiedAnalysis(
         metadataArray as Metadata[],
-        dataSlices as CSVData[],
+        dataSlices as Array<{ fileName: string; rows: Row[] }>,
         userPrompt || "",
-        relations || []
+        (config || {}) as VisualizationConfig
       );
 
       log.info("Unified analysis complete", {
         visualizations: analysis.visualizations.length,
-        relations: analysis.relations.length,
       });
 
       return NextResponse.json(analysis);

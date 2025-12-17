@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AIService } from "@/lib/ai/ai-service";
+import { AIService, type DataMeshConfig } from "@/lib/ai/ai-service";
 import { log } from "@/lib/logger";
-import type { Metadata, CSVData } from "@/lib/types/data";
+import type { Metadata, Row } from "@/lib/types/data";
 
 export async function POST(request: NextRequest) {
   try {
     log.info("Data mesh request received");
-    const { metadataArray, dataSlices, userPrompt } = await request.json();
+    const { metadataArray, dataSlices, userPrompt, config } = await request.json();
 
     if (!metadataArray || !Array.isArray(metadataArray)) {
       log.error("Invalid metadata array");
@@ -24,29 +24,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const totalRows = dataSlices.reduce((sum: number, data: CSVData) => sum + data.rows.length, 0);
+    const totalRows = dataSlices.reduce((sum: number, data: { rows: unknown[] }) => sum + (data.rows?.length || 0), 0);
     log.info("Processing data mesh", { 
       files: metadataArray.length, 
       totalRows,
-      hasPrompt: !!userPrompt 
+      hasPrompt: !!userPrompt,
+      config: config || {}
     });
-    
-    const hasApiKey = !!process.env.OPENAI_API_KEY;
-    if (!hasApiKey) {
-      log.error("OPENAI_API_KEY environment variable is not set");
-      return NextResponse.json(
-        { error: "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable in Vercel." },
-        { status: 500 }
-      );
-    }
 
     const aiService = new AIService();
     
     try {
       const dataMesh = await aiService.dataMesh(
         metadataArray as Metadata[],
-        dataSlices as CSVData[],
-        userPrompt || ""
+        dataSlices as Array<{ fileName: string; rows: Row[] }>,
+        userPrompt || "",
+        (config || {}) as DataMeshConfig
       );
 
       log.info("Data mesh complete", { relations: dataMesh.relations.length });

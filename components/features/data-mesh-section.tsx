@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Zap, Eye } from "lucide-react";
+import { Loader2, Zap } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { DataMeshVisualization } from "@/components/data-mesh-visualization";
 
@@ -12,7 +12,6 @@ interface DataMeshSectionProps {
   isProcessing: boolean;
   step: string;
   onAnalyze: () => Promise<void>;
-  onUseSample: () => void;
   onUpdateRelations: (relations: DataMeshRelation[]) => void;
 }
 
@@ -24,7 +23,6 @@ export function DataMeshSection({
   isProcessing,
   step,
   onAnalyze,
-  onUseSample,
   onUpdateRelations,
 }: DataMeshSectionProps) {
   if (csvData.length === 0) {
@@ -63,7 +61,7 @@ export function DataMeshSection({
         </p>
       </div>
 
-      <div className="ml-11 flex flex-col gap-3 sm:flex-row">
+      <div className="ml-11">
         <button
           onClick={onAnalyze}
           disabled={isProcessing}
@@ -80,17 +78,6 @@ export function DataMeshSection({
               <span>Analyze Data Mesh</span>
             </span>
           )}
-        </button>
-
-        <button
-          onClick={onUseSample}
-          disabled={isProcessing || csvData.length === 0}
-          className="group relative rounded-xl border-2 border-indigo-200 bg-indigo-50/80 px-6 py-4 font-semibold text-indigo-700 shadow-sm transition-all duration-200 hover:bg-indigo-100/80 hover:shadow-md hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
-        >
-          <span className="flex items-center justify-center gap-2">
-            <Eye className="h-4 w-4" />
-            <span>Use Sample Relations</span>
-          </span>
         </button>
       </div>
 

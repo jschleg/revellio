@@ -128,7 +128,6 @@ export interface VisualizationInstruction {
 
 export interface UnifiedAIOutput {
   visualizations: VisualizationInstruction[];
-  relations: Relation[];
   reasoning: string; // Overall reasoning for all decisions
   metadata: {
     insights: string[];

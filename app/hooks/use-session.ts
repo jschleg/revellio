@@ -20,15 +20,16 @@ export interface SessionState {
   meshRelations: DataMeshRelation[];
   meshInputPayload: {
     metadataArray: Metadata[];
-    dataSlices?: CSVData[];
+    dataSlices?: Array<{ fileName: string; rows: unknown[] }>;
     userPrompt?: string;
+    config?: unknown;
   } | null;
   aiOutput: UnifiedAIOutput | null;
   aiInputPayload: {
     metadataArray: Metadata[];
-    dataSlices?: CSVData[];
+    dataSlices?: Array<{ fileName: string; rows: unknown[] }>;
     userPrompt?: string;
-    relations?: DataMeshRelation[];
+    config?: unknown;
   } | null;
 }
 

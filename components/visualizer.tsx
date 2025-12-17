@@ -1,7 +1,7 @@
 "use client";
 
 import type { UnifiedAIOutput, CSVData } from "@/lib/types/data";
-import { BarChart3, GitBranch, MessageSquare } from "lucide-react";
+import { BarChart3, MessageSquare } from "lucide-react";
 import { DynamicVisualization } from "./visualizations";
 
 interface VisualizerProps {
@@ -58,7 +58,6 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
           <DynamicVisualization
             instruction={instruction}
             csvData={csvData}
-            relations={aiOutput.relations}
           />
         </div>
       </div>
@@ -83,48 +82,6 @@ export function Visualizer({ aiOutput, csvData }: VisualizerProps) {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground">Visualizations</h2>
           {aiOutput.visualizations.map((viz, index) => renderVisualization(viz, index))}
-        </div>
-      )}
-
-      {/* Relations */}
-      {aiOutput.relations.length > 0 && (
-        <div className="rounded-lg border border-zinc-200/50 bg-card p-6 dark:border-zinc-800/50">
-          <div className="mb-4 flex items-center gap-2">
-            <GitBranch className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            <h2 className="text-xl font-semibold text-foreground">Identified Relations</h2>
-          </div>
-          <div className="space-y-3">
-            {aiOutput.relations.map((rel, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 rounded-lg border border-purple-200/50 bg-purple-50/50 p-4 dark:border-purple-800/50 dark:bg-purple-900/20"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded bg-purple-600 px-2 py-1 text-xs font-medium text-white dark:bg-purple-500">
-                      {rel.type}
-                    </span>
-                    <span className="text-sm font-medium text-foreground">
-                      {rel.sourceColumn}
-                    </span>
-                    <span className="text-purple-600 dark:text-purple-400">→</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {rel.targetColumn}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                    {rel.description}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                    {(rel.confidence * 100).toFixed(0)}%
-                  </div>
-                  <div className="text-xs text-zinc-500 dark:text-zinc-400">Confidence</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

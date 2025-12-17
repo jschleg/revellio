@@ -6,6 +6,7 @@ import type {
   DataMeshOutput,
   DataMeshRelation,
 } from "@/lib/types/data";
+import type { DataMeshConfig } from "@/lib/ai/ai-service";
 
 export function useDataMesh() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -14,14 +15,16 @@ export function useDataMesh() {
   const analyzeDataMesh = useCallback(
     async (
       csvData: CSVData[],
-      userPrompt: string
+      userPrompt: string,
+      config: DataMeshConfig = {}
     ): Promise<{
       metadataArray: Metadata[];
-      dataSlices: CSVData[];
+      dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
       payload: {
         metadataArray: Metadata[];
-        dataSlices: CSVData[];
+        dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
         userPrompt: string;
+        config: DataMeshConfig;
       };
       result: DataMeshOutput;
     }> => {
@@ -34,27 +37,17 @@ export function useDataMesh() {
         const metadataArray = metadataExtractor.extractAll(csvData);
 
         setStep("Preparing data samples (20 rows per file)...");
-        const dataSlices: CSVData[] = csvData.map((data) => {
-          const slicedRows = data.rows.slice(0, 20);
-          return {
-            ...data,
-            rows: slicedRows,
-            rawContent: "",
-            metadata: {
-              ...data.metadata,
-              rowCount: Math.min(20, data.metadata.rowCount),
-              sample: {
-                rows: slicedRows,
-                totalRows: slicedRows.length,
-              },
-            },
-          };
-        });
+        // Optimized: only send fileName and rows (no rawContent, minimal metadata)
+        const dataSlices = csvData.map((data) => ({
+          fileName: data.fileName,
+          rows: data.rows.slice(0, 20),
+        }));
 
         const payload = {
           metadataArray,
           dataSlices,
           userPrompt: userPrompt || "",
+          config,
         };
 
         setStep("Analyzing data mesh network...");
@@ -65,8 +58,15 @@ export function useDataMesh() {
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Data mesh analysis failed: ${errorText}`);
+          let errorMessage = `Data mesh analysis failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
 
         const result: DataMeshOutput = await response.json();
@@ -85,97 +85,10 @@ export function useDataMesh() {
     []
   );
 
-  const generateSampleDataMesh = useCallback(
-    (csvData: CSVData[]): DataMeshOutput => {
-      const relations: DataMeshRelation[] = [];
-
-      for (let i = 0; i < csvData.length; i++) {
-        for (let j = i + 1; j < csvData.length; j++) {
-          const file1 = csvData[i];
-          const file2 = csvData[j];
-
-          relations.push({
-            title: `File Relationship: ${file1.fileName} ↔ ${file2.fileName}`,
-            elements: [
-              { name: file1.fileName, source: { file: file1.fileName } },
-              { name: file2.fileName, source: { file: file2.fileName } },
-            ],
-            relationExplanation: `These files are related and can be analyzed together. Both contain structured data that may share common patterns or themes.`,
-          });
-
-          file1.columns.forEach((col1) => {
-            file2.columns.forEach((col2) => {
-              const col1Lower = col1.toLowerCase();
-              const col2Lower = col2.toLowerCase();
-
-              if (
-                col1Lower === col2Lower ||
-                col1Lower.includes(col2Lower) ||
-                col2Lower.includes(col1Lower) ||
-                (col1Lower.includes("date") && col2Lower.includes("date")) ||
-                (col1Lower.includes("id") && col2Lower.includes("id"))
-              ) {
-                relations.push({
-                  title: `Column Match: ${col1} ↔ ${col2}`,
-                  elements: [
-                    {
-                      name: col1,
-                      source: { file: file1.fileName, column: col1 },
-                    },
-                    {
-                      name: col2,
-                      source: { file: file2.fileName, column: col2 },
-                    },
-                  ],
-                  relationExplanation: `Columns "${col1}" and "${col2}" appear to be related, possibly representing the same or similar data across different files.`,
-                });
-              }
-            });
-          });
-        }
-      }
-
-      csvData.forEach((file) => {
-        if (file.columns.length > 1) {
-          for (let i = 0; i < file.columns.length; i++) {
-            for (let j = i + 1; j < file.columns.length; j++) {
-              const col1 = file.columns[i];
-              const col2 = file.columns[j];
-
-              relations.push({
-                title: `Dataset Columns: ${col1} ↔ ${col2}`,
-                elements: [
-                  {
-                    name: col1,
-                    source: { file: file.fileName, column: col1 },
-                  },
-                  {
-                    name: col2,
-                    source: { file: file.fileName, column: col2 },
-                  },
-                ],
-                relationExplanation: `Columns "${col1}" and "${col2}" are part of the same dataset and may have contextual relationships.`,
-              });
-            }
-          }
-        }
-      });
-
-      const summary = `Sample data mesh network with ${relations.length} detected relations across ${csvData.length} file(s). This is sample data for development purposes.`;
-
-      return {
-        relations,
-        summary,
-      };
-    },
-    []
-  );
-
   return {
     isProcessing,
     step,
     analyzeDataMesh,
-    generateSampleDataMesh,
   };
 }
 

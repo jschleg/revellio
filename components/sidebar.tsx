@@ -10,6 +10,10 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Database,
+  Network,
+  BarChart3,
+  Settings,
 } from "lucide-react";
 
 interface Session {
@@ -22,6 +26,8 @@ interface Session {
   };
 }
 
+export type NavigationSection = "data" | "data-mesh" | "visualizations" | "technical";
+
 interface SidebarProps {
   currentSessionId: string | null;
   onSessionSelect: (sessionId: string) => void;
@@ -30,7 +36,20 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   refreshTrigger?: number; // Trigger to refresh the sessions list
+  activeSection: NavigationSection;
+  onSectionChange: (section: NavigationSection) => void;
 }
+
+const navigationItems: Array<{
+  id: NavigationSection;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { id: "data", label: "Data & Files", icon: Database },
+  { id: "data-mesh", label: "Data Mesh", icon: Network },
+  { id: "visualizations", label: "Visualizations", icon: BarChart3 },
+  { id: "technical", label: "Technical Details", icon: Settings },
+];
 
 export function Sidebar({
   currentSessionId,
@@ -40,6 +59,8 @@ export function Sidebar({
   isCollapsed,
   onToggleCollapse,
   refreshTrigger,
+  activeSection,
+  onSectionChange,
 }: SidebarProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,6 +143,32 @@ export function Sidebar({
         >
           <ChevronRight className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
         </button>
+        <div className="flex flex-col border-b border-zinc-200/80 dark:border-zinc-800/80">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSectionChange(item.id)}
+                className={`flex h-12 w-full items-center justify-center transition-colors hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 ${
+                  isActive
+                    ? "bg-gradient-to-b from-purple-100/80 to-purple-50/80 dark:from-purple-900/40 dark:to-purple-950/40"
+                    : ""
+                }`}
+                title={item.label}
+              >
+                <Icon
+                  className={`h-5 w-5 ${
+                    isActive
+                      ? "text-purple-700 dark:text-purple-300"
+                      : "text-zinc-600 dark:text-zinc-400"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -151,8 +198,46 @@ export function Sidebar({
         </div>
       </div>
 
+      {/* Navigation */}
+      <div className="border-b border-zinc-200/80 bg-white/40 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          Navigation
+        </h3>
+        <div className="space-y-1">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSectionChange(item.id)}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-all ${
+                  isActive
+                    ? "bg-gradient-to-r from-purple-100/80 to-purple-50/80 text-purple-900 shadow-sm dark:from-purple-900/40 dark:to-purple-950/40 dark:text-purple-100"
+                    : "text-zinc-700 hover:bg-white/60 dark:text-zinc-300 dark:hover:bg-zinc-800/40"
+                }`}
+              >
+                <Icon
+                  className={`h-4 w-4 flex-shrink-0 ${
+                    isActive
+                      ? "text-purple-700 dark:text-purple-300"
+                      : "text-zinc-600 dark:text-zinc-400"
+                  }`}
+                />
+                <span className="font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Sessions List */}
       <div className="flex-1 overflow-y-auto p-2">
+        <div className="mb-2 px-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            Sessions
+          </h3>
+        </div>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />

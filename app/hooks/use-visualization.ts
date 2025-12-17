@@ -4,8 +4,8 @@ import type {
   CSVData,
   Metadata,
   UnifiedAIOutput,
-  DataMeshRelation,
 } from "@/lib/types/data";
+import type { VisualizationConfig } from "@/lib/ai/ai-service";
 
 export function useVisualization() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -15,15 +15,15 @@ export function useVisualization() {
     async (
       csvData: CSVData[],
       userPrompt: string,
-      relations: DataMeshRelation[]
+      config: VisualizationConfig = {}
     ): Promise<{
       metadataArray: Metadata[];
-      dataSlices: CSVData[];
+      dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
       payload: {
         metadataArray: Metadata[];
-        dataSlices: CSVData[];
+        dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
         userPrompt: string;
-        relations: DataMeshRelation[];
+        config: VisualizationConfig;
       };
       result: UnifiedAIOutput;
     }> => {
@@ -36,8 +36,9 @@ export function useVisualization() {
         const metadataArray = metadataExtractor.extractAll(csvData);
 
         setStep("Preparing data samples...");
-        const dataSlices: CSVData[] = csvData.map((data) => ({
-          ...data,
+        // Optimized: only send fileName and rows (no rawContent, no relations)
+        const dataSlices = csvData.map((data) => ({
+          fileName: data.fileName,
           rows: data.rows.slice(0, 5),
         }));
 
@@ -45,7 +46,7 @@ export function useVisualization() {
           metadataArray,
           dataSlices,
           userPrompt: userPrompt || "",
-          relations,
+          config,
         };
 
         setStep("AI is analyzing data and creating visualization strategy...");
@@ -56,8 +57,15 @@ export function useVisualization() {
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`AI analysis failed: ${errorText}`);
+          let errorMessage = `AI analysis failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
 
         const result: UnifiedAIOutput = await response.json();

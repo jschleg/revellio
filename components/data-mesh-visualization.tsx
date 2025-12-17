@@ -548,6 +548,27 @@ export function DataMeshVisualization({
         onRelationHover={setHoveredRelation}
         onRelationClick={openEditWindow}
         onToggleSelection={toggleRelation}
+        onRemove={(index) => {
+          const updatedRelations = localRelations.filter((_, i) => i !== index);
+          setLocalRelations(updatedRelations);
+          if (onUpdateRelations) {
+            onUpdateRelations(updatedRelations);
+          }
+          setSelectedRelations((prev) => {
+            const next = new Set(prev);
+            next.delete(index);
+            // Adjust indices for relations after the removed one
+            const adjusted = new Set<number>();
+            next.forEach((idx) => {
+              if (idx > index) {
+                adjusted.add(idx - 1);
+              } else {
+                adjusted.add(idx);
+              }
+            });
+            return adjusted;
+          });
+        }}
       />
     </div>
   );

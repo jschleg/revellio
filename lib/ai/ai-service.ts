@@ -4,6 +4,7 @@ import type {
   Metadata,
   UnifiedAIOutput,
   DataMeshOutput,
+  DataMeshRelation,
   Row,
 } from "@/lib/types/data";
 import { buildDataMeshPrompt } from "./prompts/data-mesh-prompt";
@@ -60,7 +61,9 @@ export class AIService {
     metadataArray: Metadata[],
     dataSlices: Array<{ fileName: string; rows: Row[] }>,
     userPrompt: string = "",
-    config: DataMeshConfig = {}
+    config: DataMeshConfig = {},
+    existingRelations?: DataMeshRelation[],
+    feedback?: string
   ): Promise<DataMeshOutput> {
     if (!this.isAvailable()) {
       const errorMsg = "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.";
@@ -69,10 +72,12 @@ export class AIService {
     }
 
     try {
-      const prompt = buildDataMeshPrompt(metadataArray, dataSlices, userPrompt, config);
+      const prompt = buildDataMeshPrompt(metadataArray, dataSlices, userPrompt, config, existingRelations, feedback);
       log.info("Sending data mesh request to OpenAI", { 
         files: metadataArray.length, 
         hasPrompt: !!userPrompt,
+        hasExistingRelations: !!existingRelations?.length,
+        hasFeedback: !!feedback,
         config 
       });
       
@@ -107,8 +112,13 @@ export class AIService {
         log.warn("No relations found in AI response");
       }
 
+      // If we have existing relations, merge them with new ones
+      const relations = existingRelations && existingRelations.length > 0
+        ? [...existingRelations, ...(result.relations || [])]
+        : (result.relations || []);
+
       return {
-        relations: result.relations || [],
+        relations,
         summary: result.summary || "No summary available",
       };
     } catch (error) {
@@ -127,7 +137,9 @@ export class AIService {
     metadataArray: Metadata[],
     dataSlices: Array<{ fileName: string; rows: Row[] }>,
     userPrompt: string,
-    config: VisualizationConfig = {}
+    config: VisualizationConfig = {},
+    existingOutput?: UnifiedAIOutput,
+    feedback?: string
   ): Promise<UnifiedAIOutput> {
     if (!this.isAvailable()) {
       const errorMsg = "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.";
@@ -136,9 +148,11 @@ export class AIService {
     }
 
     try {
-      const prompt = buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, config);
+      const prompt = buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, config, existingOutput, feedback);
       log.info("Sending unified analysis request to OpenAI", { 
         files: metadataArray.length,
+        hasExistingOutput: !!existingOutput,
+        hasFeedback: !!feedback,
         config 
       });
       

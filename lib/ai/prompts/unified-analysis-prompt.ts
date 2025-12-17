@@ -1,4 +1,4 @@
-import type { Metadata, Row } from "@/lib/types/data";
+import type { Metadata, Row, UnifiedAIOutput } from "@/lib/types/data";
 import type { VisualizationConfig } from "../ai-service";
 
 /**
@@ -8,7 +8,9 @@ export function buildUnifiedAnalysisPrompt(
   metadataArray: Metadata[],
   dataSlices: Array<{ fileName: string; rows: Row[] }>,
   userPrompt: string,
-  config: VisualizationConfig = {}
+  config: VisualizationConfig = {},
+  existingOutput?: UnifiedAIOutput,
+  feedback?: string
 ): string {
   // Only essential metadata
   const metadataSummary = metadataArray.map((meta, idx) => {
@@ -28,6 +30,16 @@ ${JSON.stringify(data.rows.slice(0, 5), null, 1)}`;
   const preferredTypes = config.preferredTypes?.length ? `Preferred types: ${config.preferredTypes.join(", ")}.` : "";
   const focusMetrics = config.focusMetrics?.length ? `Focus on metrics: ${config.focusMetrics.join(", ")}.` : "";
 
+  // Handle feedback scenario - include existing output and feedback
+  const existingOutputSection = existingOutput
+    ? `\n\nPREVIOUS OUTPUT (for reference):
+${JSON.stringify(existingOutput, null, 2)}`
+    : "";
+
+  const feedbackSection = feedback
+    ? `\n\nUSER FEEDBACK: ${feedback}\n\nPlease regenerate the visualizations considering this feedback along with the previous output.`
+    : "";
+
   return `Create visualizations for the provided CSV data.
 
 METADATA:
@@ -36,7 +48,7 @@ ${metadataSummary}
 DATA SAMPLES:
 ${dataSamples}
 
-USER REQUEST: ${userPrompt || "Create appropriate visualizations"}
+USER REQUEST: ${userPrompt || "Create appropriate visualizations"}${existingOutputSection}${feedbackSection}
 
 ${maxViz} ${preferredTypes} ${focusMetrics}
 

@@ -16,7 +16,9 @@ export function useDataMesh() {
     async (
       csvData: CSVData[],
       userPrompt: string,
-      config: DataMeshConfig = {}
+      config: DataMeshConfig = {},
+      existingRelations?: DataMeshRelation[],
+      feedback?: string
     ): Promise<{
       metadataArray: Metadata[];
       dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
@@ -25,6 +27,8 @@ export function useDataMesh() {
         dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
         userPrompt: string;
         config: DataMeshConfig;
+        existingRelations?: DataMeshRelation[];
+        feedback?: string;
       };
       result: DataMeshOutput;
     }> => {
@@ -48,6 +52,8 @@ export function useDataMesh() {
           dataSlices,
           userPrompt: userPrompt || "",
           config,
+          ...(existingRelations && { existingRelations }),
+          ...(feedback && { feedback }),
         };
 
         setStep("Analyzing data mesh network...");

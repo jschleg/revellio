@@ -1,8 +1,10 @@
 "use client";
 
-import { Loader2, Zap } from "lucide-react";
+import { useRef } from "react";
+import { Loader2, Zap, RefreshCw, MessageSquare } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { DataMeshVisualization } from "@/components/data-mesh-visualization";
+import { FeedbackPanel } from "@/components/data-mesh-visualization/FeedbackPanel";
 
 interface DataMeshSectionProps {
   csvData: CSVData[];
@@ -13,6 +15,7 @@ interface DataMeshSectionProps {
   step: string;
   onAnalyze: () => Promise<void>;
   onUpdateRelations: (relations: DataMeshRelation[]) => void;
+  onReroll?: (existingRelations: DataMeshRelation[], feedback: string) => Promise<void>;
 }
 
 export function DataMeshSection({
@@ -24,10 +27,34 @@ export function DataMeshSection({
   step,
   onAnalyze,
   onUpdateRelations,
+  onReroll,
 }: DataMeshSectionProps) {
+  const feedbackSectionRef = useRef<HTMLDivElement>(null);
+  const rerollSectionRef = useRef<HTMLDivElement>(null);
+
   if (csvData.length === 0) {
     return null;
   }
+
+  const scrollToFeedback = () => {
+    feedbackSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const scrollToReroll = () => {
+    rerollSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleFeedbackSubmit = async (feedback: string) => {
+    if (onReroll && meshOutput) {
+      await onReroll(meshOutput.relations, feedback);
+    }
+  };
+
+  const handleRerollSubmit = async (feedback: string) => {
+    if (onReroll && meshOutput) {
+      await onReroll(meshOutput.relations, feedback);
+    }
+  };
 
   return (
     <div className="mb-8 space-y-4">
@@ -82,18 +109,67 @@ export function DataMeshSection({
       </div>
 
       {meshOutput && (
-        <div className="mb-8 rounded-xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 to-white/60 backdrop-blur-sm p-6 shadow-sm dark:border-indigo-800/80 dark:from-indigo-950/40 dark:to-zinc-900/60">
-          <div className="mb-4 flex items-center gap-2">
-            <Zap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-              Data Mesh Network
-            </h2>
+        <div className="mb-8 space-y-4">
+          <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 to-white/60 backdrop-blur-sm p-6 shadow-sm dark:border-indigo-800/80 dark:from-indigo-950/40 dark:to-zinc-900/60">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                  Data Mesh Network
+                </h2>
+                <span className="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  ({meshOutput.relations.length} relations)
+                </span>
+              </div>
+              {onReroll && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={scrollToFeedback}
+                    className="flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Feedback
+                  </button>
+                  <button
+                    onClick={scrollToReroll}
+                    className="flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 dark:border-indigo-400 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Reroll Relations
+                  </button>
+                </div>
+              )}
+            </div>
+            <DataMeshVisualization
+              dataMeshOutput={meshOutput}
+              csvData={csvData}
+              onUpdateRelations={onUpdateRelations}
+            />
           </div>
-          <DataMeshVisualization
-            dataMeshOutput={meshOutput}
-            csvData={csvData}
-            onUpdateRelations={onUpdateRelations}
-          />
+
+          {/* Feedback Section - Always Visible */}
+          {onReroll && (
+            <>
+              <div ref={feedbackSectionRef} className="scroll-mt-4">
+                <FeedbackPanel
+                  onSubmit={handleFeedbackSubmit}
+                  onCancel={() => {}}
+                  placeholder="Provide feedback to improve the relations. The AI will consider your feedback along with the current relations..."
+                  title="Provide Feedback for Relations"
+                />
+              </div>
+
+              {/* Reroll Feedback Section - Always Visible */}
+              <div ref={rerollSectionRef} className="scroll-mt-4">
+                <FeedbackPanel
+                  onSubmit={handleRerollSubmit}
+                  onCancel={() => {}}
+                  placeholder="Describe what additional relations you'd like to see. Current relations will be kept, and new ones will be generated based on your input..."
+                  title="Reroll Relations - Generate More"
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 

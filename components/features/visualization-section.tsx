@@ -1,7 +1,9 @@
 "use client";
 
-import { Loader2, Zap } from "lucide-react";
-import type { DataMeshOutput, DataMeshRelation } from "@/lib/types/data";
+import { useState } from "react";
+import { Loader2, Zap, RefreshCw, MessageSquare } from "lucide-react";
+import type { DataMeshOutput, DataMeshRelation, UnifiedAIOutput } from "@/lib/types/data";
+import { VisualizationFeedbackPanel } from "@/components/visualizations/FeedbackPanel";
 
 interface VisualizationSectionProps {
   csvDataCount: number;
@@ -12,6 +14,8 @@ interface VisualizationSectionProps {
   isProcessing: boolean;
   step: string;
   onAnalyze: () => Promise<void>;
+  onRegenerate?: (existingOutput: UnifiedAIOutput, feedback: string) => Promise<void>;
+  existingOutput?: UnifiedAIOutput | null;
 }
 
 export function VisualizationSection({
@@ -23,10 +27,21 @@ export function VisualizationSection({
   isProcessing,
   step,
   onAnalyze,
+  onRegenerate,
+  existingOutput,
 }: VisualizationSectionProps) {
+  const [showFeedback, setShowFeedback] = useState(false);
+
   if (csvDataCount === 0 || !meshOutput || meshRelations.length === 0) {
     return null;
   }
+
+  const handleFeedbackSubmit = async (feedback: string) => {
+    if (onRegenerate && existingOutput) {
+      await onRegenerate(existingOutput, feedback);
+      setShowFeedback(false);
+    }
+  };
 
   return (
     <div className="mb-8 space-y-4">
@@ -59,7 +74,7 @@ export function VisualizationSection({
         </p>
       </div>
 
-      <div className="ml-11">
+      <div className="ml-11 flex items-center gap-3">
         <button
           onClick={onAnalyze}
           disabled={isProcessing || !meshOutput || meshRelations.length === 0}
@@ -77,7 +92,29 @@ export function VisualizationSection({
             </span>
           )}
         </button>
+        {existingOutput && onRegenerate && (
+          <button
+            onClick={() => setShowFeedback(!showFeedback)}
+            disabled={isProcessing}
+            className="flex items-center gap-2 rounded-xl border border-purple-500 bg-purple-600 px-6 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:bg-purple-700 hover:shadow-xl hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:border-purple-400 dark:bg-purple-500 dark:hover:bg-purple-600"
+          >
+            <RefreshCw className="h-5 w-5" />
+            <span>Regenerate</span>
+          </button>
+        )}
       </div>
+
+      {/* Feedback Panel */}
+      {showFeedback && onRegenerate && existingOutput && (
+        <div className="ml-11 mt-4">
+          <VisualizationFeedbackPanel
+            onSubmit={handleFeedbackSubmit}
+            onCancel={() => setShowFeedback(false)}
+            placeholder="Provide feedback to improve the visualizations. The AI will consider your feedback along with the previous output..."
+            title="Regenerate Visualizations with Feedback"
+          />
+        </div>
+      )}
 
       {isProcessing && step && (
         <div className="ml-11 rounded-xl border border-purple-200/80 bg-gradient-to-r from-purple-50/60 to-white/60 backdrop-blur-sm p-4 shadow-sm dark:border-purple-800/80 dark:from-purple-950/40 dark:to-zinc-900/60">

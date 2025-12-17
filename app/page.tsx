@@ -96,6 +96,34 @@ export default function Home() {
     }
   };
 
+  const handleDataMeshReroll = async (existingRelations: typeof session.meshRelations, feedback: string) => {
+    if (session.csvData.length === 0) {
+      setError("Please upload files first");
+      return;
+    }
+
+    setError(null);
+    try {
+      const { metadataArray, payload, result } = await analyzeDataMesh(
+        session.csvData,
+        session.dataMeshPrompt,
+        {},
+        existingRelations,
+        feedback
+      );
+
+      setSession((prev) => ({
+        ...prev,
+        metadataInput: metadataArray,
+        meshOutput: result,
+        meshRelations: result.relations,
+        meshInputPayload: payload,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+    }
+  };
+
 
   const handleVisualizationAnalysis = async () => {
     if (session.csvData.length === 0) {
@@ -108,6 +136,33 @@ export default function Home() {
       const { metadataArray, payload, result } = await analyzeVisualization(
         session.csvData,
         session.userPrompt
+      );
+
+      setSession((prev) => ({
+        ...prev,
+        metadataInput: metadataArray,
+        aiOutput: result,
+        aiInputPayload: payload,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+    }
+  };
+
+  const handleVisualizationRegenerate = async (existingOutput: typeof session.aiOutput, feedback: string) => {
+    if (session.csvData.length === 0) {
+      setError("Please upload files first");
+      return;
+    }
+
+    setError(null);
+    try {
+      const { metadataArray, payload, result } = await analyzeVisualization(
+        session.csvData,
+        session.userPrompt,
+        {},
+        existingOutput || undefined,
+        feedback
       );
 
       setSession((prev) => ({
@@ -307,6 +362,7 @@ export default function Home() {
                 onUpdateRelations={(relations) =>
                   setSession((prev) => ({ ...prev, meshRelations: relations }))
                 }
+                onReroll={handleDataMeshReroll}
               />
               )}
 
@@ -324,6 +380,8 @@ export default function Home() {
                     isProcessing={isAnalyzing}
                     step={analyzingStep}
                     onAnalyze={handleVisualizationAnalysis}
+                    onRegenerate={handleVisualizationRegenerate}
+                    existingOutput={session.aiOutput}
                   />
 
                   {session.aiOutput && (
@@ -349,7 +407,11 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <Visualizer aiOutput={session.aiOutput} csvData={session.csvData} />
+                      <Visualizer 
+                        aiOutput={session.aiOutput} 
+                        csvData={session.csvData}
+                        onRegenerate={handleVisualizationRegenerate}
+                      />
                     </>
                   )}
                 </>

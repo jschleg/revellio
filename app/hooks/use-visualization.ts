@@ -15,7 +15,9 @@ export function useVisualization() {
     async (
       csvData: CSVData[],
       userPrompt: string,
-      config: VisualizationConfig = {}
+      config: VisualizationConfig = {},
+      existingOutput?: UnifiedAIOutput,
+      feedback?: string
     ): Promise<{
       metadataArray: Metadata[];
       dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
@@ -24,6 +26,8 @@ export function useVisualization() {
         dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
         userPrompt: string;
         config: VisualizationConfig;
+        existingOutput?: UnifiedAIOutput;
+        feedback?: string;
       };
       result: UnifiedAIOutput;
     }> => {
@@ -47,6 +51,8 @@ export function useVisualization() {
           dataSlices,
           userPrompt: userPrompt || "",
           config,
+          ...(existingOutput && { existingOutput }),
+          ...(feedback && { feedback }),
         };
 
         setStep("AI is analyzing data and creating visualization strategy...");

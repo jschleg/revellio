@@ -1,4 +1,4 @@
-import type { Metadata, Row } from "@/lib/types/data";
+import type { Metadata, Row, DataMeshRelation } from "@/lib/types/data";
 import type { DataMeshConfig } from "../ai-service";
 
 /**
@@ -8,7 +8,9 @@ export function buildDataMeshPrompt(
   metadataArray: Metadata[],
   dataSlices: Array<{ fileName: string; rows: Row[] }>,
   userPrompt: string = "",
-  config: DataMeshConfig = {}
+  config: DataMeshConfig = {},
+  existingRelations?: DataMeshRelation[],
+  feedback?: string
 ): string {
   // Only include essential metadata
   const metadataSummary = metadataArray.map((meta, idx) => {
@@ -29,16 +31,30 @@ ${JSON.stringify(data.rows.slice(0, 10), null, 1)}`;
   const maxElements = config.maxRelationElements ? `Maximum ${config.maxRelationElements} elements per relation.` : "";
   const focusAreas = config.focusAreas?.length ? `Focus on: ${config.focusAreas.join(", ")}.` : "";
 
+  // Handle reroll scenario - include existing relations and feedback
+  const existingRelationsSection = existingRelations && existingRelations.length > 0
+    ? `\n\nEXISTING RELATIONS (keep these, generate additional ones):
+${JSON.stringify(existingRelations, null, 2)}`
+    : "";
+
+  const feedbackSection = feedback
+    ? `\n\nUSER FEEDBACK: ${feedback}\n\nPlease consider this feedback when generating relations.`
+    : "";
+
+  const rerollInstruction = existingRelations && existingRelations.length > 0
+    ? `\n\nIMPORTANT: Keep all existing relations above. Generate ADDITIONAL relations based on the feedback and data.`
+    : "";
+
   return `Analyze CSV data and identify relationships between data elements.
 
 METADATA:
 ${metadataSummary}
 
 SAMPLE DATA:
-${dataSamples}${userPrompt ? `\n\nUSER CONTEXT: ${userPrompt}` : ""}
+${dataSamples}${userPrompt ? `\n\nUSER CONTEXT: ${userPrompt}` : ""}${existingRelationsSection}${feedbackSection}
 
 ${maxRelations} ${maxElements} ${focusAreas}
-Minimum ${minElements} elements per relation.
+Minimum ${minElements} elements per relation.${rerollInstruction}
 
 OUTPUT JSON:
 {

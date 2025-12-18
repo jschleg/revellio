@@ -142,9 +142,17 @@ revellio/
 ├── components/                    # React UI components
 │   ├── features/                 # Feature-based components
 │   │   ├── file-upload-section.tsx
+│   │   ├── file-display-section.tsx
+│   │   ├── metadata-display-section.tsx
 │   │   ├── data-mesh-section.tsx
 │   │   ├── visualization-section.tsx
+│   │   ├── ai-analysis-overview.tsx
+│   │   ├── technical-details-section.tsx
+│   │   ├── main-content.tsx      # Main content router/orchestrator
 │   │   └── session-header.tsx
+│   ├── ui/                       # Reusable UI components
+│   │   ├── error-display.tsx
+│   │   └── collapsible-section.tsx
 │   ├── data-mesh-visualization/  # Data mesh visualization components
 │   ├── visualizations/            # Dynamic visualization components
 │   ├── file-drop.tsx             # File upload component
@@ -170,6 +178,7 @@ revellio/
 │       └── ... (other utils)
 ├── docs/                          # Documentation
 │   ├── workflow.md               # Workflow documentation
+│   ├── main-page-architecture.md  # Main page architecture & MainContent explanation
 │   ├── data-mesh-component.md
 │   └── class-diagram.puml
 ├── public/                        # Static assets
@@ -220,6 +229,7 @@ See [Workflow Documentation](./docs/workflow.md) for detailed information.
 
 **Entry Points:**
 1. **`app/page.tsx`** - Main application page (orchestrates UI and hooks)
+   - See [Main Page Architecture Documentation](./docs/main-page-architecture.md) for detailed explanation
 2. **`app/hooks/use-session.ts`** - Session state management logic
 3. **`lib/services/session-service.ts`** - Database operations for sessions
 

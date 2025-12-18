@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type React from "react";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2, Zap, Copy, Check } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { DataMeshVisualization } from "@/components/data-mesh-visualization";
 import { RelationActionModal } from "@/components/data-mesh-visualization/RelationActionModal";
@@ -45,6 +45,7 @@ export function DataMeshSection({
   const [editedTitle, setEditedTitle] = useState<string>("");
   const [editedExplanation, setEditedExplanation] = useState<string>("");
   const [editingConnectionPoint, setEditingConnectionPoint] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   if (csvData.length === 0) {
     return null;
@@ -203,6 +204,34 @@ export function DataMeshSection({
     handleModalClose();
   };
 
+  const handleCopyJSON = useCallback(async () => {
+    if (!meshOutput) return;
+
+    try {
+      const jsonString = JSON.stringify(meshOutput, null, 2);
+      await navigator.clipboard.writeText(jsonString);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = JSON.stringify(meshOutput, null, 2);
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("Fallback copy failed:", err);
+      }
+      document.body.removeChild(textArea);
+    }
+  }, [meshOutput]);
+
   const getModalConfig = () => {
     switch (actionModal.type) {
       case "add":
@@ -298,6 +327,23 @@ export function DataMeshSection({
                   ({meshOutput.relations.length} relations)
                 </span>
               </div>
+              <button
+                onClick={handleCopyJSON}
+                className="group relative flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-all hover:bg-indigo-100 hover:shadow-sm dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                title="Copy JSON structure to clipboard"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 transition-transform group-hover:scale-110" />
+                    <span>Copy JSON</span>
+                  </>
+                )}
+              </button>
             </div>
 
             <DataMeshVisualization

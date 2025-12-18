@@ -171,7 +171,7 @@ export function useSession() {
         meshRelations: relations,
         selectedRelationsForVisualization:
           sessionData.selectedRelationsForVisualization ||
-          (relations.length > 0 ? relations.map((_, i) => i) : []),
+          (relations.length > 0 ? relations.map((_: unknown, i: number) => i) : []),
         meshInputPayload: sessionData.meshInputPayload || null,
         aiOutput: sessionData.aiOutput || null,
         aiInputPayload: sessionData.aiInputPayload || null,

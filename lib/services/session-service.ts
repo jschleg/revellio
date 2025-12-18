@@ -70,7 +70,8 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
           ? JSON.stringify(data.meshInputPayload)
           : null,
         aiInputPayload: (() => {
-          const payload = data.aiInputPayload || {};
+          const payload: AIInputPayload & { selectedRelationsForVisualization?: number[] } = 
+            (data.aiInputPayload || {}) as AIInputPayload;
           if (data.selectedRelationsForVisualization !== undefined) {
             payload.selectedRelationsForVisualization = data.selectedRelationsForVisualization;
           }

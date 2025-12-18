@@ -31,7 +31,7 @@ export function DataMeshControls({
       <button
         onClick={onAddRelation}
         className="rounded-lg border border-purple-200/50 bg-white/80 p-1.5 text-purple-700 transition-colors hover:bg-purple-50 dark:border-purple-800/50 dark:bg-zinc-900/80 dark:text-purple-300 dark:hover:bg-purple-900/50"
-        title="Add Relation Manually"
+        title="Add Relation Manually (Coming soon)"
       >
         <Plus className="h-4 w-4" />
       </button>

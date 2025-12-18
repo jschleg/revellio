@@ -123,7 +123,7 @@ export function DataMeshSection({
     switch (actionModal.type) {
       case "add":
         return {
-          title: "Add Relation Manually",
+          title: "Add Relation Manually (Coming soon)",
           placeholder: "Describe the relation you want to add manually...",
           submitLabel: "Add Relation",
           onSubmit: handleAddRelationSubmit,
@@ -137,7 +137,7 @@ export function DataMeshSection({
         };
       case "determine":
         return {
-          title: "Determine Relations Deterministically",
+          title: "Determine Relations Deterministically  (Coming soon)",
           placeholder: "This feature is coming soon. Describe how you'd like relations to be determined...",
           submitLabel: "Determine",
           onSubmit: handleDetermineSubmit,

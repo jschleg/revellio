@@ -1,46 +1,46 @@
-# Data Mesh Komponente
+# Data Mesh Component
 
-## Überblick
+## Overview
 
-Die Data Mesh Komponente ist eine interaktive Visualisierungskomponente, die alle erkannten Relationen zwischen Daten auf drei hierarchischen Ebenen darstellt: **Files**, **Columns** und **Rows**. Sie ist ein zentraler Bestandteil des Revellio Workflows, da sie es dem User ermöglicht, Relationen zu überprüfen und zu bearbeiten, bevor diese für die Visualisierungsgenerierung verwendet werden.
+The Data Mesh component is an interactive visualization component that displays all detected relations between data on three hierarchical levels: **Files**, **Columns**, and **Rows**. It is a central part of the Revellio workflow, as it enables users to review and edit relations before they are used for visualization generation.
 
-## Konzept
+## Concept
 
-### Zielsetzung
+### Objectives
 
-Die Komponente ermöglicht es dem User:
-- Alle erkannten Relationen zwischen Daten zu sehen
-- Die hierarchische Struktur der Daten zu verstehen (File → Columns → Rows)
-- **Relationen zu bearbeiten** (Erklärungen ändern, Verbindungen anpassen)
-- **Ungewollte Relationen zu entfernen**
-- Die Erklärungen (Explanations) zu jeder Relation zu sehen
-- **Bearbeitete Relationen werden an die Visualisierungsanalyse weitergegeben**
+The component enables users to:
+- See all detected relations between data
+- Understand the hierarchical structure of data (File → Columns → Rows)
+- **Edit relations** (change explanations, adjust connections)
+- **Remove unwanted relations**
+- See the explanations for each relation
+- **Edited relations are passed to the visualization analysis**
 
-### Rolle im Workflow
+### Role in Workflow
 
-Die Data Mesh Komponente ist **Schritt 1** im Revellio Workflow:
-1. User lädt Daten hoch
-2. **Data Mesh Analyse** → Relationen werden erkannt
-3. **User bearbeitet Relationen** (diese Komponente)
-4. Visualisierungsanalyse verwendet bearbeitete Relationen
-5. Visualisierungen werden angezeigt
+The Data Mesh component is **Step 1** in the Revellio workflow:
+1. User uploads data
+2. **Data Mesh Analysis** → Relations are detected
+3. **User edits relations** (this component)
+4. Visualization analysis uses edited relations
+5. Visualizations are displayed
 
-### Funktionalität (Implementiert)
+### Functionality (Implemented)
 
-- **Hierarchische Darstellung**: Alle 3 Ebenen (File, Columns, Rows) verschachtelt darstellen
-- **Relationen visualisieren**: Betroffene Elemente mit SVG-Linien verbinden
-- **Interaktive Bearbeitung**: 
-  - Relationen anklicken zum Bearbeiten
-  - Erklärungen ändern
-  - Verbindungspunkte (Element1/Element2) ändern
-  - Relationen entfernen
-- **Hover-Tooltips**: Details zu Relationen beim Hovern
-- **Zoom & Pan**: Für große Datenmengen
-- **Vollbild-Modus**: Für bessere Übersicht
+- **Hierarchical Display**: All 3 levels (File, Columns, Rows) displayed nested
+- **Visualize Relations**: Connect affected elements with SVG lines
+- **Interactive Editing**: 
+  - Click relations to edit
+  - Change explanations
+  - Change connection points (Element1/Element2)
+  - Remove relations
+- **Hover Tooltips**: Details about relations on hover
+- **Zoom & Pan**: For large datasets
+- **Fullscreen Mode**: For better overview
 
-## Datenstruktur
+## Data Structure
 
-Die Komponente verwendet die `DataMeshOutput` Struktur:
+The component uses the `DataMeshOutput` structure:
 
 ```typescript
 interface DataMeshRelation {
@@ -65,110 +65,115 @@ interface DataMeshOutput {
 }
 ```
 
-## Visualisierungskonzept
+## Visualization Concept
 
-### Hierarchische Struktur
+### Hierarchical Structure
 
-Die Daten werden verschachtelt dargestellt:
-
-```
-📁 File 1
-  ├─ 📊 Column A
-  │   ├─ 📄 Row 0
-  │   ├─ 📄 Row 1
-  │   └─ 📄 Row 2
-  ├─ 📊 Column B
-  │   ├─ 📄 Row 0
-  │   └─ 📄 Row 1
-  └─ 📊 Column C
-
-📁 File 2
-  ├─ 📊 Column X
-  └─ 📊 Column Y
-```
-
-### Relationen-Darstellung
-
-Relationen werden als Linien zwischen den betroffenen Elementen dargestellt:
-- **File ↔ File**: Linie zwischen zwei File-Knoten
-- **Column ↔ Column**: Linie zwischen zwei Column-Knoten (innerhalb oder zwischen Files)
-- **Row ↔ Row**: Linie zwischen zwei Row-Knoten
-- **Gemischte Relationen**: Linien zwischen verschiedenen Ebenen
-
-Jede Linie trägt eine **Note** mit der `relationExplanation`.
-
-### Interaktive Elemente
-
-- **Checkboxen**: User kann Relationen als "sinnvoll" markieren
-- **Hover-Effekte**: Beim Hovern über eine Relation werden Details hervorgehoben
-- **Filter**: Möglichkeit, nur markierte Relationen anzuzeigen
-
-## Technische Umsetzung
-
-### Technologie-Stack
-
-- **React**: Für die Komponentenlogik
-- **SVG**: Für die Visualisierung der Relationen (Linien)
-- **Tailwind CSS**: Für das Styling
-- **TypeScript**: Für Type-Safety
-
-### Komponentenstruktur
+Data is displayed nested:
 
 ```
-DataMeshVisualization/
-├── index.tsx                    # Hauptkomponente
-├── hierarchy-tree.tsx           # Hierarchische Struktur-Darstellung
-├── relation-lines.tsx           # SVG-Linien für Relationen
-├── relation-notes.tsx           # Notes/Labels für Explanations
-└── types.ts                     # TypeScript-Typen
+File 1
+  ├─ Column A
+  │   ├─ Row 0
+  │   ├─ Row 1
+  │   └─ Row 2
+  ├─ Column B
+  │   ├─ Row 0
+  │   └─ Row 1
+  └─ Column C
+
+File 2
+  ├─ Column X
+  └─ Column Y
 ```
 
-### Layout-Strategie
+### Relation Display
 
-1. **Hierarchische Struktur**: Links oder oben als verschachtelte Liste/Boxen
-2. **Relationen-Linien**: SVG-Overlay über der Struktur
-3. **Notes**: Tooltips oder Popover bei Hover/Klick auf Relationen
+Relations are displayed as lines between affected elements:
+- **File ↔ File**: Line between two file nodes
+- **Column ↔ Column**: Line between two column nodes (within or across files)
+- **Row ↔ Row**: Line between two row nodes
+- **Mixed Relations**: Lines between different levels
 
-## Implementierungsstatus
+Each line carries a **Note** with the `relationExplanation`.
 
-### ✅ Implementiert
+### Interactive Elements
 
-- [x] Komponente-Grundgerüst
-- [x] Hierarchische Darstellung (File → Columns → Rows)
-- [x] SVG-Linien zwischen Elementen
-- [x] Positionierung der Elemente für Linien
-- [x] Hover-Tooltips mit Relation-Details
-- [x] Interaktive Bearbeitung:
-  - [x] Relationen anklicken zum Bearbeiten
-  - [x] Erklärungen ändern
-  - [x] Verbindungspunkte ändern
-  - [x] Relationen entfernen
-- [x] Zoom & Pan Funktionalität
-- [x] Vollbild-Modus
+- **Relations List**: User can select and view relations
+- **Hover Tooltips**: Details are displayed when hovering over a relation
+- **Edit Modal**: Relations can be edited (explanation, connection points)
+- **Reroll Function**: New relations can be generated (Find More References)
+- **Individual Relation Reroll**: Specific relations can be regenerated
+
+## Technical Implementation
+
+### Technology Stack
+
+- **React**: For component logic
+- **SVG**: For visualizing relations (lines)
+- **Tailwind CSS**: For styling
+- **TypeScript**: For type safety
+
+### Component Structure
+
+```
+components/data-mesh-visualization/
+├── index.ts                     # Export of main component
+├── CanvasControls.tsx            # Zoom, Reset, Fullscreen Controls
+├── DataHierarchy.tsx             # Hierarchical structure display
+├── EditRelationModal.tsx         # Modal for editing relations
+├── FeedbackPanel.tsx             # Feedback panel for reroll functions
+├── RelationLines.tsx             # SVG lines for relations
+├── RelationsList.tsx             # List of relations with selection
+└── RelationTooltip.tsx           # Tooltip with relation details
+
+components/data-mesh-visualization.tsx  # Main component
+```
+
+### Layout Strategy
+
+1. **Hierarchical Structure**: Left or top as nested list/boxes
+2. **Relation Lines**: SVG overlay over the structure
+3. **Notes**: Tooltips or popover on hover/click on relations
+
+## Implementation Status
+
+### Implemented
+
+- [x] Component foundation
+- [x] Hierarchical display (File → Columns → Rows)
+- [x] SVG lines between elements
+- [x] Element positioning for lines
+- [x] Hover tooltips with relation details
+- [x] Interactive editing:
+  - [x] Click relations to edit
+  - [x] Change explanations
+  - [x] Change connection points
+  - [x] Remove relations
+- [x] Zoom & Pan functionality
+- [x] Fullscreen mode
 - [x] Integration in `page.tsx`
-- [x] `onUpdateRelations` Callback für State-Management
-- [x] Relations-Liste mit Auswahl
+- [x] `onUpdateRelations` callback for state management
+- [x] Relations list with selection
 - [x] Canvas Controls (Zoom, Reset, Fullscreen)
+- [x] Reroll function (Find More References - generate new relations)
+- [x] Individual relation reroll (regenerate specific relation)
 
-### 🔄 Geplant
+### Planned
 
-- [ ] Filter nach Relation-Typ
-- [ ] Gruppierung ähnlicher Relationen
-- [ ] Export als Bild
-- [ ] Reroll-Funktion (neue Relationen generieren)
+- [ ] Filter by relation type
+- [ ] Group similar relations
+- [ ] Export as image
 
-## Offene Fragen
+## Open Questions
 
-- Welches Layout ist am besten geeignet? (Horizontal, Vertikal, Radial?)
-- Wie viele Rows sollen dargestellt werden? (Alle oder nur Sample?)
-- Sollen Relationen zwischen Rows dargestellt werden oder nur auf File/Column-Ebene?
-- Wie groß soll die Komponente sein? (Scrollbar, Zoom-Funktion?)
+- Which layout is best suited? (Horizontal, Vertical, Radial?)
+- How many rows should be displayed? (All or just sample?)
+- Should relations between rows be displayed or only at File/Column level?
+- How large should the component be? (Scrollbar, zoom function?)
 
-## Zukünftige Erweiterungen
+## Future Extensions
 
-- **Reroll-Funktion**: Neue Relationen generieren lassen
-- **Export**: Visualisierung als Bild exportieren
-- **Zoom & Pan**: Für große Datenmengen
-- **Filter**: Nach Relation-Typ filtern
-- **Gruppierung**: Ähnliche Relationen gruppieren
-
+- **Export**: Export visualization as image
+- **Filter**: Filter by relation type
+- **Grouping**: Group similar relations

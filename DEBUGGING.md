@@ -1,52 +1,52 @@
-# Debugging Guide für Revellio
+# Debugging Guide for Revellio
 
-## 🛠️ Debugging-Methoden
+## Debugging Methods
 
 ### 1. **Browser DevTools (Client-side)**
 
 #### Console Tab
-- Öffne DevTools: `F12` oder `Cmd+Option+I` (Mac) / `Ctrl+Shift+I` (Windows)
-- Sieh dir die Console-Logs an:
-  - `🔍 [DEBUG]` - Debug-Informationen
-  - `✅ [DEBUG]` - Erfolgreiche Operationen
-  - `❌ [DEBUG]` - Fehler
-  - `⚠️ [DEBUG]` - Warnungen
+- Open DevTools: `F12` or `Cmd+Option+I` (Mac) / `Ctrl+Shift+I` (Windows)
+- View Console logs:
+  - `[DEBUG]` - Debug information
+  - `[DEBUG]` - Successful operations
+  - `[DEBUG]` - Errors
+  - `[DEBUG]` - Warnings
 
 #### Network Tab
-- Überwache API-Calls:
-  - Filter: `XHR` oder `Fetch`
-  - Klicke auf einen Request → sieh dir `Request` und `Response` an
-  - Prüfe Status-Codes (200 = OK, 400/500 = Fehler)
+- Monitor API calls:
+  - Filter: `XHR` or `Fetch`
+  - Click on a request → view `Request` and `Response`
+  - Check status codes (200 = OK, 400/500 = Error)
 
 #### React DevTools
-- Installiere die [React DevTools Extension](https://react.dev/learn/react-developer-tools)
-- Inspect Components und State
+- Install the [React DevTools Extension](https://react.dev/learn/react-developer-tools)
+- Inspect Components and State
 
 ### 2. **Server-side Debugging (API Routes)**
 
 #### Terminal/Console
-- Die API Routes loggen direkt in die Terminal-Konsole
-- Sieh dir die Server-Logs an, während `pnpm dev` läuft
+- API Routes log directly to the terminal console
+- View server logs while `pnpm dev` is running
 
-#### Debug-Logs hinzufügen
+#### Adding Debug Logs
 ```typescript
 // In app/api/ai/analyze/route.ts
 export async function POST(request: NextRequest) {
-  console.log("📥 [API] Received request");
+  console.log("[API] Received request");
   const { metadataArray } = await request.json();
-  console.log("📊 [API] Metadata:", metadataArray);
+  console.log("[API] Metadata:", metadataArray);
   
-  // ... dein Code ...
+  // ... your code ...
   
-  console.log("📤 [API] Sending response:", analysis);
+  console.log("[API] Sending response:", analysis);
   return NextResponse.json(analysis);
 }
 ```
 
-### 3. **Debugging-Tools**
+### 3. **Debugging Tools**
 
 #### VS Code Debugger
-1. Erstelle `.vscode/launch.json`:
+1. Create `.vscode/launch.json`:
 ```json
 {
   "version": "0.2.0",
@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-2. Setze Breakpoints in deinem Code
-3. Starte Debugging (F5)
+2. Set breakpoints in your code
+3. Start debugging (F5)
 
-### 4. **Häufige Debugging-Szenarien**
+### 4. **Common Debugging Scenarios**
 
-#### API-Call schlägt fehl
+#### API Call Fails
 ```typescript
 // In app/page.tsx
 const response = await fetch("/api/ai/analyze", {...});
@@ -82,15 +82,15 @@ console.log("Response headers:", response.headers);
 if (!response.ok) {
   const errorText = await response.text();
   console.error("Error response:", errorText);
-  // Oder:
+  // Or:
   const errorJson = await response.json();
   console.error("Error JSON:", errorJson);
 }
 ```
 
-#### State nicht aktualisiert
+#### State Not Updated
 ```typescript
-// Verwende useEffect zum Debugging
+// Use useEffect for debugging
 useEffect(() => {
   console.log("State updated:", {
     csvData,
@@ -101,21 +101,21 @@ useEffect(() => {
 }, [csvData, analysis, visualizations, relations]);
 ```
 
-#### API-Key Problem
+#### API Key Problem
 ```typescript
 // In app/api/ai/analyze/route.ts
 console.log("API Key exists:", !!process.env.OPENAI_API_KEY);
 console.log("API Key length:", process.env.OPENAI_API_KEY?.length);
 ```
 
-### 5. **Nützliche Console-Commands**
+### 5. **Useful Console Commands**
 
-#### Im Browser Console:
+#### In Browser Console:
 ```javascript
-// State inspizieren (wenn du React DevTools hast)
-$r // Aktuelles React-Element
+// Inspect state (if you have React DevTools)
+$r // Current React element
 
-// Network Requests wiederholen
+// Repeat network requests
 fetch("/api/ai/analyze", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -123,21 +123,21 @@ fetch("/api/ai/analyze", {
 }).then(r => r.json()).then(console.log)
 ```
 
-### 6. **Debug-Modus aktivieren**
+### 6. **Enable Debug Mode**
 
-Füge eine Debug-Variable hinzu:
+Add a debug variable:
 ```typescript
 // In app/page.tsx
 const DEBUG = process.env.NODE_ENV === 'development';
 
 if (DEBUG) {
-  console.log("🐛 Debug mode enabled");
+  console.log("Debug mode enabled");
 }
 ```
 
 ### 7. **Error Boundaries**
 
-Erstelle eine Error Boundary Komponente:
+Create an Error Boundary component:
 ```typescript
 // components/error-boundary.tsx
 "use client";
@@ -180,21 +180,20 @@ export class ErrorBoundary extends Component<Props, State> {
 }
 ```
 
-## 🎯 Quick Debug Checklist
+## Quick Debug Checklist
 
-- [ ] Browser Console geöffnet?
-- [ ] Network Tab zeigt API-Calls?
-- [ ] Server-Logs im Terminal sichtbar?
-- [ ] API-Key in `.env.local` vorhanden?
-- [ ] Response-Status-Codes geprüft?
-- [ ] Error-Messages gelesen?
-- [ ] State mit React DevTools inspiziert?
+- [ ] Browser Console open?
+- [ ] Network Tab shows API calls?
+- [ ] Server logs visible in terminal?
+- [ ] API key present in `.env.local`?
+- [ ] Response status codes checked?
+- [ ] Error messages read?
+- [ ] State inspected with React DevTools?
 
-## 📝 Debugging-Tipps
+## Debugging Tips
 
-1. **Logge immer Input und Output**
-2. **Prüfe Network-Tab für API-Calls**
-3. **Verwende aussagekräftige Log-Messages** (mit Emojis für schnelle Erkennung)
-4. **Isoliere das Problem** - teste einzelne Funktionen
-5. **Prüfe TypeScript-Fehler** - `pnpm run build` zeigt alle Typ-Fehler
-
+1. **Always log input and output**
+2. **Check Network tab for API calls**
+3. **Use meaningful log messages** (with clear prefixes for quick recognition)
+4. **Isolate the problem** - test individual functions
+5. **Check TypeScript errors** - `pnpm run build` shows all type errors

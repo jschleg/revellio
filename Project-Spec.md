@@ -1,581 +1,536 @@
-## Revellio – Internes Grundlagendokument
-
-Version 0.1 – Arbeits- & Entscheidungsbasis
-
-
-- Walenstadt, Samstag, 13. Dezember
-- Zweck und Einordnung des Dokuments Table of Contents
-- Ausgangslage und Problemverständnis
-   - Ursprung der Idee
-   - Kernprobleme im Umgang mit Daten
-   - Grenzen bestehender Lösungen
-- Produktdefinition und Leitgedanken
-   - Was Revellio ist
-   - Zentrale Eigenschaften
-   - Was Revellio nicht ist
-   - Leitprinzipien
-   - Namensgebung und visuelle Leitidee
-- Zielgruppen und Nutzungskontext
-   - Primäre Zielgruppen
-   - Sekundäre Zielgruppen
-   - Erwartungshaltung
-- Rolle der KI und Systemlogik
-   - Aufgaben der KI
-   - Die KI übernimmt nicht:
-   - Transparenzprinzip
-- Dateninput und Analyseverständnis
-   - Art der Daten
-   - Analyseansatz
-   - Umgang mit Datenqualität
-- Output-, Visualisierungs- und Erklärkonzept
-- Walenstadt, Samstag, 13. Dezember
-   - Visualisierungsprinzip
-   - Beispiele für UI-Blöcke
-   - Erklärung der Ergebnisse
-- User-Interaktion und Nutzerführung
-   - Interaktion im MVP
-   - Erweiterte Interaktion (vorgesehen)
-   - Langfristiges Zielbild
-- MVP-Abgrenzung und Fokus
-   - Ziel des MVP
-   - Enthalten im MVP
-   - Nicht enthalten im MVP
-- Persistenz und Weiterverarbeitung
-   - Speicherung
-   - Exportmöglichkeiten
-- Technische Leitplanken
-   - Architekturprinzipien
-   - Skalierbarkeit
-- Projektstatus und Ausblick
-   - Einordnung
-   - O_ene Punkte
-   - Nächste Schritte
-- Glosar
-
-
-Walenstadt, Samstag, 13. Dezember 2025
-
-## Zweck und Einordnung des Dokuments Table of Contents
-
-Dieses Dokument dient als interne Referenz für das Projekt Revellio. Es hält die
-zentralen Annahmen, Definitionen und Leitplanken fest und soll ein gemeinsames,
-konsistentes Verständnis des Produkts ermöglichen. Es bildet die Grundlage für
-Produktentscheidungen, konzeptionelle Weiterentwicklung und spätere technische
-Umsetzung.
-
-Das Dokument ist bewusst nicht für externe Kommunikation gedacht. Es ist kein
-Marketingtext, kein Pitch-Deck, keine technische Spezifikation und kein Businessplan.
-Der Fokus liegt auf Klarheit, Nachvollziehbarkeit und Entscheidungsfähigkeit.
-
-## Ausgangslage und Problemverständnis
-
-### Ursprung der Idee
-
-Die Idee zu Revellio entstand aus der Beobachtung, dass strukturierte Daten zwar weit
-verbreitet sind, deren sinnvolle Auswertung jedoch weiterhin anspruchsvoll bleibt. CSV-
-Dateien sind ein gängiges Austauschformat, werden jedoch oft nur oberflächlich genutzt
-oder gar nicht analysiert.
-
-### Kernprobleme im Umgang mit Daten
+## Revellio – Internal Foundational Document
+
+Version 0.1 – Working & Decision Basis
+
+- Walenstadt, Saturday, December 13
+- Purpose and Classification of the Document Table of Contents
+- Starting Point and Problem Understanding
+   - Origin of the Idea
+   - Core Problems in Data Handling
+   - Limitations of Existing Solutions
+- Product Definition and Guiding Principles
+   - What Revellio Is
+   - Central Characteristics
+   - What Revellio Is Not
+   - Guiding Principles
+   - Naming and Visual Concept
+- Target Groups and Usage Context
+   - Primary Target Groups
+   - Secondary Target Groups
+   - Expectations
+- Role of AI and System Logic
+   - AI Tasks
+   - What AI Does Not Handle:
+   - Transparency Principle
+- Data Input and Analysis Understanding
+   - Type of Data
+   - Analysis Approach
+   - Handling Data Quality
+- Output, Visualization, and Explanation Concept
+- Walenstadt, Saturday, December 13
+   - Visualization Principle
+   - Examples of UI Blocks
+   - Explanation of Results
+- User Interaction and User Guidance
+   - Interaction in MVP
+   - Extended Interaction (Planned)
+   - Long-term Vision
+- MVP Scope and Focus
+   - MVP Goal
+   - Included in MVP
+   - Not Included in MVP
+- Persistence and Further Processing
+   - Storage
+   - Export Options
+- Technical Guidelines
+   - Architecture Principles
+   - Scalability
+- Project Status and Outlook
+   - Classification
+   - Open Points
+   - Next Steps
+- Glossary
 
-- Daten liegen fragmentiert in mehreren Dateien vor
-- Zusammenhänge zwischen Datensätzen sind unklar
-- Nutzer wissen nicht, welche Fragen sie stellen sollen
-- Visualisierungstools setzen Analysewissen voraus
+Walenstadt, Saturday, December 13, 2025
 
-### Grenzen bestehender Lösungen
+## Purpose and Classification of the Document Table of Contents
 
-Bestehende Tools bieten leistungsfähige Funktionen, verlangen jedoch:
+This document serves as an internal reference for the Revellio project. It records the central assumptions, definitions, and guidelines and should enable a shared, consistent understanding of the product. It forms the basis for product decisions, conceptual further development, and later technical implementation.
 
-- manuelle Modellierung
-- Kenntnisse über Datenstrukturen
-- Entscheidungen über Visualisierungen
-- Vorwissen über relevante Zusammenhänge
-
-Revellio setzt an dem Punkt an, an dem dieses Wissen fehlt.
+The document is intentionally not intended for external communication. It is not a marketing text, not a pitch deck, not a technical specification, and not a business plan. The focus is on clarity, traceability, and decision-making capability.
 
+## Starting Point and Problem Understanding
 
-Walenstadt, Samstag, 13. Dezember 2025
-
-## Produktdefinition und Leitgedanken
-
-### Was Revellio ist
+### Origin of the Idea
 
-Revellio ist ein KI-gestütztes Analyse- und Visualisierungstool mit Fokus auf
-Erkenntnisgewinn. Der User liefert Daten, das System übernimmt Analyse,
-Strukturierung und Darstellung.
+The idea for Revellio arose from the observation that while structured data is widespread, meaningful analysis remains challenging. CSV files are a common exchange format but are often only superficially used or not analyzed at all.
 
-### Zentrale Eigenschaften
+### Core Problems in Data Handling
 
-- Automatisches Erkennen von Zusammenhängen
-- Mehrere Homogene Inputs sollen zusammengebracht werden können
-- Heterogene Inputs Interpretieren und Annahmen für Zusammenführung
-    ausarbeiten
-- KI-gesteuerte Struktur- und Visualisierungsentscheidungen
-- erklärende Einordnung aller relevanten Ergebnisse
-- geführte Nutzererfahrung
+- Data is fragmented across multiple files
+- Relationships between datasets are unclear
+- Users don't know what questions to ask
+- Visualization tools require analysis knowledge
 
-### Was Revellio nicht ist
+### Limitations of Existing Solutions
 
-- kein klassisches BI-Tool
-- kein Dashboard-Builder
-- kein Excel-Ersatz
-- kein Tool zur Bestätigung bestehender Annahmen
+Existing tools offer powerful features but require:
 
-### Leitprinzipien
+- Manual modeling
+- Knowledge of data structures
+- Decisions about visualizations
+- Prior knowledge of relevant relationships
 
-- Erkenntnis vor Kontrolle
-- Führung statt Konfiguration
-- Transparenz statt Blackbox
-- Einfachheit im MVP, Erweiterbarkeit im Konzept
+Revellio addresses the point where this knowledge is missing.
 
+Walenstadt, Saturday, December 13, 2025
 
-Walenstadt, Samstag, 13. Dezember 2025
+## Product Definition and Guiding Principles
 
-### Namensgebung und visuelle Leitidee
+### What Revellio Is
 
-Der Name Revellio steht für das O`enlegen, Verstehen und Sichtbarmachen von
-verborgenen Strukturen in Daten. Er ist bewusst nicht rein beschreibend, sondern als
-Kunstwort gewählt, um Assoziationen wie Erkenntnis, Tiefe und Analyse zu vermitteln,
-ohne sich auf konkrete Technologien oder Features festzulegen. Dadurch bleibt der
-Name zeitlos und erweiterbar.
+Revellio is an AI-powered analysis and visualization tool focused on gaining insights. The user provides data, and the system handles analysis, structuring, and presentation.
 
-Für die visuelle Identität, insbesondere das Logo, soll dieser Charakter aufgegri`en
-werden. Zentrale Leitgedanken sind Klarheit, Struktur, O`enlegung und Präzision. Die
-Gestaltung soll reduziert, seriös und technisch wirken, ohne kühl oder abstrakt zu sein.
-Name, Produkt und visuelle Erscheinung sollen ein konsistentes Gesamtbild ergeben,
-das Vertrauen scha`t und den Anspruch von Revellio als erklärender Analysepartner
-widerspiegelt.
+### Central Characteristics
 
-## Zielgruppen und Nutzungskontext
+- Automatic detection of relationships
+- Multiple homogeneous inputs should be able to be combined
+- Interpret heterogeneous inputs and develop assumptions for merging
+- AI-driven structure and visualization decisions
+- Explanatory classification of all relevant results
+- Guided user experience
 
-### Primäre Zielgruppen
+### What Revellio Is Not
 
-Personen mit begrenzter Datenkompetenz, die dennoch aus Daten Erkenntnisse
-gewinnen möchten, zum Beispiel:
+- Not a classic BI tool
+- Not a dashboard builder
+- Not an Excel replacement
+- Not a tool for confirming existing assumptions
 
-- Gründerinnen und Gründer
-- Projektverantwortliche
-- Fachpersonen ohne Analysehintergrund
-- Studierende
+### Guiding Principles
 
-### Sekundäre Zielgruppen
+- Insight before control
+- Guidance instead of configuration
+- Transparency instead of black box
+- Simplicity in MVP, extensibility in concept
 
-Datena`ine Nutzer, die Revellio als Ergänzung oder Beschleuniger nutzen:
+Walenstadt, Saturday, December 13, 2025
 
-- Analysten
-- Entwickler
-- Data Scientists (explorativ)
+### Naming and Visual Concept
 
-### Erwartungshaltung
+The name Revellio stands for revealing, understanding, and making visible hidden structures in data. It is intentionally not purely descriptive but chosen as an artificial word to convey associations like insight, depth, and analysis without committing to specific technologies or features. This keeps the name timeless and extensible.
 
-- schneller Überblick über Daten
-- neue Perspektiven
-- verständliche Erklärungen
-- Möglichkeit zur Weiterverarbeitung
+For the visual identity, especially the logo, this character should be picked up. Central guiding thoughts are clarity, structure, revelation, and precision. The design should appear reduced, serious, and technical without being cold or abstract. Name, product, and visual appearance should form a consistent overall picture that builds trust and reflects Revellio's claim as an explanatory analysis partner.
 
+## Target Groups and Usage Context
 
-Walenstadt, Samstag, 13. Dezember 2025
+### Primary Target Groups
 
-## Rolle der KI und Systemlogik
+People with limited data competence who nevertheless want to gain insights from data, for example:
 
-### Aufgaben der KI
+- Founders
+- Project managers
+- Professionals without analysis background
+- Students
 
-Die KI übernimmt die inhaltliche Analyse und strategische Entscheidungsfindung in zwei Schritten:
+### Secondary Target Groups
 
-**Schritt 1: Data Mesh Analyse**
-- Analyse von Metadaten und Stichproben (20 Datenpunkte pro Datei)
-- Erkennen semantischer Überschneidungen
-- Identifikation möglicher Relationen zwischen:
-  - Dateien
-  - Spalten (innerhalb und zwischen Dateien)
-  - Datenwerten
-  - Konzeptionellen Verbindungen
+Data-savvy users who use Revellio as a supplement or accelerator:
 
-**Schritt 2: Visualisierungsanalyse**
-- Verwendung der vom User bearbeiteten Relationen
-- Bestimmung geeigneter Visualisierungsmethoden
-- Ableitung sinnvoller Datenstrukturen
-- Auswahl geeigneter Visualisierungsformen
-- Erklärung, wie Visualisierungen die definierten Relationen nutzen
+- Analysts
+- Developers
+- Data Scientists (exploratory)
 
-Abgrenzung zur klassischen Logik
+### Expectations
 
-### Die KI übernimmt nicht:
+- Quick overview of data
+- New perspectives
+- Understandable explanations
+- Possibility for further processing
 
-- vollständige Datenverarbeitung
-- Aggregation grosser Datenmengen
-- Rendering von Visualisierungen
-- UI-Logik
+Walenstadt, Saturday, December 13, 2025
 
-Diese Aufgaben werden deterministisch durch klassischen Code umgesetzt.
+## Role of AI and System Logic
 
-### Transparenzprinzip
+### AI Tasks
 
-- jede Analyse wird erklärt
-- Annahmen werden o`engelegt
-- Entscheidungen werden begründet
-- Unsicherheiten werden kommuniziert
+The AI handles content analysis and strategic decision-making in two steps:
 
-## Dateninput und Analyseverständnis
+**Step 1: Data Mesh Analysis**
+- Analysis of metadata and samples (20 data points per file)
+- Recognition of semantic overlaps
+- Identification of possible relations between:
+  - Files
+  - Columns (within and across files)
+  - Data values
+  - Conceptual connections
 
-### Art der Daten
+**Step 2: Visualization Analysis**
+- Use of user-edited relations
+- Determination of suitable visualization methods
+- Derivation of meaningful data structures
+- Selection of suitable visualization forms
+- Explanation of how visualizations use the defined relations
 
-Im MVP verarbeitet Revellio ausschliesslich CSV-Dateien mit strukturierter
-Tabellendatenform.
+Distinction from Classical Logic
 
-Umfang und Einschränkungen
+### What AI Does Not Handle:
 
-- bewusst limitierte Dateigrössen
-- Fokus auf Struktur, nicht auf Masse
-- Premium-Erweiterungen perspektivisch möglich
+- Complete data processing
+- Aggregation of large data volumes
+- Rendering of visualizations
+- UI logic
 
+These tasks are implemented deterministically through classical code.
 
-Walenstadt, Samstag, 13. Dezember 2025
+### Transparency Principle
 
-### Analyseansatz
+- Every analysis is explained
+- Assumptions are disclosed
+- Decisions are justified
+- Uncertainties are communicated
 
-- Extraktion von Spalten, Datentypen und Stichproben
-- keine vollständige Rohdatenanalyse im ersten Schritt
-- Aufbau eines semantischen Gesamtbilds
+## Data Input and Analysis Understanding
 
-### Umgang mit Datenqualität
+### Type of Data
 
-- unvollständige oder inkonsistente Daten werden toleriert
-- Probleme werden transparent kommuniziert
-- schlechte Datenqualität wird nicht kaschiert
+In the MVP, Revellio processes exclusively CSV files with structured tabular data form.
 
-## Output-, Visualisierungs- und Erklärkonzept
+Scope and Limitations
 
-### Visualisierungsprinzip
+- Intentionally limited file sizes
+- Focus on structure, not on volume
+- Premium extensions potentially possible
 
-- Ergebnisse werden in UI-Blöcken dargestellt
-- Auswahl der Blöcke erfolgt durch KI
-- Umsetzung erfolgt statisch über Code
+Walenstadt, Saturday, December 13, 2025
 
-### Beispiele für UI-Blöcke
+### Analysis Approach
 
-- Diagramme
-- Tabellen
-- relationale Ansichten
-- aggregierte Übersichten
+- Extraction of columns, data types, and samples
+- No complete raw data analysis in the first step
+- Building a semantic overall picture
 
-### Erklärung der Ergebnisse
+### Handling Data Quality
 
-Jede Darstellung wird begleitet von:
+- Incomplete or inconsistent data is tolerated
+- Problems are communicated transparently
+- Poor data quality is not concealed
 
-- Beschreibung der dargestellten Daten
-- Erklärung der gewählten Struktur
-- Begründung der Visualisierungsform
+## Output, Visualization, and Explanation Concept
 
-## User-Interaktion und Nutzerführung
+### Visualization Principle
 
-### Interaktion im MVP
+- Results are displayed in UI blocks
+- Selection of blocks is done by AI
+- Implementation is done statically through code
 
-- Geführter Einstieg mit klarem Workflow
-- **Zwei-Schritt-Prozess:**
-  1. Data Mesh Analyse (automatisch)
-  2. Relationen-Bearbeitung (User-Interaktion)
-  3. Visualisierungsanalyse (automatisch, basierend auf bearbeiteten Relationen)
-- **Interaktive Relationen-Bearbeitung:**
-  - Erklärungen anpassen
-  - Verbindungspunkte ändern
-  - Ungewollte Relationen entfernen
-- Fokus auf Verstehen statt Einstellen
-- Optionale Kontext-Prompts für beide KI-Schritte
+### Examples of UI Blocks
 
+- Diagrams
+- Tables
+- Relational views
+- Aggregated overviews
 
-Walenstadt, Samstag, 13. Dezember 2025
+### Explanation of Results
 
-### Erweiterte Interaktion (vorgesehen)
+Each display is accompanied by:
 
-- zusätzliches Prompting
-- gezielte Nachfragen an die KI
-- Kontext- und Detailabfragen
+- Description of the displayed data
+- Explanation of the chosen structure
+- Justification of the visualization form
 
-### Langfristiges Zielbild
+## User Interaction and User Guidance
 
-- intuitiv für Einsteiger
-- leistungsfähig für Fortgeschrittene
-- keine Überforderung durch Komplexität
+### Interaction in MVP
 
-## MVP-Abgrenzung und Fokus
+- Guided entry with clear workflow
+- **Two-Step Process:**
+  1. Data Mesh Analysis (automatic)
+  2. Relation Editing (User Interaction)
+  3. Visualization Analysis (automatic, based on edited relations)
+- **Interactive Relation Editing:**
+  - Adjust explanations
+  - Change connection points
+  - Remove unwanted relations
+- Focus on understanding instead of configuring
+- Optional context prompts for both AI steps
 
-### Ziel des MVP
+Walenstadt, Saturday, December 13, 2025
+
+### Extended Interaction (Planned)
+
+- Additional prompting
+- Targeted questions to the AI
+- Context and detail queries
+
+### Long-term Vision
+
+- Intuitive for beginners
+- Powerful for advanced users
+- No overwhelming complexity
+
+## MVP Scope and Focus
+
+### MVP Goal
 
 - Proof of Concept
-- Validierung des Kernmechanismus
-- Demonstration des Mehrwerts
+- Validation of the core mechanism
+- Demonstration of added value
 
-### Enthalten im MVP
+### Included in MVP
 
-- CSV-Import
-- **Zwei-Schritt KI-Workflow:**
-  1. Data Mesh Analyse (Relationen erkennen)
-  2. Visualisierungsanalyse (basierend auf bearbeiteten Relationen)
-- **Interaktive Relationen-Bearbeitung**
-- Automatische Visualisierung
-- Erklärende Texte
-- Speicherung des Analysezustands
-- Visuelle Exporte
+- CSV Import
+- **Two-Step AI Workflow:**
+  1. Data Mesh Analysis (recognize relations)
+  2. Visualization Analysis (based on edited relations)
+- **Interactive Relation Editing**
+- Automatic Visualization
+- Explanatory texts
+- Storage of analysis state
+- Visual exports
 
-### Nicht enthalten im MVP
+### Not Included in MVP
 
-- Slides und Storytelling
-- umfangreiche Konfiguration
-- komplexe Filterlogiken
-- grosse Datenmengen
+- Slides and storytelling
+- Extensive configuration
+- Complex filter logic
+- Large data volumes
 
+Walenstadt, Saturday, December 13, 2025
 
-Walenstadt, Samstag, 13. Dezember 2025
+## Persistence and Further Processing
 
-## Persistenz und Weiterverarbeitung
+### Storage
 
-### Speicherung
+Revellio stores:
 
-Revellio speichert:
+- Analysis state
+- Recognized structures
+- Visualization decisions
 
-- Analysezustand
-- erkannte Strukturen
-- Visualisierungsentscheidungen
+The goal is reproducibility and continuation of analyses.
 
-Ziel ist Reproduzierbarkeit und Weiterführung von Analysen.
+### Export Options
 
-### Exportmöglichkeiten
+- Export of visualizations (e.g., PNG, PDF)
+- Potentially export of structured data
 
-- Export von Visualisierungen (z. B. PNG, PDF)
-- perspektivisch Export strukturierter Daten
+## Technical Guidelines
 
-## Technische Leitplanken
+### Architecture Principles
 
-### Architekturprinzipien
+- Clear separation between AI and execution
+- Modularity
+- Extensibility
+- Maintainability
 
-- klare Trennung zwischen KI und Ausführung
-- Modularität
-- Erweiterbarkeit
-- Wartbarkeit
+### Scalability
 
-### Skalierbarkeit
+- Not a primary MVP goal
+- However, conceptually prepared
+- Extensions without rethinking the core
 
-- kein primäres MVP-Ziel
-- jedoch konzeptionell vorbereitet
-- Erweiterungen ohne Neudenken des Kerns
+Walenstadt, Saturday, December 13, 2025
 
+## Project Status and Outlook
 
-Walenstadt, Samstag, 13. Dezember 2025
+### Classification
 
-## Projektstatus und Ausblick
+Revellio is currently a side project with startup potential. The focus is on learning, validation, and conceptual sharpening.
 
-### Einordnung
+### Open Points
 
-Revellio ist aktuell ein Side-Project mit Startup-Potenzial. Der Fokus liegt auf Lernen,
-Validierung und konzeptioneller Schärfung.
+- Long-term positioning
+- Business model
+- Market entry
 
-### O_ene Punkte
+### Next Steps
 
-- langfristige Positionierung
-- Geschäftsmodell
-- Markteintritt
+- Further sharpening of the MVP
+- Technical prototypes
+- Tests with real datasets
 
-### Nächste Schritte
+Walenstadt, Saturday, December 13, 2025
 
-- Weitere Schärfung des MVP
-- technische Prototypen
-- Tests mit realen Datensätzen
-
-
-Walenstadt, Samstag, 13. Dezember 2025
-
-## Glosar
+## Glossary
 
 ```
-Begri0 Erklärung
+Term        Explanation
 ```
 ```
-CSV-Datei
+CSV File
 ```
 ```
-Comma-Separated Values. Ein textbasiertes Dateiformat zur
-Speicherung tabellarischer Daten, bei dem jede Zeile einen
-Datensatz und jede Spalte ein Datenfeld darstellt.
+Comma-Separated Values. A text-based file format for
+storing tabular data, where each line represents a
+record and each column represents a data field.
 ```
 ```
-Strukturierte Daten
+Structured Data
 ```
 ```
-Daten, die in einem festen Schema vorliegen, typischerweise in
-Tabellenform mit klar definierten Spalten und Datentypen.
+Data that exists in a fixed schema, typically in
+tabular form with clearly defined columns and data types.
 ```
 ```
-Homogener Input
+Homogeneous Input
 ```
 ```
-Mehrere Datensätze mit vergleichbarem strukturellem Aufbau
-und gemeinsamem inhaltlichem Kontext, die sich sinnvoll
-gemeinsam analysieren oder zusammenführen lassen.
+Multiple datasets with comparable structural setup
+and shared content context that can be meaningfully
+analyzed or merged together.
 ```
 ```
-Heterogener Input
+Heterogeneous Input
 ```
 ```
-Datensätze mit unterschiedlichem Aufbau oder
-unterschiedlichem inhaltlichen Kontext, deren
-Zusammenführung zusätzliche Interpretation oder Annahmen
-erfordert.
+Datasets with different structure or
+different content context, whose
+merging requires additional interpretation or assumptions.
 ```
 ```
-Metadaten
+Metadata
 ```
 ```
-Daten über Daten, beispielsweise Spaltennamen, Datentypen
-oder Formatierungen, die Informationen über die Struktur der
-eigentlichen Daten liefern.
+Data about data, such as column names, data types
+or formatting that provide information about the structure
+of the actual data.
 ```
 ```
-Stichprobe
+Sample
 ```
 ```
-Eine begrenzte Auswahl von Datensätzen aus einer grösseren
-Datenmenge, die zur Einschätzung der Datenstruktur und Inhalte
-verwendet wird.
+A limited selection of records from a larger
+dataset used to assess data structure and content.
 ```
 ```
-Semantische
-Überschneidung
+Semantic Overlap
 ```
 ```
-Inhaltliche Gemeinsamkeit zwischen Datenfeldern oder
-Datensätzen, auch wenn diese unterschiedlich benannt oder
-strukturiert sind.
+Content commonality between data fields or
+datasets, even if they are differently named or
+structured.
 ```
 ```
 Relation
 ```
 ```
-Eine logische oder inhaltliche Beziehung zwischen Datensätzen
-oder Spalten, zum Beispiel über gemeinsame Schlüssel,
-Zeitbezüge oder Kategorien.
+A logical or content relationship between datasets
+or columns, for example through common keys,
+time references, or categories.
 ```
 ```
 Aggregation
 ```
 ```
-Zusammenfassung von Daten durch Rechenoperationen wie
-Zählen, Summieren oder Mittelwertbildung, um übergeordnete
-Muster sichtbar zu machen.
+Summary of data through computational operations such as
+counting, summing, or averaging to make higher-level
+patterns visible.
 ```
 
-Walenstadt, Samstag, 13. Dezember 2025
+Walenstadt, Saturday, December 13, 2025
 
 ```
-Begri0 Erklärung
+Term        Explanation
 ```
 ```
-KI (Künstliche
-Intelligenz)
+AI (Artificial Intelligence)
 ```
 ```
-Analytische und strategische Systemkomponente in Revellio, die
-Daten interpretiert, Zusammenhänge erkennt und Struktur-
-sowie Darstellungsentscheidungen vorbereitet.
+Analytical and strategic system component in Revellio that
+interprets data, recognizes relationships, and prepares structure
+and presentation decisions.
 ```
 ```
-KI-Analyse
+AI Analysis
 ```
 ```
-Prozess, bei dem die KI Metadaten und Stichproben auswertet,
-um Muster, Relationen und sinnvolle Visualisierungen
-abzuleiten.
+Process in which the AI evaluates metadata and samples
+to derive patterns, relations, and meaningful visualizations.
 ```
 ```
-Deterministische
-Logik
+Deterministic Logic
 ```
 ```
-Klassische Programmierlogik mit eindeutigem Verhalten, bei der
-identische Eingaben stets zu identischen Ausgaben führen.
+Classical programming logic with unambiguous behavior, where
+identical inputs always lead to identical outputs.
 ```
 ```
-Datenpipeline Abfolge automatisierter Verarbeitungsschritte, durch die Daten
-transformiert, aggregiert oder weitergeleitet werden.
+Data Pipeline Sequence of automated processing steps through which data
+is transformed, aggregated, or forwarded.
 ```
 ```
-Rendering Technische Umsetzung und Darstellung von Daten in visueller
-Form, etwa als Diagramm oder Tabelle.
+Rendering Technical implementation and presentation of data in visual
+form, such as a diagram or table.
 ```
 ```
-UI (User Interface) Die visuelle Benutzeroberfläche, über die der User mit dem
-System interagiert.
+UI (User Interface) The visual user interface through which the user interacts with the
+system.
 ```
 ```
-UI-Block
+UI Block
 ```
 ```
-In sich geschlossener visueller Baustein der Benutzeroberfläche,
-zum Beispiel ein Diagramm, eine Tabelle oder eine relationale
-Ansicht.
+Self-contained visual building block of the user interface,
+for example a diagram, a table, or a relational view.
 ```
 ```
-Visualisierung Grafische Darstellung von Daten zur besseren Erkennung von
-Mustern, Trends und Zusammenhängen.
+Visualization Graphical representation of data for better recognition of
+patterns, trends, and relationships.
 ```
 ```
-Analysezustand
+Analysis State
 ```
 ```
-Der gespeicherte Gesamtzustand einer Analyse, inklusive
-Datenreferenzen, erkannter Strukturen und gewählter
-Visualisierungen.
+The stored overall state of an analysis, including
+data references, recognized structures, and chosen
+visualizations.
 ```
 ```
-Persistenz
+Persistence
 ```
 ```
-Fähigkeit eines Systems, Daten oder Zustände dauerhaft zu
-speichern und später wiederherzustellen.
+Ability of a system to permanently store data or states
+and restore them later.
 ```
 ```
-Export Ausgeben von Analyseergebnissen oder Visualisierungen in ein externes Format, zum Beispiel als Bild oder PDF.
+Export Output of analysis results or visualizations to an external format, for example as an image or PDF.
 ```
 ```
 Proof of Concept
 ```
 ```
-Frühe Produktversion, die dazu dient, die grundsätzliche
-Funktionsfähigkeit und den Mehrwert einer Idee zu
-demonstrieren.
+Early product version that serves to demonstrate the basic
+functionality and added value of an idea.
 ```
 
-Walenstadt, Samstag, 13. Dezember 2025
+Walenstadt, Saturday, December 13, 2025
 
 ```
-Begri0 Erklärung
+Term        Explanation
 ```
 ```
-MVP (Minimum
-Viable Product)
+MVP (Minimum Viable Product)
 ```
 ```
-Kleinste funktionsfähige Produktversion, die den Kernnutzen
-abbildet und zur Validierung der Grundidee dient.
+Smallest functional product version that represents the core value
+and serves to validate the basic idea.
 ```
 ```
-Workflow-
-Optimierung
+Workflow Optimization
 ```
 ```
-Verbesserung von Arbeitsabläufen durch Reduktion manueller
-Schritte, Zeitaufwand oder Komplexität.
+Improvement of workflows through reduction of manual
+steps, time expenditure, or complexity.
 ```
 ```
-Blackbox System, dessen interne Entscheidungsprozesse für den User
-nicht nachvollziehbar sind.
+Black Box System whose internal decision processes are not
+traceable for the user.
 ```
 ```
-Transparenzprinzip
+Transparency Principle
 ```
 ```
-Grundsatz, nach dem Annahmen, Entscheidungen und
-Methodiken o`en kommuniziert und erklärbar gemacht werden.
+Principle according to which assumptions, decisions, and
+methodologies are openly communicated and made explainable.
 ```
-

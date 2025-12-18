@@ -83,16 +83,20 @@ Revellio follows a two-step AI-driven workflow that ensures users have control o
   - Explanation text
   - Connection points (element1/element2)
   - Can remove unwanted relations
+- Can use "Find More References" to generate additional relations
+- Can reroll individual relations with feedback
 
 **System Processing:**
 - Relations are stored in component state
 - Changes are tracked via `onUpdateRelations` callback
 - Updated relations are ready for next step
+- Reroll functions allow generating new relations based on feedback
 
 **Key Feature:**
 - User has full control over which relations are used
 - Relations can be refined before visualization generation
 - This ensures visualizations match user expectations
+- Reroll functionality allows iterative improvement of relations
 
 ### Step 4: Visualization Analysis
 
@@ -123,7 +127,6 @@ Revellio follows a two-step AI-driven workflow that ensures users have control o
 - `UnifiedAIOutput` containing:
   - Array of `VisualizationInstruction` objects
   - Relations (additional ones found)
-  - Reasoning for visualization choices
   - Reasoning for visualization choices
 
 ### Step 5: Visualization Display

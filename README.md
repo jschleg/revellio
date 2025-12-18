@@ -1,6 +1,6 @@
 # Revellio
 
-Revellio ist ein KI-gestütztes Analyse- und Visualisierungstool mit Fokus auf Erkenntnisgewinn. Der User liefert Daten, das System übernimmt Analyse, Strukturierung und Darstellung.
+Revellio is an AI-powered analysis and visualization tool focused on gaining insights. The user provides data, and the system handles analysis, structuring, and presentation.
 
 A modern Next.js application built with TypeScript, Tailwind CSS, and shadcn/ui.
 
@@ -9,9 +9,9 @@ A modern Next.js application built with TypeScript, Tailwind CSS, and shadcn/ui.
 Revellio is an AI-powered data analysis and visualization tool that helps users discover insights from CSV data without requiring data science expertise. The system uses a two-step AI workflow:
 
 1. **Data Mesh Analysis**: AI detects relationships between data elements (using 20 data points per file)
-2. **User Review & Edit**: Users can review, edit, and refine detected relations
+2. **User Review & Edit**: Users can review, edit, refine, and reroll detected relations
 3. **Visualization Analysis**: AI creates visualization strategy based on edited relations
-4. **Visualizations**: Dynamic visualizations are rendered based on AI recommendations
+4. **Visualizations**: Dynamic visualizations are rendered based on AI recommendations (bar charts, line charts, pie charts, scatter plots, and data tables)
 
 ## Prerequisites
 
@@ -198,6 +198,7 @@ Revellio follows a two-step AI-driven workflow that ensures users have control o
    - User can edit relation explanations
    - User can remove unwanted relations
    - User can modify connection points
+   - User can reroll relations (find more or regenerate specific ones)
    ↓
 4. Visualization Analysis (AI Step 2)
    - Edited relations passed to second AI run
@@ -205,9 +206,10 @@ Revellio follows a two-step AI-driven workflow that ensures users have control o
    - AI creates visualization strategy based on relations
    ↓
 5. Visualizations Displayed
-   - Dynamic visualizations rendered
+   - Dynamic visualizations rendered (bar, line, pie, scatter, table)
    - Based on AI recommendations
    - Leveraging the defined relations
+   - User can regenerate visualizations with feedback
 ```
 
 See [Workflow Documentation](./docs/workflow.md) for detailed information.
@@ -225,6 +227,7 @@ See [Workflow Documentation](./docs/workflow.md) for detailed information.
 1. **Data Processing**: `lib/data/csv-parser.ts` - Parses CSV files
 2. **AI Integration**: `lib/ai/ai-service.ts` - OpenAI API client
 3. **Visualization**: `components/visualizer.tsx` - Renders AI-generated visualizations
+4. **Data Mesh**: `components/data-mesh-visualization.tsx` - Interactive relation visualization and editing
 
 **Key Flows:**
 1. **File Upload → Parse → Extract Metadata**:
@@ -232,9 +235,11 @@ See [Workflow Documentation](./docs/workflow.md) for detailed information.
 
 2. **Data Mesh Analysis**:
    - `app/hooks/use-data-mesh.ts` → `app/api/ai/data-mesh/route.ts` → `lib/ai/ai-service.ts`
+   - Relations can be edited and rerolled via `components/data-mesh-visualization.tsx`
 
 3. **Visualization Generation**:
    - `app/hooks/use-visualization.ts` → `app/api/ai/analyze/route.ts` → `lib/ai/ai-service.ts` → `components/visualizer.tsx`
+   - Supports 5 visualization types: bar charts, line charts, pie charts, scatter plots, and data tables
 
 ### Code Organization Principles
 

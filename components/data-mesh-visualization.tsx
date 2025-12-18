@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { CanvasControls } from "./data-mesh-visualization/CanvasControls";
+import { DataMeshControls } from "./data-mesh-visualization/DataMeshControls";
 import { RelationLines } from "./data-mesh-visualization/RelationLines";
 import { RelationTooltip } from "./data-mesh-visualization/RelationTooltip";
 import { DataHierarchy } from "./data-mesh-visualization/DataHierarchy";
@@ -18,6 +19,10 @@ interface DataMeshVisualizationProps {
   onRelationClick?: (index: number) => void;
   selectedRelations?: Set<number>;
   onToggleSelection?: (index: number) => void;
+  onAddRelation?: () => void;
+  onRegenerateRelations?: () => void;
+  onDetermineRelations?: () => void;
+  onShowRelations?: () => void;
 }
 
 interface ElementPosition {
@@ -33,6 +38,10 @@ export function DataMeshVisualization({
   csvData,
   onUpdateRelations,
   onRerollRelation,
+  onAddRelation,
+  onRegenerateRelations,
+  onDetermineRelations,
+  onShowRelations,
 }: DataMeshVisualizationProps) {
   // State
   const [selectedRelations, setSelectedRelations] = useState<Set<number>>(new Set());
@@ -477,17 +486,34 @@ export function DataMeshVisualization({
           onMouseLeave={handleMouseUp}
           style={{ zIndex: editingConnectionPoint ? 101 : undefined }}
         >
-          {/* Canvas Controls - Inside canvas, always visible */}
-          <div className="absolute top-2 right-2 z-[100]">
-            <CanvasControls
-              zoomLevel={zoomLevel}
-              isFullscreen={isFullscreen}
-              onZoomIn={handleZoomIn}
-              onZoomOut={handleZoomOut}
-              onReset={handleReset}
-              onToggleFullscreen={toggleFullscreen}
-            />
+          {/* Canvas Controls - Top middle, sticks to viewport */}
+          <div className="pointer-events-none absolute left-1/2 top-2 z-[100] -translate-x-1/2">
+            <div className="pointer-events-auto">
+              <CanvasControls
+                zoomLevel={zoomLevel}
+                isFullscreen={isFullscreen}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onReset={handleReset}
+                onToggleFullscreen={toggleFullscreen}
+              />
+            </div>
           </div>
+
+          {/* Data Mesh Controls - Left center, sticks to viewport */}
+          {(onAddRelation || onRegenerateRelations || onDetermineRelations || onShowRelations) && (
+            <div className="pointer-events-none absolute left-2 top-1/2 z-[100] -translate-y-1/2">
+              <div className="pointer-events-auto">
+                <DataMeshControls
+                  onAddRelation={onAddRelation || (() => {})}
+                  onRegenerateRelations={onRegenerateRelations || (() => {})}
+                  onDetermineRelations={onDetermineRelations || (() => {})}
+                  onShowRelations={onShowRelations || (() => {})}
+                  hasRelations={localRelations.length > 0}
+                />
+              </div>
+            </div>
+          )}
           {/* Tooltip */}
           {hoveredRelation !== null && (
             <RelationTooltip

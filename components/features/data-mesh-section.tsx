@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Loader2, Zap } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { DataMeshVisualization } from "@/components/data-mesh-visualization";
-import { DataMeshControls } from "@/components/data-mesh-visualization/DataMeshControls";
 import { RelationActionModal } from "@/components/data-mesh-visualization/RelationActionModal";
 import { RelationsListModal } from "@/components/data-mesh-visualization/RelationsListModal";
 
@@ -217,15 +216,6 @@ export function DataMeshSection({
               </div>
             </div>
 
-            {/* Data Mesh Controls */}
-            <DataMeshControls
-              onAddRelation={handleAddRelation}
-              onRegenerateRelations={handleRegenerateRelations}
-              onDetermineRelations={handleDetermineRelations}
-              onShowRelations={handleShowRelations}
-              hasRelations={meshOutput.relations.length > 0}
-            />
-
             <DataMeshVisualization
               dataMeshOutput={meshOutput}
               csvData={csvData}
@@ -235,6 +225,10 @@ export function DataMeshSection({
               onRelationClick={handleRelationClick}
               selectedRelations={selectedRelations}
               onToggleSelection={handleToggleSelection}
+              onAddRelation={handleAddRelation}
+              onRegenerateRelations={handleRegenerateRelations}
+              onDetermineRelations={handleDetermineRelations}
+              onShowRelations={handleShowRelations}
             />
           </div>
         </div>

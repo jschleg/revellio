@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef } from "react";
-import { Loader2, Zap, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Zap } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { DataMeshVisualization } from "@/components/data-mesh-visualization";
-import { FeedbackPanel } from "@/components/data-mesh-visualization/FeedbackPanel";
+import { DataMeshControls } from "@/components/data-mesh-visualization/DataMeshControls";
+import { RelationActionModal } from "@/components/data-mesh-visualization/RelationActionModal";
+import { RelationsListModal } from "@/components/data-mesh-visualization/RelationsListModal";
 
 interface DataMeshSectionProps {
   csvData: CSVData[];
@@ -31,21 +33,122 @@ export function DataMeshSection({
   onReroll,
   onRerollRelation,
 }: DataMeshSectionProps) {
-  const rerollSectionRef = useRef<HTMLDivElement>(null);
+  const [actionModal, setActionModal] = useState<{
+    type: "add" | "regenerate" | "determine" | null;
+    isOpen: boolean;
+  }>({ type: null, isOpen: false });
+  const [showRelationsModal, setShowRelationsModal] = useState(false);
+  const [selectedRelations, setSelectedRelations] = useState<Set<number>>(new Set());
+  const [hoveredRelation, setHoveredRelation] = useState<number | null>(null);
+  const [editingRelation, setEditingRelation] = useState<number | null>(null);
 
   if (csvData.length === 0) {
     return null;
   }
 
-  const scrollToReroll = () => {
-    rerollSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const handleAddRelation = () => {
+    setActionModal({ type: "add", isOpen: true });
   };
 
-  const handleRerollSubmit = async (feedback: string) => {
+  const handleRegenerateRelations = () => {
+    setActionModal({ type: "regenerate", isOpen: true });
+  };
+
+  const handleDetermineRelations = () => {
+    setActionModal({ type: "determine", isOpen: true });
+  };
+
+  const handleShowRelations = () => {
+    setShowRelationsModal(true);
+  };
+
+  const handleRelationClick = (index: number) => {
+    setEditingRelation(index);
+  };
+
+  const handleToggleSelection = (index: number) => {
+    setSelectedRelations((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
+  const handleRemoveRelation = (index: number) => {
+    if (!meshOutput) return;
+    const updatedRelations = meshOutput.relations.filter((_, i) => i !== index);
+    onUpdateRelations(updatedRelations);
+    setSelectedRelations((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      const adjusted = new Set<number>();
+      next.forEach((idx) => {
+        if (idx > index) {
+          adjusted.add(idx - 1);
+        } else {
+          adjusted.add(idx);
+        }
+      });
+      return adjusted;
+    });
+  };
+
+  const handleModalClose = () => {
+    setActionModal({ type: null, isOpen: false });
+  };
+
+  const handleAddRelationSubmit = async (feedback: string) => {
+    // TODO: Implement manual relation addition
+    console.log("Add relation manually with feedback:", feedback);
+    handleModalClose();
+  };
+
+  const handleRegenerateSubmit = async (feedback: string) => {
     if (onReroll && meshOutput) {
       await onReroll(meshOutput.relations, feedback);
+      handleModalClose();
     }
   };
+
+  const handleDetermineSubmit = async (feedback: string) => {
+    // TODO: Implement deterministic relation determination
+    console.log("Determine relations deterministically with feedback:", feedback);
+    handleModalClose();
+  };
+
+  const getModalConfig = () => {
+    switch (actionModal.type) {
+      case "add":
+        return {
+          title: "Add Relation Manually",
+          placeholder: "Describe the relation you want to add manually...",
+          submitLabel: "Add Relation",
+          onSubmit: handleAddRelationSubmit,
+        };
+      case "regenerate":
+        return {
+          title: "Regenerate Relations with AI",
+          placeholder: "Describe what additional relations you'd like to see. Current relations will be kept, and new ones will be generated based on your input...",
+          submitLabel: "Regenerate",
+          onSubmit: handleRegenerateSubmit,
+        };
+      case "determine":
+        return {
+          title: "Determine Relations Deterministically",
+          placeholder: "This feature is coming soon. Describe how you'd like relations to be determined...",
+          submitLabel: "Determine",
+          onSubmit: handleDetermineSubmit,
+        };
+      default:
+        return null;
+    }
+  };
+
+  const modalConfig = getModalConfig();
 
   return (
     <div className="mb-8 space-y-4">
@@ -112,36 +215,28 @@ export function DataMeshSection({
                   ({meshOutput.relations.length} relations)
                 </span>
               </div>
-              {onReroll && (
-                <button
-                  onClick={scrollToReroll}
-                  className="flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 dark:border-indigo-400 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Find More References
-                </button>
-              )}
             </div>
+
+            {/* Data Mesh Controls */}
+            <DataMeshControls
+              onAddRelation={handleAddRelation}
+              onRegenerateRelations={handleRegenerateRelations}
+              onDetermineRelations={handleDetermineRelations}
+              onShowRelations={handleShowRelations}
+              hasRelations={meshOutput.relations.length > 0}
+            />
+
             <DataMeshVisualization
               dataMeshOutput={meshOutput}
               csvData={csvData}
               onUpdateRelations={onUpdateRelations}
               onRerollRelation={onRerollRelation}
+              onRelationHover={setHoveredRelation}
+              onRelationClick={handleRelationClick}
+              selectedRelations={selectedRelations}
+              onToggleSelection={handleToggleSelection}
             />
           </div>
-
-          {/* Find More References Section - Always Visible */}
-          {onReroll && (
-            <div ref={rerollSectionRef} className="scroll-mt-4">
-              <FeedbackPanel
-                onSubmit={handleRerollSubmit}
-                onCancel={() => {}}
-                showCancel={false}
-                placeholder="Describe what additional relations you'd like to see. Current relations will be kept, and new ones will be generated based on your input..."
-                title="Find More References with AI"
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -157,6 +252,35 @@ export function DataMeshSection({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Action Modal */}
+      {modalConfig && (
+        <RelationActionModal
+          isOpen={actionModal.isOpen}
+          onClose={handleModalClose}
+          onSubmit={modalConfig.onSubmit}
+          title={modalConfig.title}
+          placeholder={modalConfig.placeholder}
+          submitLabel={modalConfig.submitLabel}
+          isLoading={isProcessing}
+        />
+      )}
+
+      {/* Relations List Modal */}
+      {meshOutput && (
+        <RelationsListModal
+          isOpen={showRelationsModal}
+          onClose={() => setShowRelationsModal(false)}
+          relations={meshOutput.relations}
+          selectedRelations={selectedRelations}
+          hoveredRelation={hoveredRelation}
+          onRelationHover={setHoveredRelation}
+          onRelationClick={handleRelationClick}
+          onToggleSelection={handleToggleSelection}
+          onRemove={handleRemoveRelation}
+          onRerollRelation={onRerollRelation}
+        />
       )}
     </div>
   );

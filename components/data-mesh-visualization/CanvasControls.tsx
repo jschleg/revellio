@@ -20,7 +20,7 @@ export function CanvasControls({
   onToggleFullscreen,
 }: CanvasControlsProps) {
   return (
-    <div className="mb-2 flex items-center justify-end gap-2">
+    <div className="flex items-center justify-end gap-2">
       <div className="flex items-center gap-1 rounded-lg border border-purple-200/50 bg-white/80 px-2 py-1 text-xs dark:border-purple-800/50 dark:bg-zinc-900/80">
         <span className="text-zinc-600 dark:text-zinc-400">Zoom:</span>
         <span className="font-mono font-medium text-purple-700 dark:text-purple-300">

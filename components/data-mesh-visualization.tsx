@@ -14,6 +14,10 @@ interface DataMeshVisualizationProps {
   csvData: CSVData[];
   onUpdateRelations?: (relations: DataMeshRelation[]) => void;
   onRerollRelation?: (index: number, feedback: string) => Promise<void>;
+  onRelationHover?: (index: number | null) => void;
+  onRelationClick?: (index: number) => void;
+  selectedRelations?: Set<number>;
+  onToggleSelection?: (index: number) => void;
 }
 
 interface ElementPosition {
@@ -42,7 +46,7 @@ export function DataMeshVisualization({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(0.5);
   const [positionsUpdateKey, setPositionsUpdateKey] = useState(0);
 
   // Refs
@@ -217,15 +221,15 @@ export function DataMeshVisualization({
   }, [isFullscreen]);
 
   const handleZoomIn = useCallback(() => {
-    setZoomLevel((prev) => Math.min(prev + 0.25, 3));
+    setZoomLevel((prev) => Math.min(prev + 0.25, 10));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
+    setZoomLevel((prev) => Math.max(prev - 0.25, 0.1));
   }, []);
 
   const handleReset = useCallback(() => {
-    setZoomLevel(1);
+    setZoomLevel(0.5);
     if (canvasRef.current) {
       canvasRef.current.scrollLeft = 0;
       canvasRef.current.scrollTop = 0;
@@ -248,12 +252,22 @@ export function DataMeshVisualization({
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    // Update tooltip position when mouse moves over canvas
+    if (hoveredRelation !== null && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+    
+    // Handle dragging
     if (!isDragging || !canvasRef.current) return;
     const newX = dragStart.x - e.clientX;
     const newY = dragStart.y - e.clientY;
     canvasRef.current.scrollLeft = newX;
     canvasRef.current.scrollTop = newY;
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, hoveredRelation]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -404,7 +418,7 @@ export function DataMeshVisualization({
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        setZoomLevel((prev) => Math.max(0.5, Math.min(3, prev + delta)));
+        setZoomLevel((prev) => Math.max(0.1, Math.min(10, prev + delta)));
       }
     };
 
@@ -451,15 +465,6 @@ export function DataMeshVisualization({
 
       {/* Visualization Container */}
       <div className="relative w-full">
-        <CanvasControls
-          zoomLevel={zoomLevel}
-          isFullscreen={isFullscreen}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onReset={handleReset}
-          onToggleFullscreen={toggleFullscreen}
-        />
-
         {/* Draggable Scrollable Canvas */}
         <div
           ref={canvasRef}
@@ -472,6 +477,17 @@ export function DataMeshVisualization({
           onMouseLeave={handleMouseUp}
           style={{ zIndex: editingConnectionPoint ? 101 : undefined }}
         >
+          {/* Canvas Controls - Inside canvas, always visible */}
+          <div className="absolute top-2 right-2 z-[100]">
+            <CanvasControls
+              zoomLevel={zoomLevel}
+              isFullscreen={isFullscreen}
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              onReset={handleReset}
+              onToggleFullscreen={toggleFullscreen}
+            />
+          </div>
           {/* Tooltip */}
           {hoveredRelation !== null && (
             <RelationTooltip
@@ -523,56 +539,6 @@ export function DataMeshVisualization({
           </div>
         </div>
       </div>
-
-      {/* Edit Relation Modal */}
-      {editingRelation !== null && currentRelation && (
-        <EditRelationModal
-          relation={currentRelation}
-          editedTitle={editedTitle}
-          editedExplanation={editedExplanation}
-          editingConnectionPoint={editingConnectionPoint}
-          strokeColor={relationStrokeColor}
-          onClose={closeEditWindow}
-          onSave={saveEditedRelation}
-          onRemove={removeRelation}
-          onTitleChange={setEditedTitle}
-          onExplanationChange={setEditedExplanation}
-          onConnectionPointEdit={setEditingConnectionPoint}
-          onCancelSelection={() => setEditingConnectionPoint(null)}
-        />
-      )}
-
-      {/* Relations List */}
-      <RelationsList
-        relations={localRelations}
-        selectedRelations={selectedRelations}
-        hoveredRelation={hoveredRelation}
-        onRelationHover={setHoveredRelation}
-        onRelationClick={openEditWindow}
-        onToggleSelection={toggleRelation}
-        onRemove={(index) => {
-          const updatedRelations = localRelations.filter((_, i) => i !== index);
-          setLocalRelations(updatedRelations);
-          if (onUpdateRelations) {
-            onUpdateRelations(updatedRelations);
-          }
-          setSelectedRelations((prev) => {
-            const next = new Set(prev);
-            next.delete(index);
-            // Adjust indices for relations after the removed one
-            const adjusted = new Set<number>();
-            next.forEach((idx) => {
-              if (idx > index) {
-                adjusted.add(idx - 1);
-              } else {
-                adjusted.add(idx);
-              }
-            });
-            return adjusted;
-          });
-        }}
-        onRerollRelation={onRerollRelation}
-      />
     </div>
   );
 }

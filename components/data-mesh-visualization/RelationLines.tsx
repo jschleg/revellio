@@ -25,21 +25,50 @@ export function RelationLines({
 }: RelationLinesProps) {
   const handleMouseEnter = (index: number, e: React.MouseEvent) => {
     onRelationHover(index);
-    // Use viewport coordinates for fixed positioning
-    onTooltipPositionUpdate({
-      x: e.clientX,
-      y: e.clientY,
-    });
+    updateTooltipPosition(e);
   };
 
   const handleMouseMove = (index: number, e: React.MouseEvent) => {
     if (hoveredRelation === index) {
-      // Use viewport coordinates for fixed positioning
-      onTooltipPositionUpdate({
-        x: e.clientX,
-        y: e.clientY,
-      });
+      updateTooltipPosition(e);
     }
+  };
+
+  const updateTooltipPosition = (e: React.MouseEvent) => {
+    // e.clientX and e.clientY are viewport coordinates
+    // We need to find the canvas container and calculate relative position
+    const svg = e.currentTarget.closest('svg');
+    if (!svg) return;
+    
+    // Find the canvas container by traversing up the DOM
+    // Structure: canvas (overflow-auto) -> contentRef (scaled) -> containerRef -> SVG
+    let parent = svg.parentElement;
+    let canvasContainer: HTMLElement | null = null;
+    
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      if (style.overflow === 'auto' || style.overflowY === 'auto' || style.overflowX === 'auto') {
+        canvasContainer = parent;
+        break;
+      }
+      parent = parent.parentElement;
+    }
+    
+    if (!canvasContainer) {
+      // Fallback: use viewport coordinates directly
+      onTooltipPositionUpdate({ x: e.clientX, y: e.clientY });
+      return;
+    }
+    
+    const canvasRect = canvasContainer.getBoundingClientRect();
+    
+    // Calculate position relative to canvas container
+    // This accounts for scroll position automatically since getBoundingClientRect
+    // returns the position relative to the viewport
+    const x = e.clientX - canvasRect.left;
+    const y = e.clientY - canvasRect.top;
+    
+    onTooltipPositionUpdate({ x, y });
   };
 
   return (

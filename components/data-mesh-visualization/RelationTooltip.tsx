@@ -11,7 +11,7 @@ interface RelationTooltipProps {
 export function RelationTooltip({ relation, position, color }: RelationTooltipProps) {
   return (
     <div
-      className="pointer-events-none fixed z-50"
+      className="pointer-events-none absolute z-50"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,

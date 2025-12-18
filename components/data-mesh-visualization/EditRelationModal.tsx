@@ -36,7 +36,7 @@ export function EditRelationModal({
     <>
       {/* Selection Mode Indicator */}
       {editingConnectionPoint !== null && (
-        <div className="fixed top-4 left-1/2 z-[102] -translate-x-1/2 rounded-lg border-2 border-purple-500 bg-purple-600 px-6 py-3 text-sm font-medium text-white shadow-2xl dark:bg-purple-500">
+        <div className="fixed top-4 left-1/2 z-[202] -translate-x-1/2 rounded-lg border-2 border-purple-500 bg-purple-600 px-6 py-3 text-sm font-medium text-white shadow-2xl dark:bg-purple-500">
           <div className="flex items-center gap-3">
             <div className="h-2 w-2 animate-pulse rounded-full bg-white"></div>
             <span>
@@ -55,7 +55,7 @@ export function EditRelationModal({
       {/* Edit Panel - hidden during selection mode */}
       {!editingConnectionPoint && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
           onClick={onClose}
         >
           <div

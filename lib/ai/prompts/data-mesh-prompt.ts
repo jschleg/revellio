@@ -1,5 +1,4 @@
 import type { Metadata, Row, DataMeshRelation } from "@/lib/types/data";
-import type { DataMeshConfig } from "../ai-service";
 
 /**
  * Builds the prompt for data mesh analysis
@@ -8,7 +7,6 @@ export function buildDataMeshPrompt(
   metadataArray: Metadata[],
   dataSlices: Array<{ fileName: string; rows: Row[] }>,
   userPrompt: string = "",
-  config: DataMeshConfig = {},
   existingRelations?: DataMeshRelation[],
   feedback?: string,
   relationToUpdate?: DataMeshRelation
@@ -26,11 +24,6 @@ Rows: ${meta.rowCount}`;
 Sample rows:
 ${JSON.stringify(data.rows.slice(0, 10), null, 1)}`;
   }).join("\n\n");
-
-  const maxRelations = config.maxRelations ? `Generate up to ${config.maxRelations} relations.` : "";
-  const minElements = config.minRelationElements || 2;
-  const maxElements = config.maxRelationElements ? `Maximum ${config.maxRelationElements} elements per relation.` : "";
-  const focusAreas = config.focusAreas?.length ? `Focus on: ${config.focusAreas.join(", ")}.` : "";
 
   // Handle single relation update scenario
   const relationToUpdateSection = relationToUpdate
@@ -62,8 +55,6 @@ ${metadataSummary}
 SAMPLE DATA:
 ${dataSamples}${userPrompt ? `\n\nUSER CONTEXT: ${userPrompt}` : ""}${relationToUpdateSection}${existingRelationsSection}${feedbackSection}
 
-${maxRelations} ${maxElements} ${focusAreas}
-Minimum ${minElements} elements per relation.${rerollInstruction}
 
 OUTPUT JSON:
 {

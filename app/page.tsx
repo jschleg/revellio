@@ -107,7 +107,6 @@ export default function Home() {
       const { metadataArray, payload, result } = await analyzeDataMesh(
         session.csvData,
         session.dataMeshPrompt,
-        {},
         existingRelations,
         feedback
       );
@@ -141,7 +140,6 @@ export default function Home() {
       const { metadataArray, payload, result } = await analyzeDataMesh(
         session.csvData,
         session.dataMeshPrompt,
-        {},
         undefined,
         feedback,
         relationToUpdate
@@ -204,7 +202,6 @@ export default function Home() {
       const { metadataArray, payload, result } = await analyzeVisualization(
         session.csvData,
         session.userPrompt,
-        {},
         existingOutput || undefined,
         feedback
       );

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AIService, type VisualizationConfig } from "@/lib/ai/ai-service";
+import { AIService } from "@/lib/ai/ai-service";
 import { log } from "@/lib/logger";
 import type { Metadata, Row, UnifiedAIOutput } from "@/lib/types/data";
 
 export async function POST(request: NextRequest) {
   try {
     log.info("Unified analysis request received");
-    const { metadataArray, dataSlices, userPrompt, config, existingOutput, feedback } = await request.json();
+    const { metadataArray, dataSlices, userPrompt, existingOutput, feedback } = await request.json();
 
     if (!metadataArray || !Array.isArray(metadataArray)) {
       log.error("Invalid metadata array");
@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
     log.info("Processing unified analysis", {
       files: metadataArray.length,
       hasPrompt: !!userPrompt,
-      config: config || {}
     });
 
     const aiService = new AIService();
@@ -37,7 +36,6 @@ export async function POST(request: NextRequest) {
         metadataArray as Metadata[],
         dataSlices as Array<{ fileName: string; rows: Row[] }>,
         userPrompt || "",
-        (config || {}) as VisualizationConfig,
         existingOutput as UnifiedAIOutput | undefined,
         feedback
       );

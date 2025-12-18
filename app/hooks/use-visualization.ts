@@ -5,7 +5,6 @@ import type {
   Metadata,
   UnifiedAIOutput,
 } from "@/lib/types/data";
-import type { VisualizationConfig } from "@/lib/ai/ai-service";
 
 export function useVisualization() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -15,7 +14,6 @@ export function useVisualization() {
     async (
       csvData: CSVData[],
       userPrompt: string,
-      config: VisualizationConfig = {},
       existingOutput?: UnifiedAIOutput,
       feedback?: string
     ): Promise<{
@@ -25,7 +23,6 @@ export function useVisualization() {
         metadataArray: Metadata[];
         dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
         userPrompt: string;
-        config: VisualizationConfig;
         existingOutput?: UnifiedAIOutput;
         feedback?: string;
       };
@@ -49,8 +46,7 @@ export function useVisualization() {
         const payload = {
           metadataArray,
           dataSlices,
-          userPrompt: userPrompt || "",
-          config,
+          userPrompt: userPrompt || "", 
           ...(existingOutput && { existingOutput }),
           ...(feedback && { feedback }),
         };

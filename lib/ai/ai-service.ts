@@ -12,22 +12,6 @@ import { buildUnifiedAnalysisPrompt } from "./prompts/unified-analysis-prompt";
 
 
 /**
- * Configuration options for AI analysis
- */
-export interface DataMeshConfig {
-  maxRelations?: number; // Maximum number of relations to generate
-  minRelationElements?: number; // Minimum elements per relation (default: 2)
-  maxRelationElements?: number; // Maximum elements per relation
-  focusAreas?: string[]; // Specific areas to focus on (e.g., ["revenue", "dates"])
-}
-
-export interface VisualizationConfig {
-  maxVisualizations?: number; // Maximum number of visualizations to generate
-  preferredTypes?: string[]; // Preferred visualization types
-  focusMetrics?: string[]; // Specific metrics to focus on
-}
-
-/**
  * AI Service - Handles AI-powered analysis using OpenAI
  * Uses GPT-4o for structured data analysis tasks
  */
@@ -61,7 +45,6 @@ export class AIService {
     metadataArray: Metadata[],
     dataSlices: Array<{ fileName: string; rows: Row[] }>,
     userPrompt: string = "",
-    config: DataMeshConfig = {},
     existingRelations?: DataMeshRelation[],
     feedback?: string,
     relationToUpdate?: DataMeshRelation
@@ -73,14 +56,13 @@ export class AIService {
     }
 
     try {
-      const prompt = buildDataMeshPrompt(metadataArray, dataSlices, userPrompt, config, existingRelations, feedback, relationToUpdate);
+      const prompt = buildDataMeshPrompt(metadataArray, dataSlices, userPrompt, existingRelations, feedback, relationToUpdate);
       log.info("Sending data mesh request to OpenAI", { 
         files: metadataArray.length, 
         hasPrompt: !!userPrompt,
         hasExistingRelations: !!existingRelations?.length,
         hasFeedback: !!feedback,
-        hasRelationToUpdate: !!relationToUpdate,
-        config 
+        hasRelationToUpdate: !!relationToUpdate
       });
       
       const response = await this.client!.chat.completions.create({
@@ -147,7 +129,6 @@ export class AIService {
     metadataArray: Metadata[],
     dataSlices: Array<{ fileName: string; rows: Row[] }>,
     userPrompt: string,
-    config: VisualizationConfig = {},
     existingOutput?: UnifiedAIOutput,
     feedback?: string
   ): Promise<UnifiedAIOutput> {
@@ -158,12 +139,11 @@ export class AIService {
     }
 
     try {
-      const prompt = buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, config, existingOutput, feedback);
+      const prompt = buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, existingOutput, feedback);
       log.info("Sending unified analysis request to OpenAI", { 
         files: metadataArray.length,
         hasExistingOutput: !!existingOutput,
-        hasFeedback: !!feedback,
-        config 
+        hasFeedback: !!feedback
       });
       
       const response = await this.client!.chat.completions.create({

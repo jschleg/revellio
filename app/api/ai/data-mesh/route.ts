@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AIService, type DataMeshConfig } from "@/lib/ai/ai-service";
+import { AIService } from "@/lib/ai/ai-service";
 import { log } from "@/lib/logger";
 import type { Metadata, Row } from "@/lib/types/data";
 
 export async function POST(request: NextRequest) {
   try {
     log.info("Data mesh request received");
-    const { metadataArray, dataSlices, userPrompt, config, existingRelations, feedback, relationToUpdate } = await request.json();
+    const { metadataArray, dataSlices, userPrompt, existingRelations, feedback, relationToUpdate } = await request.json();
 
     if (!metadataArray || !Array.isArray(metadataArray)) {
       log.error("Invalid metadata array");
@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
       files: metadataArray.length, 
       totalRows,
       hasPrompt: !!userPrompt,
-      config: config || {}
     });
 
     const aiService = new AIService();
@@ -39,7 +38,6 @@ export async function POST(request: NextRequest) {
         metadataArray as Metadata[],
         dataSlices as Array<{ fileName: string; rows: Row[] }>,
         userPrompt || "",
-        (config || {}) as DataMeshConfig,
         existingRelations,
         feedback,
         relationToUpdate

@@ -1,5 +1,4 @@
 import type { Metadata, Row, UnifiedAIOutput } from "@/lib/types/data";
-import type { VisualizationConfig } from "../ai-service";
 
 /**
  * Builds the prompt for visualization analysis
@@ -8,7 +7,6 @@ export function buildUnifiedAnalysisPrompt(
   metadataArray: Metadata[],
   dataSlices: Array<{ fileName: string; rows: Row[] }>,
   userPrompt: string,
-  config: VisualizationConfig = {},
   existingOutput?: UnifiedAIOutput,
   feedback?: string
 ): string {
@@ -25,10 +23,6 @@ Rows: ${meta.rowCount}`;
 Sample (5 rows):
 ${JSON.stringify(data.rows.slice(0, 5), null, 1)}`;
   }).join("\n\n");
-
-  const maxViz = config.maxVisualizations ? `Generate up to ${config.maxVisualizations} visualizations.` : "";
-  const preferredTypes = config.preferredTypes?.length ? `Preferred types: ${config.preferredTypes.join(", ")}.` : "";
-  const focusMetrics = config.focusMetrics?.length ? `Focus on metrics: ${config.focusMetrics.join(", ")}.` : "";
 
   // Handle feedback scenario - include existing output and feedback
   const existingOutputSection = existingOutput
@@ -49,8 +43,6 @@ DATA SAMPLES:
 ${dataSamples}
 
 USER REQUEST: ${userPrompt || "Create appropriate visualizations"}${existingOutputSection}${feedbackSection}
-
-${maxViz} ${preferredTypes} ${focusMetrics}
 
 AVAILABLE TYPES: bar-chart, line-chart, pie-chart, scatter-plot, table
 

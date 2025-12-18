@@ -6,7 +6,6 @@ import type {
   DataMeshOutput,
   DataMeshRelation,
 } from "@/lib/types/data";
-import type { DataMeshConfig } from "@/lib/ai/ai-service";
 
 export function useDataMesh() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -16,7 +15,6 @@ export function useDataMesh() {
     async (
       csvData: CSVData[],
       userPrompt: string,
-      config: DataMeshConfig = {},
       existingRelations?: DataMeshRelation[],
       feedback?: string,
       relationToUpdate?: DataMeshRelation
@@ -27,7 +25,6 @@ export function useDataMesh() {
         metadataArray: Metadata[];
         dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
         userPrompt: string;
-        config: DataMeshConfig;
         existingRelations?: DataMeshRelation[];
         feedback?: string;
         relationToUpdate?: DataMeshRelation;
@@ -53,7 +50,6 @@ export function useDataMesh() {
           metadataArray,
           dataSlices,
           userPrompt: userPrompt || "",
-          config,
           ...(existingRelations && { existingRelations }),
           ...(feedback && { feedback }),
           ...(relationToUpdate && { relationToUpdate }),

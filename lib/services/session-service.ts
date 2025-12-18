@@ -37,6 +37,7 @@ export interface SessionData {
   userPrompt?: string | null;
   meshInputPayload?: MeshInputPayload | null;
   aiInputPayload?: AIInputPayload | null;
+  selectedRelationsForVisualization?: number[];
 }
 
 export interface SessionResponse {
@@ -51,6 +52,7 @@ export interface SessionResponse {
   aiOutput: UnifiedAIOutput | null;
   meshInputPayload: MeshInputPayload | null;
   aiInputPayload: AIInputPayload | null;
+  selectedRelationsForVisualization?: number[];
 }
 
 /**
@@ -67,9 +69,13 @@ export async function createSession(data: SessionData): Promise<SessionResponse>
         meshInputPayload: data.meshInputPayload
           ? JSON.stringify(data.meshInputPayload)
           : null,
-        aiInputPayload: data.aiInputPayload
-          ? JSON.stringify(data.aiInputPayload)
-          : null,
+        aiInputPayload: (() => {
+          const payload = data.aiInputPayload || {};
+          if (data.selectedRelationsForVisualization !== undefined) {
+            payload.selectedRelationsForVisualization = data.selectedRelationsForVisualization;
+          }
+          return Object.keys(payload).length > 0 ? JSON.stringify(payload) : null;
+        })(),
         dataMeshSummary: data.dataMeshOutput?.summary || null,
         aiOutputReasoning: data.aiOutput?.reasoning || null,
         aiOutputMetadata: data.aiOutput?.metadata
@@ -233,6 +239,13 @@ export async function getSessionById(
     ? JSON.parse(session.aiInputPayload)
     : null;
 
+  // Extract selectedRelationsForVisualization from aiInputPayload if present
+  const selectedRelationsForVisualization = aiInputPayload && 
+    typeof aiInputPayload === 'object' && 
+    'selectedRelationsForVisualization' in aiInputPayload
+    ? (aiInputPayload as any).selectedRelationsForVisualization
+    : undefined;
+
   return {
     id: session.id,
     name: session.name,
@@ -245,6 +258,7 @@ export async function getSessionById(
     aiOutput,
     meshInputPayload,
     aiInputPayload,
+    selectedRelationsForVisualization,
   };
 }
 
@@ -291,10 +305,16 @@ export async function updateSession(
         ? JSON.stringify(data.meshInputPayload)
         : null;
     }
-    if (data.aiInputPayload !== undefined) {
-      updateData.aiInputPayload = data.aiInputPayload
-        ? JSON.stringify(data.aiInputPayload)
-        : null;
+    if (data.aiInputPayload !== undefined || data.selectedRelationsForVisualization !== undefined) {
+      // Merge selectedRelationsForVisualization into aiInputPayload
+      const existingAiInputPayload = existingSession.aiInputPayload
+        ? JSON.parse(existingSession.aiInputPayload)
+        : {};
+      const newAiInputPayload = data.aiInputPayload || existingAiInputPayload;
+      if (data.selectedRelationsForVisualization !== undefined) {
+        newAiInputPayload.selectedRelationsForVisualization = data.selectedRelationsForVisualization;
+      }
+      updateData.aiInputPayload = JSON.stringify(newAiInputPayload);
     }
     if (data.dataMeshOutput?.summary !== undefined) {
       updateData.dataMeshSummary = data.dataMeshOutput.summary;

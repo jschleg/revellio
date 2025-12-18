@@ -129,6 +129,7 @@ export class AIService {
     metadataArray: Metadata[],
     dataSlices: Array<{ fileName: string; rows: Row[] }>,
     userPrompt: string,
+    relations?: DataMeshRelation[],
     existingOutput?: UnifiedAIOutput,
     feedback?: string
   ): Promise<UnifiedAIOutput> {
@@ -139,9 +140,10 @@ export class AIService {
     }
 
     try {
-      const prompt = buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, existingOutput, feedback);
+      const prompt = buildUnifiedAnalysisPrompt(metadataArray, dataSlices, userPrompt, relations, existingOutput, feedback);
       log.info("Sending unified analysis request to OpenAI", { 
         files: metadataArray.length,
+        relationsCount: relations?.length || 0,
         hasExistingOutput: !!existingOutput,
         hasFeedback: !!feedback
       });

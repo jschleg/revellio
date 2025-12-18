@@ -50,6 +50,7 @@ export async function PUT(
       userPrompt,
       meshInputPayload,
       aiInputPayload,
+      selectedRelationsForVisualization,
     } = body;
 
     const sessionData: Partial<SessionData> = {
@@ -61,6 +62,7 @@ export async function PUT(
       userPrompt,
       meshInputPayload,
       aiInputPayload,
+      selectedRelationsForVisualization,
     };
 
     const session = await updateSession(id, sessionData);

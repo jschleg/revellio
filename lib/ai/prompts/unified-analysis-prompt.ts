@@ -1,4 +1,4 @@
-import type { Metadata, Row, UnifiedAIOutput } from "@/lib/types/data";
+import type { Metadata, Row, UnifiedAIOutput, DataMeshRelation } from "@/lib/types/data";
 
 /**
  * Builds the prompt for visualization analysis
@@ -7,6 +7,7 @@ export function buildUnifiedAnalysisPrompt(
   metadataArray: Metadata[],
   dataSlices: Array<{ fileName: string; rows: Row[] }>,
   userPrompt: string,
+  relations?: DataMeshRelation[],
   existingOutput?: UnifiedAIOutput,
   feedback?: string
 ): string {
@@ -34,7 +35,25 @@ ${JSON.stringify(existingOutput, null, 2)}`
     ? `\n\nUSER FEEDBACK: ${feedback}\n\nPlease regenerate the visualizations considering this feedback along with the previous output.`
     : "";
 
-  return `Create visualizations for the provided CSV data.
+  // Build relations section if provided
+  const relationsSection = relations && relations.length > 0
+    ? `\n\nSELECTED RELATIONS (you MUST create one visualization for EACH relation):
+${relations.map((rel, idx) => {
+  const elements = rel.elements.map(e => {
+    let desc = e.source.file;
+    if (e.source.column) desc += ` → ${e.source.column}`;
+    if (e.source.rowIndex !== undefined) desc += ` (Row ${e.source.rowIndex + 1})`;
+    return desc;
+  }).join(", ");
+  return `Relation ${idx + 1}: ${rel.title}
+  Explanation: ${rel.relationExplanation}
+  Elements: ${elements}`;
+}).join("\n\n")}
+
+CRITICAL: You MUST create exactly ${relations.length} visualization(s), one for each relation above. Each visualization should directly visualize the relationship described in its corresponding relation.`
+    : "";
+
+  return `Create visualizations for the provided CSV data.${relationsSection}
 
 METADATA:
 ${metadataSummary}
@@ -103,6 +122,9 @@ REQUIREMENTS:
 - Include complete schema with dataPoints and structure
 - Set rowIndex to null to use all rows
 - Choose appropriate aggregation (sum for totals, avg for rates, count for frequencies)
-- Provide clear reasoning for each choice`;
+- Provide clear reasoning for each choice${relations && relations.length > 0 ? `
+- CRITICAL: Create exactly ${relations.length} visualization(s), one per relation
+- Each visualization must directly visualize the relationship described in its corresponding relation
+- The visualization should use the data points and elements specified in the relation` : ""}`;
 
 }

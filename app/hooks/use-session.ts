@@ -18,6 +18,7 @@ export interface SessionState {
   userPrompt: string;
   meshOutput: DataMeshOutput | null;
   meshRelations: DataMeshRelation[];
+  selectedRelationsForVisualization: number[]; // Array of relation indices
   meshInputPayload: {
     metadataArray: Metadata[];
     dataSlices?: Array<{ fileName: string; rows: unknown[] }>;
@@ -42,6 +43,7 @@ const createEmptySessionState = (): SessionState => ({
   userPrompt: "",
   meshOutput: null,
   meshRelations: [],
+  selectedRelationsForVisualization: [],
   meshInputPayload: null,
   aiOutput: null,
   aiInputPayload: null,
@@ -107,6 +109,7 @@ export function useSession() {
             userPrompt: session.userPrompt,
             meshInputPayload: session.meshInputPayload,
             aiInputPayload: session.aiInputPayload,
+            selectedRelationsForVisualization: session.selectedRelationsForVisualization,
           }),
         });
 
@@ -156,6 +159,7 @@ export function useSession() {
         metadataArray = metadataExtractor.extractAll(sessionData.csvData);
       }
 
+      const relations = sessionData.dataMeshOutput?.relations || [];
       setSession({
         id: sessionData.id,
         name: sessionData.name,
@@ -164,7 +168,10 @@ export function useSession() {
         dataMeshPrompt: sessionData.dataMeshPrompt || "",
         userPrompt: sessionData.userPrompt || "",
         meshOutput: sessionData.dataMeshOutput || null,
-        meshRelations: sessionData.dataMeshOutput?.relations || [],
+        meshRelations: relations,
+        selectedRelationsForVisualization:
+          sessionData.selectedRelationsForVisualization ||
+          (relations.length > 0 ? relations.map((_, i) => i) : []),
         meshInputPayload: sessionData.meshInputPayload || null,
         aiOutput: sessionData.aiOutput || null,
         aiInputPayload: sessionData.aiInputPayload || null,

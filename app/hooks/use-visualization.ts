@@ -4,6 +4,7 @@ import type {
   CSVData,
   Metadata,
   UnifiedAIOutput,
+  DataMeshRelation,
 } from "@/lib/types/data";
 
 export function useVisualization() {
@@ -14,6 +15,7 @@ export function useVisualization() {
     async (
       csvData: CSVData[],
       userPrompt: string,
+      selectedRelations?: DataMeshRelation[],
       existingOutput?: UnifiedAIOutput,
       feedback?: string
     ): Promise<{
@@ -46,7 +48,8 @@ export function useVisualization() {
         const payload = {
           metadataArray,
           dataSlices,
-          userPrompt: userPrompt || "", 
+          userPrompt: userPrompt || "",
+          ...(selectedRelations && selectedRelations.length > 0 && { relations: selectedRelations }),
           ...(existingOutput && { existingOutput }),
           ...(feedback && { feedback }),
         };

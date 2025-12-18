@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       userPrompt,
       meshInputPayload,
       aiInputPayload,
+      selectedRelationsForVisualization,
     } = body;
 
     const sessionData: SessionData = {
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       userPrompt,
       meshInputPayload,
       aiInputPayload,
+      selectedRelationsForVisualization,
     };
 
     const session = await createSession(sessionData);

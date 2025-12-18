@@ -30,6 +30,8 @@ interface MainContentProps {
   userPrompt: string;
   meshOutput: DataMeshOutput | null;
   meshRelations: DataMeshRelation[];
+  selectedRelationsForVisualization: number[];
+  onSelectedRelationsChange: (selected: number[]) => void;
   aiOutput: UnifiedAIOutput | null;
   meshInputPayload: unknown;
   aiInputPayload: unknown;
@@ -65,6 +67,8 @@ export function MainContent({
   userPrompt,
   meshOutput,
   meshRelations,
+  selectedRelationsForVisualization,
+  onSelectedRelationsChange,
   aiOutput,
   meshInputPayload,
   aiInputPayload,
@@ -138,6 +142,10 @@ export function MainContent({
             csvDataCount={csvData.length}
             meshOutput={meshOutput}
             meshRelations={meshRelations}
+            selectedRelationsForVisualization={new Set(selectedRelationsForVisualization)}
+            onSelectedRelationsChange={(selected) =>
+              onSelectedRelationsChange(Array.from(selected))
+            }
             userPrompt={userPrompt}
             onUserPromptChange={onUserPromptChange}
             isProcessing={isAnalyzing}

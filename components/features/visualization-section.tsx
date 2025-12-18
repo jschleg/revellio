@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Zap, RefreshCw, MessageSquare } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, UnifiedAIOutput } from "@/lib/types/data";
 import { VisualizationFeedbackPanel } from "@/components/visualizations/FeedbackPanel";
+import { RelationSelection } from "./relation-selection";
 
 interface VisualizationSectionProps {
   csvDataCount: number;
   meshOutput: DataMeshOutput | null;
   meshRelations: DataMeshRelation[];
+  selectedRelationsForVisualization: Set<number>;
+  onSelectedRelationsChange: (selected: Set<number>) => void;
   userPrompt: string;
   onUserPromptChange: (prompt: string) => void;
   isProcessing: boolean;
@@ -22,6 +25,8 @@ export function VisualizationSection({
   csvDataCount,
   meshOutput,
   meshRelations,
+  selectedRelationsForVisualization,
+  onSelectedRelationsChange,
   userPrompt,
   onUserPromptChange,
   isProcessing,
@@ -31,6 +36,18 @@ export function VisualizationSection({
   existingOutput,
 }: VisualizationSectionProps) {
   const [showFeedback, setShowFeedback] = useState(false);
+
+  // Auto-select all relations if none are selected and relations exist
+  useEffect(() => {
+    if (
+      meshRelations.length > 0 &&
+      selectedRelationsForVisualization.size === 0 &&
+      !existingOutput
+    ) {
+      const allSelected = new Set(meshRelations.map((_, index) => index));
+      onSelectedRelationsChange(allSelected);
+    }
+  }, [meshRelations.length, selectedRelationsForVisualization.size, existingOutput, onSelectedRelationsChange]);
 
   if (csvDataCount === 0 || !meshOutput || meshRelations.length === 0) {
     return null;
@@ -54,9 +71,16 @@ export function VisualizationSection({
         </h2>
       </div>
       <p className="ml-11 text-sm text-zinc-700 dark:text-zinc-300">
-        Based on the defined relations, AI will determine the best visualization methods for
-        your data.
+        Select which relations to visualize. Each selected relation will get its own fitting
+        visualization based on the data structure and relationship type.
       </p>
+
+      {/* Relation Selection */}
+      <RelationSelection
+        relations={meshRelations}
+        selectedRelations={selectedRelationsForVisualization}
+        onSelectionChange={onSelectedRelationsChange}
+      />
 
       <div className="ml-11 rounded-xl border border-zinc-200/80 bg-white/60 backdrop-blur-sm p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/60">
         <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -77,7 +101,12 @@ export function VisualizationSection({
       <div className="ml-11 flex items-center gap-3">
         <button
           onClick={onAnalyze}
-          disabled={isProcessing || !meshOutput || meshRelations.length === 0}
+          disabled={
+            isProcessing ||
+            !meshOutput ||
+            meshRelations.length === 0 ||
+            selectedRelationsForVisualization.size === 0
+          }
           className="group relative rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-purple-800 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-200 hover:from-purple-700 hover:via-purple-800 hover:to-purple-900 hover:shadow-xl hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 dark:from-purple-500 dark:via-purple-600 dark:to-purple-700 dark:hover:from-purple-600 dark:hover:via-purple-700 dark:hover:to-purple-800"
         >
           {isProcessing ? (

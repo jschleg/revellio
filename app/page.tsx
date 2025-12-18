@@ -54,6 +54,7 @@ export default function Home() {
         aiOutput: null,
         meshOutput: null,
         meshRelations: [],
+        selectedRelationsForVisualization: [],
         meshInputPayload: null,
         aiInputPayload: null,
       }));
@@ -110,6 +111,10 @@ export default function Home() {
         metadataInput: metadataArray,
         meshOutput: result,
         meshRelations: result.relations,
+        selectedRelationsForVisualization:
+          result.relations.length > 0
+            ? result.relations.map((_, i) => i)
+            : prev.selectedRelationsForVisualization,
         meshInputPayload: payload,
       }));
     } catch (err) {
@@ -153,6 +158,9 @@ export default function Home() {
           relations: updatedRelations,
         },
         meshRelations: updatedRelations,
+        selectedRelationsForVisualization: prev.selectedRelationsForVisualization.filter(
+          (idx) => idx < updatedRelations.length
+        ),
         meshInputPayload: payload,
       }));
     } catch (err) {
@@ -167,11 +175,21 @@ export default function Home() {
       return;
     }
 
+    if (session.selectedRelationsForVisualization.length === 0) {
+      setError("Please select at least one relation for visualization");
+      return;
+    }
+
     setError(null);
     try {
+      const selectedRelations = session.selectedRelationsForVisualization.map(
+        (idx) => session.meshRelations[idx]
+      ).filter((rel): rel is typeof rel => rel !== undefined);
+
       const { metadataArray, payload, result } = await analyzeVisualization(
         session.csvData,
-        session.userPrompt
+        session.userPrompt,
+        selectedRelations
       );
 
       setSession((prev) => ({
@@ -191,11 +209,21 @@ export default function Home() {
       return;
     }
 
+    if (session.selectedRelationsForVisualization.length === 0) {
+      setError("Please select at least one relation for visualization");
+      return;
+    }
+
     setError(null);
     try {
+      const selectedRelations = session.selectedRelationsForVisualization.map(
+        (idx) => session.meshRelations[idx]
+      ).filter((rel): rel is typeof rel => rel !== undefined);
+
       const { metadataArray, payload, result } = await analyzeVisualization(
         session.csvData,
         session.userPrompt,
+        selectedRelations,
         existingOutput || undefined,
         feedback
       );
@@ -293,6 +321,13 @@ export default function Home() {
             userPrompt={session.userPrompt}
             meshOutput={session.meshOutput}
             meshRelations={session.meshRelations}
+            selectedRelationsForVisualization={session.selectedRelationsForVisualization}
+            onSelectedRelationsChange={(selected) =>
+              setSession((prev) => ({
+                ...prev,
+                selectedRelationsForVisualization: selected,
+              }))
+            }
             aiOutput={session.aiOutput}
             meshInputPayload={session.meshInputPayload}
             aiInputPayload={session.aiInputPayload}

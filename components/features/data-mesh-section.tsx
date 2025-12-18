@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import type React from "react";
 import { Loader2, Zap } from "lucide-react";
 import type { DataMeshOutput, DataMeshRelation, CSVData } from "@/lib/types/data";
 import { DataMeshVisualization } from "@/components/data-mesh-visualization";
 import { RelationActionModal } from "@/components/data-mesh-visualization/RelationActionModal";
 import { RelationsListModal } from "@/components/data-mesh-visualization/RelationsListModal";
+import { EditRelationModal } from "@/components/data-mesh-visualization/EditRelationModal";
 
 interface DataMeshSectionProps {
   csvData: CSVData[];
@@ -40,6 +42,9 @@ export function DataMeshSection({
   const [selectedRelations, setSelectedRelations] = useState<Set<number>>(new Set());
   const [hoveredRelation, setHoveredRelation] = useState<number | null>(null);
   const [editingRelation, setEditingRelation] = useState<number | null>(null);
+  const [editedTitle, setEditedTitle] = useState<string>("");
+  const [editedExplanation, setEditedExplanation] = useState<string>("");
+  const [editingConnectionPoint, setEditingConnectionPoint] = useState<number | null>(null);
 
   if (csvData.length === 0) {
     return null;
@@ -62,8 +67,83 @@ export function DataMeshSection({
   };
 
   const handleRelationClick = (index: number) => {
+    if (!meshOutput) return;
+    const relation = meshOutput.relations[index];
     setEditingRelation(index);
+    setEditedTitle(relation.title);
+    setEditedExplanation(relation.relationExplanation);
+    setEditingConnectionPoint(null);
+    // Close relations list modal when opening edit
+    setShowRelationsModal(false);
   };
+
+  const closeEditModal = useCallback(() => {
+    setEditingRelation(null);
+    setEditedTitle("");
+    setEditedExplanation("");
+    setEditingConnectionPoint(null);
+  }, []);
+
+  const handleSaveEditedRelation = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (editingRelation === null || !meshOutput) return;
+    
+    const updatedRelations = [...meshOutput.relations];
+    updatedRelations[editingRelation] = {
+      ...updatedRelations[editingRelation],
+      title: editedTitle,
+      relationExplanation: editedExplanation,
+    };
+    
+    onUpdateRelations(updatedRelations);
+    closeEditModal();
+  }, [editingRelation, meshOutput, editedTitle, editedExplanation, onUpdateRelations, closeEditModal]);
+
+  const handleRemoveFromEdit = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (editingRelation === null || !meshOutput) return;
+    
+    const updatedRelations = meshOutput.relations.filter((_, index) => index !== editingRelation);
+    onUpdateRelations(updatedRelations);
+    
+    setSelectedRelations((prev) => {
+      const next = new Set(prev);
+      next.delete(editingRelation);
+      const adjusted = new Set<number>();
+      next.forEach((idx) => {
+        if (idx > editingRelation) {
+          adjusted.add(idx - 1);
+        } else {
+          adjusted.add(idx);
+        }
+      });
+      return adjusted;
+    });
+    closeEditModal();
+  }, [editingRelation, meshOutput, onUpdateRelations, closeEditModal]);
+
+  const getRelationColor = useCallback((index: number, isSelected: boolean, isHovered: boolean): string => {
+    if (isSelected) return "rgb(147, 51, 234)";
+    if (isHovered) return "rgb(168, 85, 247)";
+    
+    const colors = [
+      "rgb(59, 130, 246)",   // blue-500
+      "rgb(34, 197, 94)",    // green-500
+      "rgb(239, 68, 68)",    // red-500
+      "rgb(251, 146, 60)",   // orange-500
+      "rgb(168, 85, 247)",   // purple-400
+      "rgb(236, 72, 153)",   // pink-500
+      "rgb(139, 92, 246)",   // violet-500
+      "rgb(20, 184, 166)",   // teal-500
+    ];
+    return colors[index % colors.length];
+  }, []);
 
   const handleToggleSelection = (index: number) => {
     setSelectedRelations((prev) => {
@@ -77,7 +157,7 @@ export function DataMeshSection({
     });
   };
 
-  const handleRemoveRelation = (index: number) => {
+  const handleRemoveRelation = useCallback((index: number) => {
     if (!meshOutput) return;
     const updatedRelations = meshOutput.relations.filter((_, i) => i !== index);
     onUpdateRelations(updatedRelations);
@@ -94,7 +174,11 @@ export function DataMeshSection({
       });
       return adjusted;
     });
-  };
+    // Close edit modal if the deleted relation was being edited
+    if (editingRelation === index) {
+      closeEditModal();
+    }
+  }, [meshOutput, onUpdateRelations, editingRelation, closeEditModal]);
 
   const handleModalClose = () => {
     setActionModal({ type: null, isOpen: false });
@@ -274,6 +358,28 @@ export function DataMeshSection({
           onToggleSelection={handleToggleSelection}
           onRemove={handleRemoveRelation}
           onRerollRelation={onRerollRelation}
+        />
+      )}
+
+      {/* Edit Relation Modal */}
+      {meshOutput && editingRelation !== null && (
+        <EditRelationModal
+          relation={meshOutput.relations[editingRelation]}
+          editedTitle={editedTitle}
+          editedExplanation={editedExplanation}
+          editingConnectionPoint={editingConnectionPoint}
+          strokeColor={getRelationColor(
+            editingRelation,
+            selectedRelations.has(editingRelation),
+            false
+          )}
+          onClose={closeEditModal}
+          onSave={handleSaveEditedRelation}
+          onRemove={handleRemoveFromEdit}
+          onTitleChange={setEditedTitle}
+          onExplanationChange={setEditedExplanation}
+          onConnectionPointEdit={setEditingConnectionPoint}
+          onCancelSelection={() => setEditingConnectionPoint(null)}
         />
       )}
     </div>

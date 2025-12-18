@@ -53,7 +53,7 @@ export function EditRelationModal({
       )}
 
       {/* Edit Panel - hidden during selection mode */}
-      {!editingConnectionPoint && (
+      {editingConnectionPoint === null && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
           onClick={onClose}
@@ -172,20 +172,32 @@ export function EditRelationModal({
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-2">
               <button
-                onClick={onRemove}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRemove();
+                }}
                 className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
               >
                 <Trash2 className="h-4 w-4" />
                 Remove
               </button>
               <button
-                onClick={onClose}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onClose();
+                }}
                 className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
                 Cancel
               </button>
               <button
-                onClick={onSave}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onSave();
+                }}
                 className="flex items-center gap-2 rounded-lg border border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 dark:border-purple-400 dark:bg-purple-500 dark:hover:bg-purple-600"
               >
                 <Save className="h-4 w-4" />

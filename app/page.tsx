@@ -310,7 +310,13 @@ export default function Home() {
               setSession((prev) => ({ ...prev, userPrompt: prompt }))
             }
             onUpdateRelations={(relations) =>
-              setSession((prev) => ({ ...prev, meshRelations: relations }))
+              setSession((prev) => ({
+                ...prev,
+                meshRelations: relations,
+                meshOutput: prev.meshOutput
+                  ? { ...prev.meshOutput, relations }
+                  : null,
+              }))
             }
             onDataMeshAnalyze={handleDataMeshAnalysis}
             onDataMeshReroll={handleDataMeshReroll}

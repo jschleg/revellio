@@ -124,6 +124,50 @@ export default function Home() {
     }
   };
 
+  const handleDataMeshRerollRelation = async (index: number, feedback: string) => {
+    if (session.csvData.length === 0 || !session.meshOutput) {
+      setError("Please upload files and generate relations first");
+      return;
+    }
+
+    const relationToUpdate = session.meshRelations[index];
+    if (!relationToUpdate) {
+      setError("Relation not found");
+      return;
+    }
+
+    setError(null);
+    try {
+      const { metadataArray, payload, result } = await analyzeDataMesh(
+        session.csvData,
+        session.dataMeshPrompt,
+        {},
+        undefined,
+        feedback,
+        relationToUpdate
+      );
+
+      // Replace the specific relation at the given index
+      const updatedRelations = [...session.meshRelations];
+      if (result.relations.length > 0) {
+        updatedRelations[index] = result.relations[0];
+      }
+
+      setSession((prev) => ({
+        ...prev,
+        metadataInput: metadataArray,
+        meshOutput: {
+          ...prev.meshOutput!,
+          relations: updatedRelations,
+        },
+        meshRelations: updatedRelations,
+        meshInputPayload: payload,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+    }
+  };
+
 
   const handleVisualizationAnalysis = async () => {
     if (session.csvData.length === 0) {
@@ -363,6 +407,7 @@ export default function Home() {
                   setSession((prev) => ({ ...prev, meshRelations: relations }))
                 }
                 onReroll={handleDataMeshReroll}
+                onRerollRelation={handleDataMeshRerollRelation}
               />
               )}
 

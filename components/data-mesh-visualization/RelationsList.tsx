@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCircle2, Circle, Edit2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, Circle, Edit2, Trash2, RefreshCw, Send, X } from "lucide-react";
 import type { DataMeshRelation } from "@/lib/types/data";
 
 interface RelationsListProps {
@@ -11,6 +12,7 @@ interface RelationsListProps {
   onRelationClick: (index: number) => void;
   onToggleSelection: (index: number) => void;
   onRemove?: (index: number) => void;
+  onRerollRelation?: (index: number, feedback: string) => Promise<void>;
 }
 
 export function RelationsList({
@@ -21,7 +23,43 @@ export function RelationsList({
   onRelationClick,
   onToggleSelection,
   onRemove,
+  onRerollRelation,
 }: RelationsListProps) {
+  const [rerollingRelation, setRerollingRelation] = useState<number | null>(null);
+  const [rerollFeedback, setRerollFeedback] = useState<Record<number, string>>({});
+  const [isRerolling, setIsRerolling] = useState(false);
+
+  const handleRerollClick = (index: number) => {
+    setRerollingRelation(index);
+    if (!rerollFeedback[index]) {
+      setRerollFeedback((prev) => ({ ...prev, [index]: "" }));
+    }
+  };
+
+  const handleRerollCancel = (index: number) => {
+    setRerollingRelation(null);
+    setRerollFeedback((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  };
+
+  const handleRerollSubmit = async (index: number) => {
+    const feedback = rerollFeedback[index]?.trim();
+    if (!feedback || !onRerollRelation) return;
+
+    setIsRerolling(true);
+    try {
+      await onRerollRelation(index, feedback);
+      handleRerollCancel(index);
+    } catch (error) {
+      console.error("Error rerolling relation:", error);
+    } finally {
+      setIsRerolling(false);
+    }
+  };
+
   if (relations.length === 0) {
     return (
       <div className="rounded-lg border border-purple-200/50 bg-white/50 p-8 text-center dark:border-purple-800/50 dark:bg-zinc-900/50">
@@ -94,6 +132,18 @@ export function RelationsList({
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
+                      {onRerollRelation && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRerollClick(index);
+                          }}
+                          className="rounded p-1 text-zinc-500 transition-colors hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/50 dark:hover:text-blue-400"
+                          title="Revise relation"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                      )}
                       {onRemove && (
                         <button
                           onClick={(e) => {
@@ -130,6 +180,65 @@ export function RelationsList({
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">
                     {relation.relationExplanation}
                   </p>
+                  
+                  {/* Reroll Input Section */}
+                  {rerollingRelation === index && onRerollRelation && (
+                    <div className="mt-3 rounded-lg border border-blue-200/50 bg-blue-50/50 p-3 dark:border-blue-800/50 dark:bg-blue-950/30">
+                      <div className="mb-2 flex items-center justify-between">
+                        <h5 className="text-xs font-semibold text-blue-900 dark:text-blue-200">
+                          Revise Relation
+                        </h5>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRerollCancel(index);
+                          }}
+                          className="rounded p-1 text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/50 dark:hover:text-blue-300"
+                          title="Cancel"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <textarea
+                        value={rerollFeedback[index] || ""}
+                        onChange={(e) => {
+                          setRerollFeedback((prev) => ({ ...prev, [index]: e.target.value }));
+                        }}
+                        placeholder="Describe how you'd like this relation to be revised..."
+                        className="mb-2 w-full rounded-lg border border-blue-300 bg-white px-2 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-blue-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus:border-blue-400"
+                        rows={2}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                            e.preventDefault();
+                            handleRerollSubmit(index);
+                          }
+                        }}
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRerollCancel(index);
+                          }}
+                          className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRerollSubmit(index);
+                          }}
+                          disabled={!rerollFeedback[index]?.trim() || isRerolling}
+                          className="flex items-center gap-1 rounded-lg border border-blue-500 bg-blue-600 px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-400 dark:bg-blue-500 dark:hover:bg-blue-600"
+                        >
+                          <Send className="h-3 w-3" />
+                          {isRerolling ? "Revising..." : "Revise"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

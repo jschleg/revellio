@@ -13,6 +13,7 @@ interface DataMeshVisualizationProps {
   dataMeshOutput: DataMeshOutput;
   csvData: CSVData[];
   onUpdateRelations?: (relations: DataMeshRelation[]) => void;
+  onRerollRelation?: (index: number, feedback: string) => Promise<void>;
 }
 
 interface ElementPosition {
@@ -27,6 +28,7 @@ export function DataMeshVisualization({
   dataMeshOutput,
   csvData,
   onUpdateRelations,
+  onRerollRelation,
 }: DataMeshVisualizationProps) {
   // State
   const [selectedRelations, setSelectedRelations] = useState<Set<number>>(new Set());
@@ -569,6 +571,7 @@ export function DataMeshVisualization({
             return adjusted;
           });
         }}
+        onRerollRelation={onRerollRelation}
       />
     </div>
   );

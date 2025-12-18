@@ -63,7 +63,8 @@ export class AIService {
     userPrompt: string = "",
     config: DataMeshConfig = {},
     existingRelations?: DataMeshRelation[],
-    feedback?: string
+    feedback?: string,
+    relationToUpdate?: DataMeshRelation
   ): Promise<DataMeshOutput> {
     if (!this.isAvailable()) {
       const errorMsg = "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.";
@@ -72,12 +73,13 @@ export class AIService {
     }
 
     try {
-      const prompt = buildDataMeshPrompt(metadataArray, dataSlices, userPrompt, config, existingRelations, feedback);
+      const prompt = buildDataMeshPrompt(metadataArray, dataSlices, userPrompt, config, existingRelations, feedback, relationToUpdate);
       log.info("Sending data mesh request to OpenAI", { 
         files: metadataArray.length, 
         hasPrompt: !!userPrompt,
         hasExistingRelations: !!existingRelations?.length,
         hasFeedback: !!feedback,
+        hasRelationToUpdate: !!relationToUpdate,
         config 
       });
       
@@ -110,6 +112,14 @@ export class AIService {
 
       if (!result.relations || result.relations.length === 0) {
         log.warn("No relations found in AI response");
+      }
+
+      // If updating a single relation, return just that relation
+      if (relationToUpdate) {
+        return {
+          relations: result.relations || [relationToUpdate],
+          summary: result.summary || "Relation updated",
+        };
       }
 
       // If we have existing relations, merge them with new ones

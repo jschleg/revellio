@@ -10,7 +10,8 @@ export function buildDataMeshPrompt(
   userPrompt: string = "",
   config: DataMeshConfig = {},
   existingRelations?: DataMeshRelation[],
-  feedback?: string
+  feedback?: string,
+  relationToUpdate?: DataMeshRelation
 ): string {
   // Only include essential metadata
   const metadataSummary = metadataArray.map((meta, idx) => {
@@ -31,17 +32,25 @@ ${JSON.stringify(data.rows.slice(0, 10), null, 1)}`;
   const maxElements = config.maxRelationElements ? `Maximum ${config.maxRelationElements} elements per relation.` : "";
   const focusAreas = config.focusAreas?.length ? `Focus on: ${config.focusAreas.join(", ")}.` : "";
 
+  // Handle single relation update scenario
+  const relationToUpdateSection = relationToUpdate
+    ? `\n\nRELATION TO UPDATE:
+${JSON.stringify(relationToUpdate, null, 2)}
+
+IMPORTANT: You must UPDATE this specific relation based on the user feedback. Return ONLY the updated version of this relation in the relations array. Do not include any other relations.`
+    : "";
+
   // Handle reroll scenario - include existing relations and feedback
-  const existingRelationsSection = existingRelations && existingRelations.length > 0
+  const existingRelationsSection = existingRelations && existingRelations.length > 0 && !relationToUpdate
     ? `\n\nEXISTING RELATIONS (keep these, generate additional ones):
 ${JSON.stringify(existingRelations, null, 2)}`
     : "";
 
   const feedbackSection = feedback
-    ? `\n\nUSER FEEDBACK: ${feedback}\n\nPlease consider this feedback when generating relations.`
+    ? `\n\nUSER FEEDBACK: ${feedback}\n\nPlease consider this feedback when ${relationToUpdate ? "updating the relation" : "generating relations"}.`
     : "";
 
-  const rerollInstruction = existingRelations && existingRelations.length > 0
+  const rerollInstruction = existingRelations && existingRelations.length > 0 && !relationToUpdate
     ? `\n\nIMPORTANT: Keep all existing relations above. Generate ADDITIONAL relations based on the feedback and data.`
     : "";
 
@@ -51,7 +60,7 @@ METADATA:
 ${metadataSummary}
 
 SAMPLE DATA:
-${dataSamples}${userPrompt ? `\n\nUSER CONTEXT: ${userPrompt}` : ""}${existingRelationsSection}${feedbackSection}
+${dataSamples}${userPrompt ? `\n\nUSER CONTEXT: ${userPrompt}` : ""}${relationToUpdateSection}${existingRelationsSection}${feedbackSection}
 
 ${maxRelations} ${maxElements} ${focusAreas}
 Minimum ${minElements} elements per relation.${rerollInstruction}

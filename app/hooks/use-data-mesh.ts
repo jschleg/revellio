@@ -18,7 +18,8 @@ export function useDataMesh() {
       userPrompt: string,
       config: DataMeshConfig = {},
       existingRelations?: DataMeshRelation[],
-      feedback?: string
+      feedback?: string,
+      relationToUpdate?: DataMeshRelation
     ): Promise<{
       metadataArray: Metadata[];
       dataSlices: Array<{ fileName: string; rows: typeof csvData[0]["rows"] }>;
@@ -29,6 +30,7 @@ export function useDataMesh() {
         config: DataMeshConfig;
         existingRelations?: DataMeshRelation[];
         feedback?: string;
+        relationToUpdate?: DataMeshRelation;
       };
       result: DataMeshOutput;
     }> => {
@@ -54,6 +56,7 @@ export function useDataMesh() {
           config,
           ...(existingRelations && { existingRelations }),
           ...(feedback && { feedback }),
+          ...(relationToUpdate && { relationToUpdate }),
         };
 
         setStep("Analyzing data mesh network...");

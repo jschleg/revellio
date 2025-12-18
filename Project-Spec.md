@@ -51,7 +51,7 @@ Version 0.1 – Working & Decision Basis
    - Next Steps
 - Glossary
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ## Purpose and Classification of the Document Table of Contents
 
@@ -83,7 +83,7 @@ Existing tools offer powerful features but require:
 
 Revellio addresses the point where this knowledge is missing.
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ## Product Definition and Guiding Principles
 
@@ -114,7 +114,7 @@ Revellio is an AI-powered analysis and visualization tool focused on gaining ins
 - Transparency instead of black box
 - Simplicity in MVP, extensibility in concept
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ### Naming and Visual Concept
 
@@ -148,7 +148,7 @@ Data-savvy users who use Revellio as a supplement or accelerator:
 - Understandable explanations
 - Possibility for further processing
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ## Role of AI and System Logic
 
@@ -202,7 +202,7 @@ Scope and Limitations
 - Focus on structure, not on volume
 - Premium extensions potentially possible
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ### Analysis Approach
 
@@ -255,7 +255,7 @@ Each display is accompanied by:
 - Focus on understanding instead of configuring
 - Optional context prompts for both AI steps
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ### Extended Interaction (Planned)
 
@@ -296,7 +296,7 @@ Walenstadt, Saturday, December 13, 2025
 - Complex filter logic
 - Large data volumes
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ## Persistence and Further Processing
 
@@ -330,7 +330,7 @@ The goal is reproducibility and continuation of analyses.
 - However, conceptually prepared
 - Extensions without rethinking the core
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ## Project Status and Outlook
 
@@ -350,7 +350,7 @@ Revellio is currently a side project with startup potential. The focus is on lea
 - Technical prototypes
 - Tests with real datasets
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ## Glossary
 
@@ -428,7 +428,7 @@ counting, summing, or averaging to make higher-level
 patterns visible.
 ```
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ```
 Term        Explanation
@@ -504,7 +504,7 @@ Early product version that serves to demonstrate the basic
 functionality and added value of an idea.
 ```
 
-Walenstadt, Saturday, December 13, 2025
+
 
 ```
 Term        Explanation
